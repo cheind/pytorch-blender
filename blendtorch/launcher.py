@@ -1,13 +1,31 @@
-import torch
-import torch.utils.data as data
 import zmq
 from subprocess import Popen
-import numpy as np
 import sys
-import atexit
 
-class BlenderLaunch():
+class BlenderLauncher():
+    '''Opens and closes Blender instances.
+    
+    This class is meant to be used withing a `with` block to ensure clean shutdown of background
+    processes.
+    '''
+
     def __init__(self, num_instances=3, start_port=11000, bind_addr='127.0.0.1', scene='scene.blend', instance_args=None, prot='tcp'):
+        '''Initialize instance.
+        
+        Kwargs
+        ------
+        num_instances: int (default=3)
+            How many Blender instances to create
+        start_port : int (default=11000)
+            Start of port range for publisher sockets
+        bind_addr : string (default='127.0.0.1')
+            Address to bind publisher sockets
+        scene : string (default='scene.blend')
+            Scene file to be processed by Blender instances
+        instance_args : array (default=None)
+            Additional arguments per instance to be passed as command
+            line arguments.
+        '''
         self.num_instances = num_instances
         self.start_port = start_port
         self.bind_addr = bind_addr
@@ -43,6 +61,18 @@ class BlenderLaunch():
         return self
 
     def recv(self, timeoutms=-1):
+        '''Receive from Blender instances.
+        
+        Receives and unpickles the next message. When connected
+        to multiple publishers, data is interleaved. When a maximum
+        number of message (currently 20) are pending, new messages
+        are dropped.
+
+        Kwargs
+        ------
+        timeoutms: int
+            Timeout in milliseconds for the next data bundle to arrive.
+        '''
         socks = dict(self.poller.poll(timeoutms))
         assert self.s in socks, 'No response within timeout interval.'
         return self.s.recv_pyobj()
@@ -51,51 +81,3 @@ class BlenderLaunch():
         [p.terminate() for p in self.processes]
         assert not any([p.poll() for p in self.processes]), 'Blender instance still open'
         print('Blender instances closed')
-
-class BlenderDataset:
-    def __init__(self, blender_launcher, transforms=None, timeoutms=10000, dslen=sys.maxsize):
-        self.blender_launcher = blender_launcher
-        self.transforms = transforms
-        self.timeoutms = timeoutms
-        self.dslen = dslen
-
-    def __len__(self):
-        return self.dslen
-
-    def __getitem__(self, idx):
-        d = self.blender_launcher.recv(timeoutms=self.timeoutms)        
-
-        x, coords = d['image'], d['xy']
-        
-        h,w = x.shape[0], x.shape[1]
-        coords[...,1] = 1. - coords[...,1] # Blender uses origin bottom-left.        
-        coords *= np.array([w,h])[None, :]
-
-        if self.transforms:
-            x = self.transforms(x)
-        return x, coords, d['id']
-
-if __name__ == '__main__':
-
-    import matplotlib.pyplot as plt
-    from mpl_toolkits.axes_grid1 import ImageGrid
-
-    with BlenderLaunch(num_instances=4, instance_args=[['-id', '0'], ['-id', '1'], ['-id', '2'], ['-id', '3']]) as bl:
-        ds = BlenderDataset(bl)
-        # Note, in the following num_workers must be 0
-        dl = data.DataLoader(ds, batch_size=4, num_workers=0, shuffle=False)
-
-        for idx in range(10):
-            x, coords, ids = next(iter(dl))
-            print(f'Received from {ids}')
-
-            # Drawing is the slow part ...
-            fig, axs = plt.subplots(2,2,frameon=False, figsize=(16*2,9*2))
-            fig.subplots_adjust(left=0, right=1, top=1, bottom=0, wspace=0.0, hspace=0.0)
-            axs = axs.reshape(-1)
-            for i in range(x.shape[0]):
-                axs[i].imshow(x[i], aspect='auto', origin='upper')
-                axs[i].scatter(coords[i][:, 0], coords[i][:, 1], s=100)
-                axs[i].set_axis_off()
-            fig.savefig(f'tmp/output_{idx}.png')
-            plt.close(fig)

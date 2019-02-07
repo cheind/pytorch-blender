@@ -31,7 +31,7 @@ Both packages are installable via `pip`. In order add packages to your Blender p
 where `<BLENDERPATH>` is the file path to the directory containing the Blender executable.
 
 ## How it works
-An instance of `pytorch.py::BlenderLaunch` is responsible for starting and stopping background Blender instances. The script `blender.py` and additional arguments are passed to the starting Blender instance. `blender.py` creates a publisher socket for communication and starts producing random renderings. Meanwhile, a `pytorch.py::BlenderDataset` connects to all publishers registered with `BlenderLaunch` instance. Upon request, the next data bundle is returned.
+An instance of [BlenderLaunch](blendtorch/launcher.py) is responsible for starting and stopping background Blender instances. The script `blender.py` and additional arguments are passed to the starting Blender instance. `blender.py` creates a publisher socket for communication and starts producing random renderings. Meanwhile, a `pytorch.py::BlenderDataset` connects to all publishers registered with `BlenderLaunch` instance. Upon request, the next data bundle is returned.
 
 ## Caveats
 - In background mode, Blender `ViewerNodes` are not updated, so rendering have to be written to files. Currently, the Blender script re-imports the written image and sends it as message to any subscriber. This way, we do not need to keep track of which files have already been read and can be deleted, which simplifies communication.
