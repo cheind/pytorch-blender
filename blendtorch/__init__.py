@@ -1,4 +1,4 @@
 from blendtorch.launcher import BlenderLauncher
-from blendtorch.dataset import BlenderDataset
+from blendtorch.receiver import Receiver
 
 __version__ = '1.0.0'

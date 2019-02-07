@@ -5,22 +5,22 @@ import matplotlib.pyplot as plt
 
 import blendtorch as bt
 
-class MyDataset(bt.BlenderDataset):
+class MyDataset:
     '''A dataset that reads from Blender publishers.'''
 
     def __init__(self, blender_launcher, transforms=None):
-        super().__init__(blender_launcher)
+        self.recv = bt.Receiver(blender_launcher)
         self.transforms = transforms
 
     def __len__(self):
-        return 100 # Virtually anything you'd like to end episodes.
+        # Virtually anything you'd like to end episodes.
+        return 100 
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx):        
+        # Data is a dictionary of {image, coordinates, id},
+        # see publisher script
+        d = self.recv(timeoutms=5000)        
         
-        d = self.recv(timeoutms=5000)
-        
-        # Data is a dictionary of images, coordinates and ids
-        # See publisher script
         x, coords = d['image'], d['xy']        
         h,w = x.shape[0], x.shape[1]
         coords[...,1] = 1. - coords[...,1] # Blender uses origin bottom-left.        
@@ -39,8 +39,9 @@ def main():
         ['-id', '3']
     ]
 
-    with bt.BlenderLauncher(num_instances=4, instance_args=instance_args) as bl:
+    with bt.BlenderLauncher(num_instances=4, instance_args=instance_args) as bl:        
         ds = MyDataset(bl)
+
         # Note, in the following num_workers must be 0
         dl = data.DataLoader(ds, batch_size=4, num_workers=0, shuffle=False)
 

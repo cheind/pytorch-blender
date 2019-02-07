@@ -1,5 +1,5 @@
 
-class BlenderDataset:
+class Receiver:
     '''A dataset that reads from Blender publishers.'''
 
     def __init__(self, blender_launcher):
@@ -16,3 +16,6 @@ class BlenderDataset:
     def recv(self, timeoutms=5000):
         '''Receive from Blender instances.'''
         return self.blender_launcher.recv(timeoutms) 
+
+    def __call__(self, timeoutms=5000):
+        return self.recv(timeoutms)
