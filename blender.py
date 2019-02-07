@@ -18,7 +18,7 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description='Blender render script.')
     parser.add_argument('bind', help='Bind-to address')
-    parser.add_argument('-id', help='Identifier for this Blender instance', default=0)
+    parser.add_argument('-id', type=int, help='Identifier for this Blender instance', default=int(os.getpid()))
     args = parser.parse_args(argv)
 
     # Create a publisher
@@ -28,7 +28,7 @@ def main():
     s.bind(args.bind)
 
     # We use our pid as identifier for temporary data
-    pid = os.getpid()
+    pid = args.id
 
     # Setup scene and random material
     scene = bpy.data.scenes["Scene"]
