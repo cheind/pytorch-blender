@@ -7,7 +7,6 @@ import numpy as np
 import os
 from PIL import Image
 
-
 def main():
     ''' Sample script publishing random scene renderings.'''
     argv = sys.argv[1:]
