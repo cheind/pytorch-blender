@@ -9,7 +9,7 @@ class BlenderLauncher():
     processes.
     '''
 
-    def __init__(self, num_instances=3, start_port=11000, bind_addr='127.0.0.1', scene='scene.blend', instance_args=None, prot='tcp'):
+    def __init__(self, num_instances=3, start_port=11000, bind_addr='127.0.0.1', scene='scene.blend', script='blender.py', instance_args=None, prot='tcp'):
         '''Initialize instance.
         
         Kwargs
@@ -25,6 +25,8 @@ class BlenderLauncher():
         instance_args : array (default=None)
             Additional arguments per instance to be passed as command
             line arguments.
+        script: string
+            Script to be called from Blender
         '''
         self.num_instances = num_instances
         self.start_port = start_port
@@ -32,6 +34,7 @@ class BlenderLauncher():
         self.prot = prot
         self.scene = scene
         self.instance_args = instance_args
+        self.script = script
         if instance_args is None:
             self.instance_args = [[] for _ in range(num_instances)]
         assert num_instances > 0
@@ -42,7 +45,7 @@ class BlenderLauncher():
         self.addresses = [f'{self.prot}://{self.bind_addr}:{p}' for p in ports]
         add_args = [' '.join(a) for a in self.instance_args]
 
-        self.processes = [Popen(f'blender {self.scene} --background --python blender.py -- {addr} {args}', 
+        self.processes = [Popen(f'blender {self.scene} --background --python {self.script} -- {addr} {args}', 
             shell=False,
             stdin=None, 
             stdout=open(f'./tmp/out_{idx}.txt', 'w'), 
