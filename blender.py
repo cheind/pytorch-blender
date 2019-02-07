@@ -1,8 +1,23 @@
 import bpy
+import bpy_extras
 import zmq
 import numpy
 import sys
 import numpy as np
+import os
+from PIL import Image
+
+
+def get_pixels(scene, obj):
+    '''Get 2D projection coordinates object's vertex coordinates.'''
+    data = obj.data
+    mat = obj.matrix_world
+    xy = []
+    for v in data.vertices:
+        p = bpy_extras.object_utils.world_to_camera_view(scene, scene.camera, mat * v.co)
+        xy.append(p[:2]) # normalized 2D in W*RS / H*RS
+    return np.stack(xy).astype(np.float32)
+
 
 def main():
     argv = sys.argv[1:]
@@ -13,6 +28,7 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description='Blender render script.')
     parser.add_argument('bind', help='Bind-to address')
+    parser.add_argument('-id', help='Identifier for this Blender instance', default=0)
     args = parser.parse_args(argv)
 
     ctx = zmq.Context()
@@ -20,23 +36,32 @@ def main():
     s.setsockopt(zmq.LINGER, 0)
     s.bind(args.bind)
 
+    pid = os.getpid()
+
     scene = bpy.data.scenes["Scene"]
     scene.render.resolution_percentage = 100
+    scene.render.filepath = '//tmp/image_%d.png' % pid
 
     cube = bpy.data.objects['Cube']
-    cube.color = np.random.rand(3).tolist() + [1]
+    mat = bpy.data.materials.new('RandomMeshMaterial')
+    mat.diffuse_color = np.random.rand(3).tolist()
+    cube.active_material = mat
 
     while True:
         cube.rotation_euler = np.random.randint(-30,30,3)
 
-        bpy.ops.render.render()
-        pixels = np.array(bpy.data.images['Viewer Node'].pixels)
-        print(len(pixels))
-
+        bpy.ops.render.render(write_still=True)
+        
         width = bpy.context.scene.render.resolution_x 
         height = bpy.context.scene.render.resolution_y
 
-        image = pixels.reshape((height, width, 4))
-        s.send_pyobj(image)
+        img = Image.open('.' + scene.render.filepath[1:]).convert('RGB')
+        xy = get_pixels(scene, cube)
+
+        s.send_pyobj({
+            'image': np.asarray(img),
+            'xy': xy,
+            'id': args.id
+        })
 
 main()
