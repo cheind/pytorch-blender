@@ -32,13 +32,13 @@ class MyDataset:
         d = self.recv(timeoutms=5000)   
         return d['image'], d['coords'], d['id']
 
-    with bt.BlenderLauncher(num_instances=4) as bl:        
-        ds = MyDataset(bl)        
-        dl = data.DataLoader(ds, batch_size=4, num_workers=0)
+with bt.BlenderLauncher(num_instances=4) as bl:        
+    ds = MyDataset(bl)        
+    dl = data.DataLoader(ds, batch_size=4, num_workers=0)
 
-        for idx in range(10):
-            x, coords, ids = next(iter(dl))
-            print(f'Received from {ids}')
+    for idx in range(10):
+        x, coords, ids = next(iter(dl))
+        print(f'Received from {ids}')
 ```
 
 ## Prerequisites
