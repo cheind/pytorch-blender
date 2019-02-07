@@ -56,9 +56,9 @@ The following packages need to be available in your PyTorch environment and Blen
 Both packages are installable via `pip`. In order add packages to your Blender packaged Python distribution, execute the following commands (usually administrator privileges are required on Windows)
 
 ```
-<BLENDERPATH>2.79\python\bin\python.exe" -m ensurepip
-<BLENDERPATH>2.79\python\bin\python.exe" -m pip install pyzmq
-<BLENDERPATH>2.79\python\bin\python.exe" -m pip install pillow
+"<BLENDERPATH>2.79\python\bin\python.exe" -m ensurepip
+"<BLENDERPATH>2.79\python\bin\python.exe" -m pip install pyzmq
+"<BLENDERPATH>2.79\python\bin\python.exe" -m pip install pillow
 ```
 where `<BLENDERPATH>` is the file path to the directory containing the Blender executable.
 
