@@ -50,7 +50,7 @@ class BlenderLauncher():
             stdin=None, 
             stdout=open(f'./tmp/out_{idx}.txt', 'w'), 
             stderr=open(f'./tmp/err_{idx}.txt', 'w'), 
-            close_fds=False) for idx, (addr, args) in enumerate(zip(self.addresses, add_args))]
+            close_fds=True) for idx, (addr, args) in enumerate(zip(self.addresses, add_args))]
         
         ctx = zmq.Context()
         self.s = ctx.socket(zmq.SUB)
