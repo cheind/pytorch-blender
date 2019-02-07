@@ -34,7 +34,13 @@ class MyDataset:
         d = self.recv(timeoutms=5000)   
         return d['image'], d['xy'], d['id']
 
-with bt.BlenderLauncher(num_instances=2) as bl:        
+kwargs = {
+    'num_instances': 2,
+    'script': 'blender.py',
+    'scene': 'scene.blend',
+}
+
+with bt.BlenderLauncher(**kwargs) as bl:        
     ds = MyDataset(bl)        
     dl = data.DataLoader(ds, batch_size=4, num_workers=0)
 
@@ -43,22 +49,31 @@ with bt.BlenderLauncher(num_instances=2) as bl:
         print(f'Received from {ids}')
 ```
 
-The above runs at `43.7 ms ± 10.3 ms` per batch including rendering, transfer and encoding/decoding. 
-A single Blender instance takes `103 ms ± 5.17 ms` per batch.
+## Runtimes
+
+The runtimes for the demo scene (really quick to render) is shown below.
+
+| Blender Instances  | Runtime ms/batch  |
+|:-:|:-:|
+| 1  | `103 ms ± 5.17 ms`  |
+| 2  | `43.7 ms ± 10.3 ms` |
+
+The above timings include rendering, transfer and encoding/decoding. Depending on the complexity of renderings you might want to tune the number of instances.
 
 ## Prerequisites
 The following packages need to be available in your PyTorch environment and Blender environment:
+ - Python >= 3.7
  - [Blender](https://www.blender.org/) >= 2.79
- - [PyTorch](http://pytorch.org) >= 0.4, Python >= 3.6
+ - [PyTorch](http://pytorch.org) >= 0.4
  - [PyZMQ](https://pyzmq.readthedocs.io/en/latest/)
  - [Pillow/PIL](https://pillow.readthedocs.io/en/stable/installation.html)
 
 Both packages are installable via `pip`. In order add packages to your Blender packaged Python distribution, execute the following commands (usually administrator privileges are required on Windows)
 
 ```
-<BLENDERPATH>2.79\python\bin\python.exe" -m ensurepip
-<BLENDERPATH>2.79\python\bin\python.exe" -m pip install pyzmq
-<BLENDERPATH>2.79\python\bin\python.exe" -m pip install pillow
+"<BLENDERPATH>2.79\python\bin\python.exe" -m ensurepip
+"<BLENDERPATH>2.79\python\bin\python.exe" -m pip install pyzmq
+"<BLENDERPATH>2.79\python\bin\python.exe" -m pip install pillow
 ```
 where `<BLENDERPATH>` is the file path to the directory containing the Blender executable.
 

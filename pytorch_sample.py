@@ -39,7 +39,7 @@ def main():
         ['-id', '3']
     ]
 
-    with bt.BlenderLauncher(num_instances=4, instance_args=instance_args) as bl:        
+    with bt.BlenderLauncher(num_instances=4, instance_args=instance_args, script='blender.py', scene='scene.blend') as bl:        
         ds = MyDataset(bl)
 
         # Note, in the following num_workers must be 0
