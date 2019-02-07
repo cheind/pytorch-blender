@@ -2,13 +2,10 @@
 
 Seamless integration of Blender renderings into [PyTorch](http://pytorch.org) datasets for deep learning from artificial visual data. This repository contains a minimal demonstration that harvests images and meta data from ever changing Blender renderings.
 
-Run 
-
 ```
 python pytorch_sample.py
 ```
-
-this will render a set of images of random rotated cubes to `./tmp/output_##.png`, such as the following
+renders a set of images of random rotated cubes to `./tmp/output_##.png`, such as the following
 
 ![](etc/result.png)
 
