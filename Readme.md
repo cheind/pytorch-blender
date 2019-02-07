@@ -37,11 +37,13 @@ class MyDataset:
 with bt.BlenderLauncher(num_instances=4) as bl:        
     ds = MyDataset(bl)        
     dl = data.DataLoader(ds, batch_size=4, num_workers=0)
-
+    
     for idx in range(10):
         x, coords, ids = next(iter(dl))
         print(f'Received from {ids}')
 ```
+
+The above runs at `43.7 ms ± 10.3 ms` per batch including rendering, transfer and encoding/decoding.
 
 ## Prerequisites
 The following packages need to be available in your PyTorch environment and Blender environment:
