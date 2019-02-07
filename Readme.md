@@ -48,8 +48,9 @@ A single Blender instance takes `103 ms ± 5.17 ms` per batch.
 
 ## Prerequisites
 The following packages need to be available in your PyTorch environment and Blender environment:
+ - Python >= 3.7
  - [Blender](https://www.blender.org/) >= 2.79
- - [PyTorch](http://pytorch.org) >= 0.4, Python >= 3.6
+ - [PyTorch](http://pytorch.org) >= 0.4
  - [PyZMQ](https://pyzmq.readthedocs.io/en/latest/)
  - [Pillow/PIL](https://pillow.readthedocs.io/en/stable/installation.html)
 
