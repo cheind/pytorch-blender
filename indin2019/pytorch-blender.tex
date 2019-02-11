@@ -65,8 +65,24 @@ machine learning, artificial data, data augmentation
 \end{IEEEkeywords}
 
 \section{Introduction}
+The impressive results in the field of supervised machine learning are largely due to the availability of annotated data. Up until recently most of the annotation was carried out by people and therefore, in many tasks it is difficult to obtain strong supervision information due to the high expenses. Exposed to this bottleneck, related fields of research have spawned. 
 
-TODO: Write some good introduction, cite related work such as \cite{2017_Varhegyi_visualServoingRGBD} and \cite{2017_Johnson_DrivingInTheMatrix}...
+Active learning \cite{druck2009active, settles2012active, cakmak2012designing} attempts to use human experts in a more targeted way by focusing on samples that seem to of highest value for learning task. Semi-supervised learning \cite{chapelle2009semi, salimans2016improved, zhu2006semi} combines large unlabeled data sets with smaller labeled data sets through structural assumptions, such as smoothness or low-dimensionality constraints. Transfer learning \cite{pratt1993discriminability, ventura2007theoretical, pan2010survey} exploits the fact that models trained on specific tasks can be adapted to related problems using fewer training samples. Weak supervision \cite{ratner2016data, zhou2017brief} is motivated by leveraging less precise, higher level supervision that is often easier to obtain. This includes heuristics, weak or biased classifiers, unreliable non-experts. 
+
+% https://hazyresearch.github.io/snorkel/blog/ws_blog_post.html
+
+In contrast to the methods mentioned above, synthetic data generation drops the necessity for real world annotated data in favor of artificial data sources. Synthesized data is available in virtually infinite variety and can easily be auto-labelled. This has led to variety of successful applications in different domains: Jaderberg et al. \cite{jaderberg2014synthetic} have demonstrated natural scene text recognition from synthetic data, Peng et al. \cite{peng2015learning} trained object detectors from 3d models and Johnson et al. \cite{2017_Johnson_DrivingInTheMatrix} used photo-realistic computer rendering captured from a game engine to train car detectors. 
+
+A common theme to all of these synthetic approaches is the following: (a) a simulator engine generators supervised artificial data, (b) the generated data is stored to disk and (c) the offline data is used for training. The shortcomings to this process are the availability of realistic simulators and the early commitment to specific training data. 
+
+In this paper we propose a principled way of generating artificial training data from a 3D simulator engine that is directly looped into the training procedure, thereby avoiding any early data commitment. We show that our approach can be applied to detection of robot poses in color images without the need for a photo-realistic simulator.
+
+% idea: bi-directional communication: generate more samples around poses of high error (i.e training procedure communicates back to simulator).
+
+
+
+
+
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\columnwidth]{figures/architecture/architecture.pdf}}
