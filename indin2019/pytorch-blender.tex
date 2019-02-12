@@ -64,7 +64,7 @@ Impressive results have been achieved in computer vision via machine learning me
 machine learning, artificial data, data augmentation
 \end{IEEEkeywords}
 
-\section{Introduction}
+\section{Introduction and Related Work}
 The impressive results of supervised deep learning in the field of robotics and computer vision are to large extent due to the availability of annotated data sets. Up until recently most of the annotation was carried out by domain experts. This time consuming process significantly slows down the progress of deep learning efforts. In many tasks it is difficult, in most niche areas impossible, to obtain strong supervision because of the high costs.
 
 Exposed to this bottleneck, new fields of research have opened up. Active learning \cite{druck2009active, settles2012active, cakmak2012designing} attempts to use human experts in a more targeted way by focusing on samples that seem to of highest value for learning task. Semi-supervised learning \cite{chapelle2009semi, salimans2016improved, zhu2006semi} combines large unlabeled data sets with smaller labeled data sets through structural assumptions, such as smoothness or low-dimensionality constraints. Transfer learning \cite{pratt1993discriminability, ventura2007theoretical, pan2010survey} exploits the fact that models trained on specific tasks can be adapted to related problems using fewer training samples. Weak supervision \cite{ratner2016data, zhou2017brief} is motivated by leveraging less precise, higher level supervision that is often easier to obtain. This includes heuristics, weak or biased classifiers, unreliable non-experts. 
@@ -75,7 +75,7 @@ In contrast to the methods mentioned above, synthetic data generation drops the 
 
 A common theme to all of these synthetic approaches is the following: (a) a simulator engine generators artificial training data, (b) the generated data is stored to disk and (c) the offline data stack is used for training. The shortcomings to this procedure are early training data commitment and the lack of adaptability of data generation to training demands.
 
-In this paper we propose a principled way of generating artificial training data from a 3D simulator engine that is directly looped into the training procedure, thereby avoiding early data commitment. A bi-directional communication channel enables the training procedure to request random samples with varying priority. We demonstrate the usefulness of our approach to the detection of robot poses in color images using non-realistic computer images.
+In this paper we propose a principled way of generating artificial training data from a 3D simulator engine that is directly looped into the training procedure, thereby avoiding early data commitment. A bi-directional communication channel enables adaptive random data generation. We demonstrate the usefulness of our approach to the detection of robot poses in color images using non-realistic computer images.
 
 
 
