@@ -80,8 +80,8 @@ In this paper we propose a principled way of generating artificial training data
 % Note, annotation of robots using experts is hard! Compare hand labelled images from Paul,Christoph,Sebastian -> better use a simulator!
 
 \begin{figure}[htbp]
-\centerline{\includegraphics[width=\columnwidth]{figures/architecture/architecture.pdf}}
-\caption{\label{fig:architecture} Architecture of our system: Individual instances generate artificially rendered images (left). These are consumed in a pytorch environment for training of deep neural networks (right).}
+\centerline{\includegraphics[width=0.9\columnwidth]{figures/architecture/overview.pdf}}
+\caption{\label{fig:architecture} Architecture of our system.}
 \label{fig}
 \end{figure}
 
@@ -94,6 +94,10 @@ In this paper we propose a principled way of generating artificial training data
 
 
 \section{Method}
+
+
+Our approach is outlined in Figure \ref{fig:overviewpipeline}. A simulator produces color images $\mathbf{I} \in \mathbb{R}^{3 \times H\times W}$ composed of a varying number of robots $R$ in random pose (Figure \ref{fig:overviewpipeline}a). Next, the joint localization model (Figure \ref{fig:overviewpipeline}b), a feed forward neural network, takes as input the style transformed images and predicts joint belief $\hat{\mathbf{B}} \in \mathbb{R}^{J \times H \times W}$, with $J$ usually being 6, and a single depth map $\hat{\mathbf{D}} \in \mathbb{R}^{1 \times H \times W}$. The results are then fed into the instance model (Figure \ref{fig:overviewpipeline}c), which estimates a set of dense pixel segmentation masks $\hat{\mathbf{S}} \in \mathbb{R}^{1 \times H \times W}$, one for per robot, using recurrent connections.
+
 
 \subsection{Artificial data and data loaders}
 
