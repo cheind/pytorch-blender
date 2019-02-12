@@ -73,9 +73,11 @@ Exposed to this bottleneck, new fields of research have opened up. Active learni
 
 In contrast to the methods mentioned above, synthetic data generation drops the necessity for real world annotated data in favor of artificial data sources. Synthesized data is available in virtually infinite variety and can easily be auto-labelled. This has led to variety of successful applications in different domains: Jaderberg et al. \cite{jaderberg2014synthetic} have demonstrated natural scene text recognition from synthetic data, Peng et al. \cite{peng2015learning} trained object detectors from 3d models and Johnson et al. \cite{2017_Johnson_DrivingInTheMatrix} used photo-realistic computer rendering captured from a game engine to train car detectors. 
 
-A common theme to all of these synthetic approaches is the following: (a) a simulator engine generators supervised artificial data, (b) the generated data is stored to disk and (c) the offline data is used for training. The shortcomings to this process are the availability of realistic simulators and the early commitment to specific training data. 
+A common theme to all of these synthetic approaches is the following: (a) a simulator engine generators supervised artificial data, (b) the generated data is stored to disk and (c) the offline data is used for training. The shortcomings to this process are early training data commitment and the lack of adaptability of data generation to training demands.
 
-In this paper we propose a principled way of generating artificial training data from a 3D simulator engine that is directly looped into the training procedure, thereby avoiding any early data commitment. We show that our approach can be applied to detection of robot poses in color images without the need for a photo-realistic simulator.
+In this paper we propose a principled way of generating artificial training data from a 3D simulator engine that is directly looped into the training procedure, thereby avoiding early data commitment. A bi-directional communication channel enables the training procedure to request random samples with varying priority. We demonstrate the usefulness of our approach to the detection of robot poses in color images using non-realistic computer images.
+
+
 
 % idea: bi-directional communication: generate more samples around poses of high error (i.e training procedure communicates back to simulator).
 
