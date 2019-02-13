@@ -92,7 +92,6 @@ In this paper we propose method of generating artificial training data from a si
     \begin{figure}[htbp]
         \centerline{\includegraphics[width=0.9\columnwidth]{figures/architecture/overview.pdf}}
         \caption{\label{fig:architecture} Architecture of our system.}
-        \label{fig}
     \end{figure}
 
 
@@ -102,7 +101,7 @@ TODO: Outline Python-support of Blender, Explain scripting in Blender, creation 
 TODO: Explain basic concepts of PyTorch and DataLoaders, etc.
 TODO: Explain ZMQ pipeline, publish/subscribe
 
-\subsection{Joint localization}
+\subsection{Localization Model and Training}
 
     Joint localization deals with the task of estimating positions of articulated body parts that constitute kinematic chains. In this work, we define joint localization to be the process of predicting 2D pixel coordinates of robotic revolute joints from color image input. 
     
@@ -110,7 +109,7 @@ TODO: Explain ZMQ pipeline, publish/subscribe
 
     \begin{figure} [!h]
         \centering
-        \includegraphics[width=0.8\columnwidth]{figures/joint_model/joint_model.pdf}
+        \includegraphics[width=0.7\columnwidth]{figures/joint_model/joint_model.pdf}
         \caption {
             \label{fig:jointmodel} 
             Architecture of the localization module. Each stage predicts joint belief maps. Successive stages are fed a channel concatenated stack of VGG features and the current estimate.
@@ -124,6 +123,18 @@ TODO: Explain ZMQ pipeline, publish/subscribe
     centered at sparse image joint locations $\{\mathbf{z}_0,\ldots,\mathbf{z}_J\}$. The output variance $\sigma^2$ determines the average distance away from its mean, the length-scale $l$ determines the width of the kernel. During training, a objective functions after each stage penalizes pixel-wise differences between belief predictions $\hat{\mathbf{B}}$ and targets $\mathbf{B}$. Usually, $L_2$ or smooth $L_1$ loss functions are used. These intermediate losses help the network to train more effectively, as the effect of vanishing gradients in deep architectures is minimized \cite{newell2016stacked, wei2016convolutional}. 
     
     When predicting from the network only the output of the last stage is used. For partial scale invariance of image features, we additionally average the belief predictions of input images scaled to different resolutions.
+
+\subsection{Feedback Mechanism}
+    A key idea to our work is a feedback mechanism that enables adaptive sampling from simulator engines. As outlined in Figure \ref{fig:architecture}, a controller updates the simulation based on information of the current training mini-batch. The update can be in principle of any kind, however, in this work we focus on modifying probability distributions of the graphical model controlling the simulation process. In particular we modify distributions of hidden variables in such a way that more examples $\{(\textbf{x},y,\textbf{h})\}$ of high value to the training are produced. Once a subset of important examples $\mathcal{S} = \{(\textbf{x},y,\textbf{h})\}$ from the training batch has been selected, we infer $P(\textbf{H},Y \lvert \textbf{X};\mathcal{S})$ (approximately, analytically or in a heuristic fashion) and continue sampling from the updated distribution.
+
+    We propose two principal ways to measure the value of specific samples for training. The first method utilizes the loss function to assign more importance to examples of high error. This trivially leads to updated sampling strategies putting more weight into regions of high training error. The second method uses prediction uncertainty to select sample candidates. In contrast to Bayesian learning for neural networks \cite{neal2012bayesian}, deterministic regression networks do not have any meaningful measure of uncertainty build in or are not well calibrated for uncertainty estimation (in the classification case) \cite{guo2017calibration}. One way to overcome this limitation is perform approximate Bayesian uncertainty estimation as proposed in Gal et al. \cite{gal2015dropout}. This is in the style of active learning, but without an expert and our approach generates new samples from the desired distribution on the fly.
+    
+    %http://stillbreeze.github.io/Uncertainty-Estimation-in-Deep-Learning/
+
+
+
+
+\subsection{Implementation Notes}
 
 \section{Results}
 
