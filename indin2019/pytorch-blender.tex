@@ -104,49 +104,26 @@ TODO: Explain ZMQ pipeline, publish/subscribe
 
 \subsection{Joint localization}
 
-    Joint localization deals with the task of estimating positions of articulated body parts that constitute kinematic chains. In this work, we define joint localization to be the process of predicting 2D pixel coordinates of robotic revolute joints from color image input $\mathbf{I} \in \mathbb{R}^{3 \times H\times W}$. Our model is based on the architecture  proposed by Heindl et al. \cite{cheind2019disp}, which in turn is an extension of methods developed for human pose estimation \cite{cao2017realtime, newell2016stacked}. For clarity, we briefly present the model at this point. In figure 
-
-    of predicting sparse coordinates, we train the network to predict dense belief maps per joint $\hat{\mathbf{B}} \in \mathbb{R}^{J \times H \times W}$.
-
-    Our approach is outlined in Figure \ref{fig:overviewpipeline}. A simulator produces color images $\mathbf{I} \in \mathbb{R}^{3 \times H\times W}$ composed of a varying number of robots $R$ in random pose (Figure \ref{fig:overviewpipeline}a). Next, the joint localization model (Figure \ref{fig:overviewpipeline}b), a feed forward neural network, takes as input the style transformed images and predicts joint belief $\hat{\mathbf{B}} \in \mathbb{R}^{J \times H \times W}$, with $J$ usually being 6, and a single depth map $\hat{\mathbf{D}} \in \mathbb{R}^{1 \times H \times W}$. The results are then fed into the instance model (Figure \ref{fig:overviewpipeline}c), which estimates a set of dense pixel segmentation masks $\hat{\mathbf{S}} \in \mathbb{R}^{1 \times H \times W}$, one for per robot, using recurrent connections.
-
-    Localizing 
-
-    The details of the localization model are shown in Figure \ref{fig:jointmodel}. Its task is the prediction of robot joint beliefs $\hat{\mathbf{B}}$ and depth maps $\hat{\mathbf{D}}$ from color image input $\mathbf{I}$. Our approach, in style of Wei et al. \cite{wei2016convolutional}, iteratively refines its estimates via a successive application of fully convolutional stages. 
+    Joint localization deals with the task of estimating positions of articulated body parts that constitute kinematic chains. In this work, we define joint localization to be the process of predicting 2D pixel coordinates of robotic revolute joints from color image input. 
+    
+    Our model, outlined in Figure \ref{fig:jointmodel}, is based on the architecture proposed by Heindl et al. \cite{cheind2019disp}, which in turn is an extension to methods developed for human pose estimation \cite{cao2017realtime, newell2016stacked}.  . Instead of predicting sparse joint pixel coordinates, we train the network to predict dense belief maps per joint $\hat{\mathbf{B}} \in \mathbb{R}^{J \times H' \times W'}$ in the following way. Color images $\mathbf{I} \in \mathbb{R}^{3 \times H\times W}$ are input to a pre-trained VGG network \cite{simonyan2014very} to extract base features $\mathbf{F} \in \mathbb{R}^{C \times H' \times W'}$. A series of convolutional image-to-image networks refines belief predictions by allowing each network to work on the basis of outputs from the previous network and VGG base features.
 
     \begin{figure} [!h]
         \centering
         \includegraphics[width=0.8\columnwidth]{figures/joint_model/joint_model.pdf}
         \caption {
             \label{fig:jointmodel} 
-            Architecture of the localization module. Each stage predicts joint belief maps and depth values in close vicinity to joint locations. Successive stages are fed a channel concatenated stack of VGG features and the current estimate. Here C is block consisting of (Conv, BN, ReLU) with number of output features written above and kernel size below, S is a sigmoid layer, and U a block composition of nearest neighbor interpolation, C blocks (3x3) followed by S.
+            Architecture of the localization module. Each stage predicts joint belief maps. Successive stages are fed a channel concatenated stack of VGG features and the current estimate.
         }
     \end{figure}
 
-    First, color images are fed through a pre-trained VGG \cite{simonyan2014very} network to generate base features of size $\mathbb{R}^{F \times H' \times W'}$. Next, each stage simultaneously predicts joint belief and single depth maps $\mathbb{R}^{J+1 \times H' \times W'}$. Both, belief and depth image entries are in the $\left[0,1\right]$ range, naturally produced by a sigmoid output layer at each stage. Additionally, an up-sample filter using nearest-neighbor interpolation followed by convolutional elements, transforms outputs to color image dimensions $\mathbb{R}^{J+1 \times H \times W}$. Except for the first stage, inputs are composed of a channel concatenated version of outputs of the previous stage and base features. 
-
-    During training, we apply two losses after each stage to the up-sampled outputs. The first loss $L_2^B$ directly penalizes the squared error between predicted $\hat{\mathbf{B}}$ and target joint belief maps $\mathbf{B}$. Regarding the depth loss, target depth values $\mathbf{Z}$ are transformed to the $\left[0,1\right]$ range by applying an inverse depth $\mathbf{D}=a\frac{1}{\mathbf{Z}} + b$ transformation \cite{hartley2003multiple}.
-
-    The complete training loss for stage $n$ in the joint localization model is given by
+    We generate target belief maps $\mathbf{B}$ by pixel-wise maximization over the contributions from $J$ squared exponential kernels
     \begin{equation}
-        L_n = L_2^B + \sum\limits_{\mathrm{p} \in \Omega}\mathbf{W}_{\mathrm{p}}\left(\mathbf{D}_{\mathrm{p}} - \hat{\mathbf{D}}_{\mathrm{p}}\right)^2
+        k_{\textrm{SE}}(\mathbf{x};\mathbf{z}) = \sigma^2e^{-\frac{\lVert \mathbf{x} - \mathbf{z} \rVert^2_2}{l^2}}
     \end{equation}
-    where $\Omega \in \mathbb{R}^{H\times W}$ is the image domain and $\mathbf{W}_{\mathrm{p}}$ is a pixel wise weight given as a function of the maximum belief at pixel $\mathrm{p}$
-    \begin{equation}
-        \mathbf{W}_{\mathrm{p}} = \left\{
-            \begin{array}{ll}
-            1 & \textrm{if } \max\limits_{j\in{J}}{\mathbf{B}}_{\mathrm{j,p}} \ge \phi \\
-            0 & \textrm{else}
-            \end{array}
-        \right\}.
-    \end{equation}
-    Here $\phi$ is a tunable hyper-parameter that controls the radius of a disc of constant depth centered at joints. The total loss for the joint model accumulates over all stages
-    \begin{equation}
-        L = \sum\limits_{i=1}^{N}L_i.
-    \end{equation}
-    When predicting from the model, only the result from the last stage is used. in training the intermediate loss signals at every stage help addressing the vanishing gradient problem \cite{wei2016convolutional}.
-
-TODO: Neural network architecture, network input/output, etc.
+    centered at sparse image joint locations $\{\mathbf{z}_0,\ldots,\mathbf{z}_J\}$. The output variance $\sigma^2$ determines the average distance away from its mean, the length-scale $l$ determines the width of the kernel. During training, a objective functions after each stage penalizes pixel-wise differences between belief predictions $\hat{\mathbf{B}}$ and targets $\mathbf{B}$. Usually, $L_2$ or smooth $L_1$ loss functions are used. These intermediate losses help the network to train more effectively, as the effect of vanishing gradients in deep architectures is minimized \cite{newell2016stacked, wei2016convolutional}. 
+    
+    When predicting from the network only the output of the last stage is used. For partial scale invariance of image features, we additionally average the belief predictions of input images scaled to different resolutions.
 
 \section{Results}
 
