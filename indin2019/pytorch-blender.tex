@@ -38,49 +38,10 @@
     }
 }
 
-%%%\author{\IEEEauthorblockN{1\textsuperscript{st} Christoph Heindl}
-%%%\IEEEauthorblockA{\textit{Visual Computing} \\
-%%%\textit{PROFACTOR GmbH}\\
-%%%4407 Steyr, Austria \\
-%%%christoph.heindl@profactor.at}
-%%%\and
-%%%\IEEEauthorblockN{2\textsuperscript{nd} Sebastian Zambal}
-%%%\IEEEauthorblockA{\textit{Machine Vision} \\
-%%%\textit{PROFACTOR GmbH}\\
-%%%4407 Steyr, Austria \\
-%%%sebastian.zambal@profactor.at}
-%%%\and
-%%%\IEEEauthorblockN{3\textsuperscript{rd} Markus Ikeda}
-%%%\IEEEauthorblockA{\textit{Robotics} \\
-%%%\textit{PROFACTOR GmbH}\\
-%%%4407 Stey, Austria \\
-%%%markus.ikeda@profactor.at}
-%%%\and
-%%%%%%\IEEEauthorblockN{~~~~~~~~~4\textsuperscript{th} Christian Eitzinger~~~~~~~~~}
-%%%%%%\IEEEauthorblockA{\textit{Machine Vision} \\
-%%%%%%\textit{PROFACTOR GmbH}\\
-%%%%%%4407 Stey, Austria \\
-%%%%%%christian.eitzinger@profactor.at}
-%%%%%%\and
-%%%%\IEEEauthorblockN{~~~~~~~~~~~~~~~~~~4\textsuperscript{th} Andreas Pichler~~~~~~~~~~~~~~~~~~}
-%%%\IEEEauthorblockN{4\textsuperscript{th} Andreas Pichler}
-%%%\IEEEauthorblockA{\textit{Robotics} \\
-%%%\textit{PROFACTOR GmbH}\\
-%%%4407 Stey, Austria \\
-%%%anreas.pichler@profactor.at}
-%%%\and
-%%%%\IEEEauthorblockN{~~~~~~~~~~~~~~~~~~5\textsuperscript{th} Josef Scharinger~~~~~~~~~~~~~~~~~~}
-%%%\IEEEauthorblockN{5\textsuperscript{th} Josef Scharinger}
-%%%\IEEEauthorblockA{\textit{Institute of Computational Perception} \\
-%%%\textit{Johannes Kepler University}\\
-%%%4040 Linz \\
-%%%josef.scharinger@jku.at}
-%%%}
-
 \maketitle
 
 \begin{abstract}
-Impressive results have been achieved in computer vision via machine learning methods over the last years. However, for many highly specialized industrial applications these methods cannot directly be applied due to the lack of large amounts of training data. In this paper we propose a software framework that provides artificial data. Such artificial data opens the door for machine learning even when it is hard or impossible to acquire real data. The presented system is flexible in the sense that it supports image data generation in a flexible way. We show how artificial images can directly be used in pytorch to perform deep neural network training. 
+Impressive results have been achieved in computer vision via deep learning methods over the last years. However, for many highly specialized industrial applications these methods cannot easily be applied due to the lack of large amounts of training data. In this paper we propose a software framework that provides artificial image data via simulation. This approach opens the door for machine learning even when it is hard or impossible to acquire real (labelled) images. Our system supports parallelized data generation and direct feedback from neural network training to adaptively put focus on critical parameter ranges. We demonstrate that the model trained on artificial robot images is able to generalize to real world images. 
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -120,7 +81,7 @@ In this paper we propose method of generating artificial training data from a si
 
 \subsection{Artificial Data for Training}
 
-    Conceptually, it makes sense to model the process for generation of artificial training data as a probabilistic graphical model. Such a model describes probabilistic relationships between hidden and observed variables in terms of prior and conditional probability distributions. The observed variables in our model correspond to pixels in the generated images $\mathbf{X}$. The hidden variables describe the model behind these images. Hidden variables $\mathbf{H}$ consist of robot joint angles and virtual camera position. To be more specific, we can write the hidden parameters of the model as a vector of random variables $\mathbf{H} = (j_1, \dots, j_6, r, \alpha, \beta, d, b)$. $j_i$ denote the individual joint angles for different poses of the robot. $\alpha$, $\beta$  represent azimuth and polar angles of polar coordinates of the virtual camera position. $r$ denotes the distance from the origin to complete polar coordinates. The camera orientation is chosen such that the camera looks at a point with random distance $d$ with respect to a pre-defined look-at point. When setting up a model, one is interested in controlling parameters that are relevant for the specific application. In our case we address robot joint locations. In order to obtain realistic background, we are not interested in creating a detailed model for this as well. We therefore make use of the fact that the rendering engine is able to provide masks for rendered objects. We use the masks of rendered robots to draw these over some random background images. From a set of real photos, we select one randomly in the rendering process and draw the robot over it. Examples of artificially rendered images are shown in figure~\ref{fig:ur10examples}.
+    Conceptually, it makes sense to model the process for creating artificial training data as a probabilistic graphical model. Such a model describes probabilistic relationships between hidden and observed variables in terms of prior and conditional probability distributions. The observed variables in our model correspond to pixels in the generated images $\mathbf{X}$. The hidden variables describe the model behind these images. Hidden variables $\mathbf{H}$ consist of robot joint angles and virtual camera position. To be more specific, we can write the hidden parameters of the model as a vector of random variables $\mathbf{H} = (j_1, \dots, j_6, r, \alpha, \beta, d, b)$. $j_i$ denote the individual joint angles for different poses of the robot. $\alpha$, $\beta$  represent azimuth and polar angles of polar coordinates of the virtual camera position. $r$ denotes the distance from the origin to complete polar coordinates. The camera orientation is chosen such that the camera looks at a point with random distance $d$ with respect to a pre-defined look-at point. When setting up a model, one is interested in controlling parameters that are relevant for the specific application. In our case we address robot joint locations. In order to obtain realistic background, we are not interested in creating a detailed model for this as well. We therefore make use of the fact that the rendering engine is able to provide masks for rendered objects. We use the masks of rendered robots to draw these over some random background images. From a set of real photos, we select one randomly in the rendering process and draw the robot over it. Examples of artificially rendered images are shown in figure~\ref{fig:ur10examples}.
     
     \begin{figure}[htbp]
         \centerline{\includegraphics[width=0.9\columnwidth]{figures/examplesUR10/renderedImages.png}}
@@ -134,7 +95,9 @@ In this paper we propose method of generating artificial training data from a si
         \caption{\label{fig:probModel} The image rendering process as probabilistic graphical model. A complex model creates images $\mathbf{X}$ conditioned on global hidden random variables $\mathbf{H}$. The hidden parameters are governed by parameters $\theta$. Local hidden variables $\mathbf{Y}$ cannot be inferred in closed form.}
     \end{figure}
 
-    The problem at hand is to derive the hidden joint locations $\mathbf{Y}$ in the camera images. Based on the probabilistic model it is not possible to invert reasoning. Although we control the process of image generation, we have no possibility to directly infer hidden parameters given the observed images. TODO (?): Mention Gibbs Sampling / Metropolis Hastings / Variational Inference?
+    The problem at hand is to derive the hidden joint locations $\mathbf{Y}$ in the camera images. Based on the probabilistic model it is not possible to invert reasoning. Although we control the process of image generation, we have no possibility to directly infer hidden parameters $\mathbf{Y}$ given the observed images $\mathbf{X}$. 
+    
+    In addition to the random parameters of the simulator explained above, we use conventional data augmentation. This includes random scaling of background images, random color jitter, etc. Although this data augmentation could be seen as part of the probabilistic model, it is not included in the model outlined above. 
     
 
 \subsection{Localization Model and Training}
