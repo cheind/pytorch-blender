@@ -146,9 +146,9 @@ TODO: Explain ZMQ pipeline, publish/subscribe
     For training the localization model we sampled a set of 10.000 samples per epoch from two simulator engines. The first simulator generated uniform random poses, while the second simulator produced importance samples as described in Section \ref{sec:feedback} according to a loss metric. Two distinct collections of random background images (city and industrial theme) were used as synthetic training- and test-set backgrounds. We trained the joint localization model using six stages with input images of size $320 \times 240$. A VGG network, pre-trained on detection, was used to generate base features. We used Adam \cite{kingma2014adam}, $\eta=\num{1e-3}$, optimization with mini-batch learning for a total of 30 epochs.
 
     \subsection{Evaluation}
-    We challenge joint localization model trained on artificial images on synthetic and real world image. For comparison we extract joint locations from prediction belief maps $\hat{\mathbf{B}}$ by performing smoothed non-maximum suppression, followed by extracting the maximum peak per joint channel. For real-world images we asked a human export to annotate the joint locations. Synthetic images are auto-labelled by our simulation engine. We define the localization error to be the Euclidean distance between predicted and target pixel locations and report it in percent of image diagonal. 
+    We test the joint localization model on synthetic and real world images. For comparison we extract joint locations from prediction belief maps $\hat{\mathbf{B}}$ by performing smoothed non-maximum suppression, followed by extracting the maximum peak per joint channel. For real-world images we asked a human export to annotate the joint locations. Synthetic images are auto-labelled by the simulation engine. See Figure \ref{fig:posresults} for sample results.
     
-    Figure \ref{fig:pixelerror} shows the localization error on two distinct test sets: synthetic with random backgrounds (Figure \ref{fig:locationerror_synth}) and real-world images (Figure \ref{fig:locationerror_real}). As expected our system performs better on synthetic data than real data. 
+    We define the localization error to be the Euclidean distance between predicted and target pixel locations and report it in percent of image diagonal. Figure \ref{fig:pixelerror} shows the localization error on two distinct test sets: synthetic with random backgrounds (Figure \ref{fig:locationerror_synth}) and real-world images (Figure \ref{fig:locationerror_real}). As expected our system performs better on synthetic data than real data. 
 
     \begin{figure}[!h]
         \centering
@@ -172,7 +172,7 @@ TODO: Explain ZMQ pipeline, publish/subscribe
         }
     \end{figure}
 
-    We attribute two effects for this outcome: (a) our simulation is non-realistic and (b) human annotation is error-prone. To underpin the latter issue, we have conducted a pilot study in which 10 people (all with reference to robotics) annotated 12 real world images of an UR-10 robot in different poses and from different viewpoints. We than computed the inter-rater spread as measure of confidence for human annotations in our domain. Figure \ref{fig:humanuncertainty} shows the average uncertainty per joint over all images. We find that the middle joints, often blocked by view and robot pose, are the most difficult to annotate precisely. These results indicate that our method performs better than indicated by figure \ref{fig:locationerror_real}, because this figure does not take into account human annotation errors.
+    We attribute two effects for this outcome: (a) our simulation is non-realistic and (b) human annotation is error-prone. To underpin the latter issue, we have conducted a pilot study in which 10 people (all with reference to robotics) annotated 12 real world images of an UR-10 robot in different poses and from different viewpoints. We than computed the inter-rater spread as measure of confidence for human annotations in our domain. Figure \ref{fig:humanuncertainty} shows the average uncertainty per joint over all images. We find that the middle joints, often blocked by view and robot pose, are the most difficult to annotate precisely. These results indicate that our method actually performs better than indicated by figure \ref{fig:locationerror_real}. 
 
     \begin{figure}[!h]
         \centering
@@ -193,6 +193,14 @@ TODO: Explain ZMQ pipeline, publish/subscribe
         \caption {
             \label{fig:uncertainty} 
             Uncertainty estimates from human annotation. Results are in percent of image diagonal.
+        }
+    \end{figure}
+
+    \begin{figure}[htbp]
+        \centerline{
+            \includegraphics[width=0.98\columnwidth]{figures/results/ur10_lab/mosaic.png}}
+        \caption{
+            \label{fig:posresults} Samples from our real-world database. Predicted belief maps (left-column) and extracted joint coordinates (right-column) dataset.
         }
     \end{figure}
 
@@ -227,6 +235,9 @@ TODO: Explain ZMQ pipeline, publish/subscribe
             Runtimes of different parts of our pipeline for $320 \times 240$ input images. Timings in milliseconds. Batch Collating (8/8) refers to batch-size 8 with 8 simulator instances.
         }
     \end{table}
+
+\section{Discussion}
+
 
 \section*{Acknowledgment}
 
