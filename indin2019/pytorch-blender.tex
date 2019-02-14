@@ -9,6 +9,7 @@
 \usepackage{xcolor}
 \usepackage[binary-units=true]{siunitx}
 \usepackage{subcaption}
+\usepackage{booktabs}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
@@ -191,7 +192,7 @@ TODO: Explain ZMQ pipeline, publish/subscribe
         \end{subfigure}
         \caption {
             \label{fig:uncertainty} 
-            Uncertainty estimates from human annotation.
+            Uncertainty estimates from human annotation. Results are in percent of image diagonal.
         }
     \end{figure}
 
@@ -201,27 +202,31 @@ TODO: Explain ZMQ pipeline, publish/subscribe
     \begin{figure}[htbp]
         \centerline{\includegraphics[width=0.9\columnwidth]{figures/control/control.pdf}}
         \caption{
-            \label{fig:control} Effects of applying adaptive simulator feedback comparing two trainings over 30 epochs. We see faster convergence if we let one of the simulator instances generate more examples in the neighborhood of training samples with high errors.
+            \label{fig:control} Effects of applying adaptive simulator feedback comparing two trainings over 30 epochs. We see faster convergence if we let one of the simulator instances generate more examples in the neighborhood of training samples with high errors. Errors are in percent of image diagonal.
         }
     \end{figure}
-    
-    \subsection{Runtime Analysis}
 
-\begin{table}[htbp]
-\caption{Performance evaluation}
-\begin{center}
-\begin{tabular}{|c|c|}
-\hline
-\textbf{Blender instance} & \textbf{Runtime ms/batch} \\
-\hline
-1 & 103 ms ± 5.17 ms \\
-\hline
-2 & 43.7 ms ± 10.3 ms \\
-\hline
-\end{tabular}
-\label{tab1}
-\end{center}
-\end{table}
+    \subsection{Runtime Analysis}
+    All experiments are carried out on a server instance containing 2x Intel Xeon E5-2650v4 12-Core and 4 NVIDIA Tesla V100 SXM2 32 GB. Table \ref{tab:runtime} summarizes the individual runtimes of different parts of our system. The duration per training step is longer when using 8 simulation instances rendering a simple robot scene in $320 \times 240$. The bottleneck in training remains the forward/backward passes of the neural network.
+
+    \begin{table}
+        \centering
+        \begin{tabular}{lrr}
+            \toprule
+            {} &  Mean [ms] &  Std [ms] \\
+            Task                   &            &           \\
+            \midrule
+            Simulation step        &      250.32 &    10.21  \\
+            Batch Collating (8/8)  &      321.23 &    24.76  \\
+            Train step             &      521.23 &   73.76  \\
+            Prediction             &      95.21 &    14.32 \\
+            \bottomrule
+        \end{tabular}
+        \caption{
+            \label{tab:runtime} 
+            Runtimes of different parts of our pipeline for $320 \times 240$ input images. Timings in milliseconds. Batch Collating (8/8) refers to batch-size 8 with 8 simulator instances.
+        }
+    \end{table}
 
 \section*{Acknowledgment}
 
