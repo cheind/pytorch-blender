@@ -10,14 +10,14 @@
 \usepackage[binary-units=true]{siunitx}
 \usepackage{subcaption}
 \usepackage{booktabs}
+\usepackage{hyperref}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
 
-\title{Learning to detect robots from artificial images\\
+\title{Learning to Detect Robot Poses from Artificial Images\\
 %{\footnotesize \textsuperscript{*}Note: Sub-titles are not captured in Xplore and
 %should not be used}
-\thanks{Identify applicable funding agency here. If none, delete this.}
 }
 
 \author{
@@ -94,9 +94,9 @@ Exposed to this bottleneck, new fields of research have opened up. Active learni
 
 % https://hazyresearch.github.io/snorkel/blog/ws_blog_post.html
 
-In contrast to the methods mentioned above, synthetic data generation drops the necessity for real world annotated data in favor of artificial data sources. Synthesized data is available in virtually infinite variety and is de-facto auto-labelled. This has led to variety of successful applications in different domains: Jaderberg et al. \cite{jaderberg2014synthetic} have demonstrated natural scene text recognition from synthetic data, Peng et al. \cite{peng2015learning} trained object detectors from 3D models and Johnson et al. \cite{2017_Johnson_DrivingInTheMatrix} used photo-realistic computer rendering captured from a game engine to train car detectors. 
+In contrast to the methods mentioned above, synthetic data generation drops the necessity for real world annotated data in favor of artificial data sources. Synthesized data is available in virtually infinite variety and is de-facto auto-labelled. This has led to variety of successful applications in different domains: Jaderberg et al. \cite{jaderberg2014synthetic} have demonstrated natural scene text recognition from synthetic data, Peng et al. \cite{peng2015learning} trained object detectors from 3D models and Johnson et al. \cite{2017_Johnson_DrivingInTheMatrix} used photo-realistic computer rendering captured from a game engine to train car detectors. A common theme to all of these synthetic approaches is the following: (a) a simulator engine generators artificial training data, (b) the generated data is stored to disk and (c) the offline data stack is used for training. The shortcomings to this procedure are early training data commitment and the lack of adaptability of data generation to training demands.
 
-A common theme to all of these synthetic approaches is the following: (a) a simulator engine generators artificial training data, (b) the generated data is stored to disk and (c) the offline data stack is used for training. The shortcomings to this procedure are early training data commitment and the lack of adaptability of data generation to training demands.
+The task of predicting human poses in images dates back to early computer vision. Pictorial approaches \cite{fischler1973representation, felzenszwalb2005pictorial} represent individual parts of the body arranged in a flexible network. With the success of deep learning, convolutional networks \cite{oliveira2016deep} predicting all body part locations superseded individually trained detectors. In multi pose detection two approaches have become established: in the top-down approach \cite{gkioxari2014using, sun2011articulated} an upstream detector singles out individual instances. The bottom-up approach identifies instance independent features, such as joint locations, and fusions them into body instances \cite{insafutdinov2016deepercut, wei2016convolutional}. Our network is based on the work of Heindl et al. \cite{cheind2019disp} which builds upon work done by Cao et al. \cite{cao2017realtime}.
 
 In this paper we propose method of generating artificial training data from a simulator engine that is directly looped into the training procedure, thereby avoiding early data commitment. A bi-directional communication channel enables adaptive random data generation. We demonstrate the usefulness of our approach to the detection of robot poses in color images trained from non-realistic computer generated images.
 
@@ -110,7 +110,7 @@ In this paper we propose method of generating artificial training data from a si
 
 \section{Method}
 
-    Our approach is outlined in Figure \ref{fig:architecture}. Without loss of generality we consider a supervised regression task. One or more simulator engines generate training tuples $\{(\textbf{x},y,\textbf{h})\} \sim P(\textbf{X},Y,\textbf{H};\theta)$ by sampling from a probabilistic graphical model parametrized by $\theta$. The training samples $\{(\textbf{x},y)\}$ are used for mini-batch updating the parameters $\phi$ of a neural network $P(Y \lvert \textbf{X};\phi)$. Finally, the simulation parameters $\theta$ are adapted via a feedback signal emitted from control unit.
+    Our approach is outlined in Figure \ref{fig:architecture}. Without loss of generality we consider a supervised regression task. One or more simulator engines generate $iid$ training tuples $\{(\textbf{x},\textbf{y},\textbf{h})\} \sim P(\textbf{X},\textbf{Y},\textbf{H};\theta)$ by sampling from a probabilistic graphical model parametrized by $\theta$. The training samples $\{(\textbf{x},\textbf{y})\}$ are used for mini-batch updating the parameters $\phi$ of a neural network $P(\textbf{Y} \lvert \textbf{X};\phi)$. Finally, the simulation parameters $\theta$ are adapted via a feedback signal emitted from control unit.
 
     \begin{figure}[htbp]
         \centerline{\includegraphics[width=0.9\columnwidth]{figures/architecture/overview.pdf}}
@@ -141,7 +141,7 @@ In this paper we propose method of generating artificial training data from a si
 
     Joint localization deals with the task of estimating positions of articulated body parts that constitute kinematic chains. In this work, we define joint localization to be the process of predicting 2D pixel coordinates of robotic revolute joints from color image input. 
     
-    Our model, outlined in Figure \ref{fig:jointmodel}, is based on the architecture proposed by Heindl et al. \cite{cheind2019disp}, which in turn is an extension to methods developed for human pose estimation \cite{cao2017realtime, newell2016stacked}.  . Instead of predicting sparse joint pixel coordinates, we train the network to predict dense belief maps per joint $\hat{\mathbf{B}} \in \mathbb{R}^{J \times H' \times W'}$ in the following way. Color images $\mathbf{I} \in \mathbb{R}^{3 \times H\times W}$ are input to a pre-trained VGG network \cite{simonyan2014very} to extract base features $\mathbf{F} \in \mathbb{R}^{C \times H' \times W'}$. A series of convolutional image-to-image networks refines belief predictions by allowing each network to work on the basis of outputs from the previous network and VGG base features.
+    Our model, outlined in Figure \ref{fig:jointmodel}, is based on the architecture proposed by Heindl et al. \cite{cheind2019disp}, which in turn is an extension to methods developed for human pose estimation \cite{cao2017realtime, newell2016stacked}. Instead of predicting sparse joint pixel coordinates, we train the network to predict dense belief maps per joint $\hat{\mathbf{B}} \in \mathbb{R}^{J \times H' \times W'}$ in the following way. Color images $\mathbf{X} \in \mathbb{R}^{3 \times H\times W}$ are input to a pre-trained VGG network \cite{simonyan2014very} to extract base features $\mathbf{F} \in \mathbb{R}^{C \times H' \times W'}$. A series of convolutional image-to-image networks refines belief predictions by allowing each network to work on the basis of outputs from the previous network and VGG base features.
 
     \begin{figure} [!h]
         \centering
@@ -162,14 +162,14 @@ In this paper we propose method of generating artificial training data from a si
 
 \subsection{Feedback Mechanism}
     \label{sec:feedback}
-    A key idea to our work is a feedback mechanism that enables adaptive sampling from simulator engines. As outlined in Figure \ref{fig:architecture}, a controller updates the simulation based on information of the current training mini-batch. The update can be in principle of any kind, however, in this work we focus on modifying probability distributions of the graphical model controlling the simulation process. In particular we modify distributions of hidden variables in such a way that more examples $\{(\textbf{x},y,\textbf{h})\}$ of high value to the training are produced. Once a subset of important examples $\mathcal{S} = \{(\textbf{x},y,\textbf{h})\}$ from the training batch has been selected, we infer $P(\textbf{H},Y \lvert \textbf{X};\mathcal{S})$ (approximately, analytically or in a heuristic fashion) and continue sampling from the updated distribution.
+    A key idea to our work is a feedback mechanism that enables adaptive sampling from simulator engines. As outlined in Figure \ref{fig:architecture}, a controller updates the simulation based on information of the current training mini-batch. The update can be in principle of any kind, however, in this work we focus on modifying probability distributions of the graphical model controlling the simulation process. In particular we modify distributions of hidden variables in such a way that more examples $\{(\textbf{x},\textbf{y},\textbf{h})\}$ of high value to the training are produced. Once a subset of important examples $\mathcal{S} = \{(\textbf{x},\textbf{y},\textbf{h})\}$ from the training batch has been selected, we infer $P(\textbf{H},\textbf{Y} \lvert \textbf{X};\mathcal{S})$ (approximately, analytically or in a heuristic fashion) and continue sampling from the updated distribution.
 
     We propose two ways to measure the value of specific samples for training. The first utilizes the loss function to assign more importance to examples of high error. This trivially leads to updated sampling strategies putting more weight into regions of high training error. The second method uses prediction uncertainty to select sample candidates. In contrast to Bayesian learning for neural networks \cite{neal2012bayesian}, deterministic regression networks do not have any meaningful measure of uncertainty build in or are not well calibrated for uncertainty estimation (in the classification case) \cite{guo2017calibration}. One way to overcome this limitation is perform approximate Bayesian uncertainty estimation as proposed in Gal et al. \cite{gal2015dropout}. Samples selected by uncertainty are intrinsically determined by the model without consulting a loss function.
     
     %http://stillbreeze.github.io/Uncertainty-Estimation-in-Deep-Learning/
 
 \subsection{Implementation Notes}
-    We use Blender \cite{blender} as a simulator engine for robotic scenes. Blender offers great scripting support, that allows us to hook into the rendering process. Our localization model is defined and trained using PyTorch \cite{paszke2017automatic}. As communication layer we use the distributed messaging library ZeroMQ \cite{zeromq_guide}. In particular, publisher/subscriber patterns are used for broadcasting simulation results to the training loop. We limit the number of outstanding messages at the subscriber to prevent the training loop from running out of memory. The control signal is based a simple request/reply pattern. As outlined in figure \ref{fig:architecture}, TCP/IP is used as transport layer. 
+    We use Blender \cite{blender} as a simulator engine for robotic scenes. Blender offers great scripting support, that allows us to hook into the rendering process. Our localization model is defined and trained using PyTorch \cite{paszke2017automatic}. As communication layer we use the distributed messaging library ZeroMQ \cite{zeromq_guide}. In particular, publisher/subscriber patterns are used for broadcasting simulation results to the training loop. We limit the number of outstanding messages at the subscriber to prevent the training loop from running out of memory. The control signal is based a simple request/reply pattern. As outlined in figure \ref{fig:architecture}, TCP/IP is used as transport layer \footnote{A minimal working sample is available at \url{https://github.com/cheind/pytorch-blender}}.
 
 \section{Results}
 
@@ -179,9 +179,9 @@ In this paper we propose method of generating artificial training data from a si
     For training the localization model we sampled a set of 10.000 samples per epoch from two simulator engines. The first simulator generated uniform random poses, while the second simulator produced importance samples as described in Section \ref{sec:feedback} according to a loss metric. Two distinct collections of random background images (city and industrial theme) were used as synthetic training- and test-set backgrounds. We trained the joint localization model using six stages with input images of size $320 \times 240$. A VGG network, pre-trained on detection, was used to generate base features. We used Adam \cite{kingma2014adam}, $\eta=\num{1e-3}$, optimization with mini-batch learning for a total of 30 epochs.
 
     \subsection{Evaluation}
-    We challenge joint localization model trained on artificial images on synthetic and real world image. For comparison we extract joint locations from prediction belief maps $\hat{\mathbf{B}}$ by performing smoothed non-maximum suppression, followed by extracting the maximum peak per joint channel. For real-world images we asked a human export to annotate the joint locations. Synthetic images are auto-labelled by our simulation engine. We define the localization error to be the Euclidean distance between predicted and target pixel locations and report it in percent of image diagonal. 
+    We test the joint localization model on synthetic and real world images. For comparison we extract joint locations from prediction belief maps $\hat{\mathbf{B}}$ by performing smoothed non-maximum suppression, followed by extracting the maximum peak per joint channel. For real-world images we asked a human export to annotate the joint locations. Synthetic images are auto-labelled by the simulation engine. See Figure \ref{fig:posresults} for sample results.
     
-    Figure \ref{fig:pixelerror} shows the localization error on two distinct test sets: synthetic with random backgrounds (Figure \ref{fig:locationerror_synth}) and real-world images (Figure \ref{fig:locationerror_real}). As expected our system performs better on synthetic data than real data. 
+    We define the localization error to be the Euclidean distance between predicted and target pixel locations and report it in percent of image diagonal. Figure \ref{fig:pixelerror} shows the localization error on two distinct test sets: synthetic with random backgrounds (Figure \ref{fig:locationerror_synth}) and real-world images (Figure \ref{fig:locationerror_real}). As expected our system performs better on synthetic data than real data. 
 
     \begin{figure}[!h]
         \centering
@@ -205,7 +205,7 @@ In this paper we propose method of generating artificial training data from a si
         }
     \end{figure}
 
-    We attribute two effects for this outcome: (a) our simulation is non-realistic and (b) human annotation is error-prone. To underpin the latter issue, we have conducted a pilot study in which 10 people (all with reference to robotics) annotated 12 real world images of an UR-10 robot in different poses and from different viewpoints. We than computed the inter-rater spread as measure of confidence for human annotations in our domain. Figure \ref{fig:humanuncertainty} shows the average uncertainty per joint over all images. We find that the middle joints, often blocked by view and robot pose, are the most difficult to annotate precisely. These results indicate that our method performs better than indicated by figure \ref{fig:locationerror_real}, because this figure does not take into account human annotation errors.
+    We attribute two effects for this outcome: (a) our simulation is non-realistic and (b) human annotation is error-prone. To underpin the latter issue, we have conducted a pilot study in which 10 people (all with reference to robotics) annotated 12 real world images of an UR-10 robot in different poses and from different viewpoints. We than computed the inter-rater spread as measure of confidence for human annotations in our domain. Figure \ref{fig:humanuncertainty} shows the average uncertainty per joint over all images. We find that the middle joints, often blocked by view and robot pose, are the most difficult to annotate precisely. These results indicate that our method actually performs better than indicated by figure \ref{fig:locationerror_real}. 
 
     \begin{figure}[!h]
         \centering
@@ -229,8 +229,16 @@ In this paper we propose method of generating artificial training data from a si
         }
     \end{figure}
 
+    \begin{figure}[htbp]
+        \centerline{
+            \includegraphics[width=0.98\columnwidth]{figures/results/ur10_lab/mosaic.png}}
+        \caption{
+            \label{fig:posresults} Samples from our real-world database. Predicted belief maps (left-column) and extracted joint coordinates (right-column) dataset.
+        }
+    \end{figure}
+
     \subsection{Effects of Feedback}
-    We evaluate the effectiveness of our feedback mechanism to generate adapted samples in the following way: a training is run twice, once without feedback enabled and one time with adaptive feedback for 30 epochs each. Each run spawns two simulator engines. In the feedback enabled run, a high $L_2$ loss indicates examples that should be resampled. We then adapt the prior distributions over joint angles of the second simulator to generate more samples in close vicinity of important joint angle configurations. To avoid too heavy exploitation behavior in training, the generated samples are interleaved at the subscriber. This ensure half of the training examples come from each of the simulators. Figure \ref{fig:control} shows the beneficial effects of our approach. Note, we only change the distribution of joint angles and leave all distributions unchanged. As described in Section \ref{sec:feedback}, one should ideally update $P(\textbf{H},Y \lvert \textbf{X};\mathcal{S})$ for all hidden variables.
+    We evaluate the effectiveness of our feedback mechanism to generate adapted samples in the following way: a training is run twice, once without feedback enabled and one time with adaptive feedback for 30 epochs each. Each run spawns two simulator engines. In the feedback enabled run, a high $L_2$ loss indicates examples that should be resampled. We then adapt the prior distributions over joint angles of the second simulator to generate more samples in close vicinity of important joint angle configurations. To avoid too heavy exploitation behavior in training, the generated samples are interleaved at the subscriber. This ensure half of the training examples come from each of the simulators. Figure \ref{fig:control} shows the beneficial effects of our approach. Note, we only change the distribution of joint angles and leave all distributions unchanged. As described in Section \ref{sec:feedback}, one should ideally update $P(\textbf{H},\textbf{Y} \lvert \textbf{X};\mathcal{S})$ for all hidden variables.
 
     \begin{figure}[htbp]
         \centerline{\includegraphics[width=0.9\columnwidth]{figures/control/control.pdf}}
@@ -261,27 +269,16 @@ In this paper we propose method of generating artificial training data from a si
         }
     \end{table}
 
-\section*{Acknowledgment}
+\section{Discussion}
+This work considers an novel approach to train from artificial images. In particular we consider the task of robot pose estimation. We show that an non photo-realistic simulation suffices to detect robots in arbitrary poses in real world images. Further, our architecture enables the training procedure to directly communicate with the simulator. This leads to more effective training as samples can be generated on the fly based on the requirements of model learning.
 
-Work presented in this paper has received funding from the European Union’s Horizon 2020 research and innovation programme under grant agreement No 721362 (project “ZAero”).
+In the future we would like to investigate additional methods to constrain robot poses in images. The prediction of joint angles would help to reconstruct 3D poses of robots in 2D color images. One of the drawbacks of the current method is that it only reliably works for a single robot in the scene. While multi-pose detectors for robots have been considered in the past \cite{cheind2019disp}, these methods are not independent of the number robots in the scene (with respect to runtime complexity). We therefore see the need for more research in this direction, paving the way to real-time pose detection in the wild.
+
+\section*{Acknowledgment}
+This research was supported in part by ”FTI Struktur Land Oberoesterreich (2017-2020)”, the European Union in cooperation with the State of Upper Austria within the project Investition in Wachstum und Beschäftigung (IWB), and European Union’s Horizon 2020 research and innovation programme under grant agreement No 721362 (project “ZAero”).
 
 \small
 \bibliographystyle{ieeetr}
 \bibliography{biblio}
-
-
-
-%%%\begin{thebibliography}{00}
-%%%\bibitem{b1} G. Eason, B. Noble, and I. N. Sneddon, ``On certain integrals of Lipschitz-Hankel type involving products of Bessel functions,'' Phil. Trans. Roy. Soc. London, vol. A247, pp. 529--551, April 1955.
-%%%\bibitem{b2} J. Clerk Maxwell, A Treatise on Electricity and Magnetism, 3rd ed., vol. 2. Oxford: Clarendon, 1892, pp.68--73.
-%%%\bibitem{b3} I. S. Jacobs and C. P. Bean, ``Fine particles, thin films and exchange anisotropy,'' in Magnetism, vol. III, G. T. Rado and H. Suhl, Eds. New York: Academic, 1963, pp. 271--350.
-%%%\bibitem{b4} K. Elissa, ``Title of paper if known,'' unpublished.
-%%%\bibitem{b5} R. Nicole, ``Title of paper with only first word capitalized,'' J. Name Stand. Abbrev., in press.
-%%%\bibitem{b6} Y. Yorozu, M. Hirano, K. Oka, and Y. Tagawa, ``Electron spectroscopy studies on magneto-optical media and plastic substrate interface,'' IEEE Transl. J. Magn. Japan, vol. 2, pp. 740--741, August 1987 [Digests 9th Annual Conf. Magnetics Japan, p. 301, 1982].
-%%%\bibitem{b7} M. Young, The Technical Writer's Handbook. Mill Valley, CA: University Science, 1989.
-%%%\end{thebibliography}
-%%%\vspace{12pt}
-%%%\color{red}
-%%%IEEE conference templates contain guidance text for composing and formatting conference papers. Please ensure that all template text is removed from your conference paper prior to submission to the conference. Failure to remove the template text from your paper may result in your paper not being published.
 
 \end{document}

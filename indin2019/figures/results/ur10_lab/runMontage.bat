@@ -1,0 +1,1 @@
+magick montage -tile 2x -geometry +2+2 raw/image_*.png mosaic.png
