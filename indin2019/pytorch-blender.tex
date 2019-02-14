@@ -7,6 +7,8 @@
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
+\usepackage[binary-units=true]{siunitx}
+\usepackage{subcaption}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
@@ -138,19 +140,75 @@ In this paper we propose method of generating artificial training data from a si
     When predicting from the network only the output of the last stage is used. For partial scale invariance of image features, we additionally average the belief predictions of input images scaled to different resolutions.
 
 \subsection{Feedback Mechanism}
+    \label{sec:feedback}
     A key idea to our work is a feedback mechanism that enables adaptive sampling from simulator engines. As outlined in Figure \ref{fig:architecture}, a controller updates the simulation based on information of the current training mini-batch. The update can be in principle of any kind, however, in this work we focus on modifying probability distributions of the graphical model controlling the simulation process. In particular we modify distributions of hidden variables in such a way that more examples $\{(\textbf{x},y,\textbf{h})\}$ of high value to the training are produced. Once a subset of important examples $\mathcal{S} = \{(\textbf{x},y,\textbf{h})\}$ from the training batch has been selected, we infer $P(\textbf{H},Y \lvert \textbf{X};\mathcal{S})$ (approximately, analytically or in a heuristic fashion) and continue sampling from the updated distribution.
 
     We propose two ways to measure the value of specific samples for training. The first utilizes the loss function to assign more importance to examples of high error. This trivially leads to updated sampling strategies putting more weight into regions of high training error. The second method uses prediction uncertainty to select sample candidates. In contrast to Bayesian learning for neural networks \cite{neal2012bayesian}, deterministic regression networks do not have any meaningful measure of uncertainty build in or are not well calibrated for uncertainty estimation (in the classification case) \cite{guo2017calibration}. One way to overcome this limitation is perform approximate Bayesian uncertainty estimation as proposed in Gal et al. \cite{gal2015dropout}. Samples selected by uncertainty are intrinsically determined by the model without consulting a loss function.
     
     %http://stillbreeze.github.io/Uncertainty-Estimation-in-Deep-Learning/
 
+\subsection{Implementation Notes}
+    We use Blender \cite{blender} as a simulator engine for robotic scenes. Blender offers great scripting support, that allows us to hook into the rendering process. Our localization model is defined and trained using PyTorch \cite{paszke2017automatic}. As communication layer we use the distributed messaging library ZeroMQ \cite{zeromq_guide}. In particular, publisher/subscriber patterns are used for broadcasting simulation results to the training loop. We limit the number of outstanding messages at the subscriber to prevent the training loop from running out of memory. The control signal is based a simple request/reply pattern. As outlined in figure \ref{fig:architecture}, TCP/IP is used as transport layer. 
+
 \section{Results}
 
-\subsection{Implementation Notes}
-    We use Blender \cite{blender} as a simulator engine for robotic scenes. Blender offers great scripting support, that allows us to hook into the rendering process. Our localization model is defined and trained using PyTorch \cite{paszke2017automatic}. As communication layer we use the distributed messaging library ZeroMQ \cite{zeromq_guide}. In particular, publisher/subscriber patterns are used for broadcasting simulation results to the training loop. We limit the number of outstanding messages at the subscriber to prevent the training loop from running out of memory. The control signal is based a simple request/reply pattern. TCP/IP is used as transport layer. 
+    In the following we describe the training procedure, evaluation of our method on synthetic and real world data, and provide runtime metrics.
 
-Evaluation UR10, comparison with Staubli
-TODO
+    \subsection{Training}
+    For training the localization model we sampled a set of 10.000 samples per epoch from two simulator engines. The first simulator generated uniform random poses, while the second simulator produced importance samples as described in Section \ref{sec:feedback} according to a loss metric. Two distinct collections of random background images (city and industrial theme) were used as synthetic training- and test-set backgrounds. We trained the joint localization model using six stages with input images of size $320 \times 240$. A VGG network, pre-trained on detection, was used to generate base features. We used Adam \cite{kingma2014adam}, $\eta=\num{1e-3}$, optimization with mini-batch learning for a total of 30 epochs.
+
+    \subsection{Evaluation}
+    We challenge joint localization model trained on artificial images on synthetic and real world image. For comparison we extract joint locations from prediction belief maps $\hat{\mathbf{B}}$ by performing smoothed non-maximum suppression, followed by extracting the maximum peak per joint channel. For real-world images we asked a human export to annotate the joint locations. Synthetic images are auto-labelled by our simulation engine. We define the localization error to be the Euclidean distance between predicted and target pixel locations and report it in percent of image diagonal. 
+    
+    Figure \ref{fig:pixelerror} shows the localization error on two distinct test sets: synthetic with random backgrounds (Figure \ref{fig:locationerror_synth}) and real-world images (Figure \ref{fig:locationerror_real}). As expected our system performs better on synthetic data than real data. 
+
+    \begin{figure}[!h]
+        \centering
+        \begin{subfigure}[t]{0.49\columnwidth}
+            \includegraphics[width=\columnwidth]{figures/results/pixel_errors/pixel_error_synth.pdf}
+            \caption {
+                \label{fig:locationerror_synth} 
+                Localization errors of joint prediction on a synthetic test data set with auto-labelled ground truth.
+            }
+        \end{subfigure}
+        \begin{subfigure}[t]{0.49\columnwidth}
+            \includegraphics[width=\columnwidth]{figures/results/pixel_errors/pixel_error_real.pdf}
+            \caption {
+                \label{fig:locationerror_real} 
+                Localization errors of joint prediction for a real world test set. Target locations annotated by a human domain expert. 
+            }
+        \end{subfigure}
+        \caption {
+            \label{fig:pixelerror} 
+            Localization errors of robot joint prediction. Results are in percent of image diagonal.
+        }
+    \end{figure}
+
+    We attribute two effects for this outcome: (a) our simulation is non-realistic and (b) human annotation is error-prone. To underpin the latter issue, we have conducted a pilot study in which 10 people (all with reference to robotics) annotated 12 real world images of an UR-10 robot in different poses and from different viewpoints. We than computed the inter-rater spread as measure of confidence for human annotations in our domain. Figure \ref{fig:humanuncertainty} shows the average uncertainty per joint over all images. We find that the middle joints, often blocked by view and robot pose, are the most difficult to annotate precisely. The results indicate that our method performs better than indicated by figure \ref{fig:locationerror_real}, because this figure does not take into account human annotation errors.
+
+    \begin{figure}[!h]
+        \centering
+        \begin{subfigure}[t]{0.49\columnwidth}
+            \includegraphics[width=\columnwidth]{figures/results/human_uncertainty/human_uncertainty.pdf}
+            \caption {
+                \label{fig:humanuncertainty} 
+                Human uncertainty estimates in pose annotation. Results are in percent of image diagonal.
+            }
+        \end{subfigure}
+        \begin{subfigure}[t]{0.49\columnwidth}
+            \includegraphics[width=\columnwidth]{figures/results/human_uncertainty/human_uncertainty_belief.png}
+            \caption {
+                \label{fig:humanuncertainty_belief} 
+                Uncertainty estimates superimposed as Gaussian kernels on one of the images to be annotated.
+            }
+        \end{subfigure}
+        \caption {
+            \label{fig:uncertainty} 
+            Uncertainty estimates from human annotation.
+        }
+    \end{figure}
+
+    \subsection{Runtime Analysis}
 
 \begin{table}[htbp]
 \caption{Performance evaluation}
