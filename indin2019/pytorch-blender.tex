@@ -171,7 +171,7 @@ TODO: Explain ZMQ pipeline, publish/subscribe
         }
     \end{figure}
 
-    We attribute two effects for this outcome: (a) our simulation is non-realistic and (b) human annotation is error-prone. To underpin the latter issue, we have conducted a pilot study in which 10 people (all with reference to robotics) annotated 12 real world images of an UR-10 robot in different poses and from different viewpoints. We than computed the inter-rater spread as measure of confidence for human annotations in our domain. Figure \ref{fig:humanuncertainty} shows the average uncertainty per joint over all images. We find that the middle joints, often blocked by view and robot pose, are the most difficult to annotate precisely. The results indicate that our method performs better than indicated by figure \ref{fig:locationerror_real}, because this figure does not take into account human annotation errors.
+    We attribute two effects for this outcome: (a) our simulation is non-realistic and (b) human annotation is error-prone. To underpin the latter issue, we have conducted a pilot study in which 10 people (all with reference to robotics) annotated 12 real world images of an UR-10 robot in different poses and from different viewpoints. We than computed the inter-rater spread as measure of confidence for human annotations in our domain. Figure \ref{fig:humanuncertainty} shows the average uncertainty per joint over all images. We find that the middle joints, often blocked by view and robot pose, are the most difficult to annotate precisely. These results indicate that our method performs better than indicated by figure \ref{fig:locationerror_real}, because this figure does not take into account human annotation errors.
 
     \begin{figure}[!h]
         \centering
@@ -195,6 +195,16 @@ TODO: Explain ZMQ pipeline, publish/subscribe
         }
     \end{figure}
 
+    \subsection{Effects of Feedback}
+    We evaluate the effectiveness of our feedback mechanism to generate adapted samples in the following way: a training is run twice, once without feedback enabled and one time with adaptive feedback for 30 epochs each. Each run spawns two simulator engines. In the feedback enabled run, a high $L_2$ loss indicates examples that should be resampled. We then adapt the prior distributions over joint angles of the second simulator to generate more samples in close vicinity of important joint angle configurations. To avoid too heavy exploitation behavior in training, the generated samples are interleaved at the subscriber. This ensure half of the training examples come from each of the simulators. Figure \ref{fig:control} shows the beneficial effects of our approach. Note, we only change the distribution of joint angles and leave all distributions unchanged. As described in Section \ref{sec:feedback}, one should ideally update $P(\textbf{H},Y \lvert \textbf{X};\mathcal{S})$ for all hidden variables.
+
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=0.9\columnwidth]{figures/control/control.pdf}}
+        \caption{
+            \label{fig:control} Effects of applying adaptive simulator feedback comparing two trainings over 30 epochs. We see faster convergence if we let one of the simulator instances generate more examples in the neighborhood of training samples with high errors.
+        }
+    \end{figure}
+    
     \subsection{Runtime Analysis}
 
 \begin{table}[htbp]
