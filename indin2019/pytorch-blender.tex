@@ -90,7 +90,7 @@ In this paper we propose method of generating artificial training data from a si
 
 \section{Method}
 
-    Our approach is outlined in Figure \ref{fig:architecture}. Without loss of generality we consider a supervised regression task. One or more simulator engines generate training tuples $\{(\textbf{x},y,\textbf{h})\} \sim P(\textbf{X},Y,\textbf{H};\theta)$ by sampling from a probabilistic graphical model parametrized by $\theta$. The training samples $\{(\textbf{x},y)\}$ are used for mini-batch updating the parameters $\phi$ of a neural network $P(Y \lvert \textbf{X};\phi)$. Finally, the simulation parameters $\theta$ are adapted via a feedback signal emitted from control unit.
+    Our approach is outlined in Figure \ref{fig:architecture}. Without loss of generality we consider a supervised regression task. One or more simulator engines generate $iid$ training tuples $\{(\textbf{x},\textbf{y},\textbf{h})\} \sim P(\textbf{X},\textbf{Y},\textbf{H};\theta)$ by sampling from a probabilistic graphical model parametrized by $\theta$. The training samples $\{(\textbf{x},\textbf{y})\}$ are used for mini-batch updating the parameters $\phi$ of a neural network $P(\textbf{Y} \lvert \textbf{X};\phi)$. Finally, the simulation parameters $\theta$ are adapted via a feedback signal emitted from control unit.
 
     \begin{figure}[htbp]
         \centerline{\includegraphics[width=0.9\columnwidth]{figures/architecture/overview.pdf}}
@@ -108,7 +108,7 @@ TODO: Explain ZMQ pipeline, publish/subscribe
 
     Joint localization deals with the task of estimating positions of articulated body parts that constitute kinematic chains. In this work, we define joint localization to be the process of predicting 2D pixel coordinates of robotic revolute joints from color image input. 
     
-    Our model, outlined in Figure \ref{fig:jointmodel}, is based on the architecture proposed by Heindl et al. \cite{cheind2019disp}, which in turn is an extension to methods developed for human pose estimation \cite{cao2017realtime, newell2016stacked}.  . Instead of predicting sparse joint pixel coordinates, we train the network to predict dense belief maps per joint $\hat{\mathbf{B}} \in \mathbb{R}^{J \times H' \times W'}$ in the following way. Color images $\mathbf{I} \in \mathbb{R}^{3 \times H\times W}$ are input to a pre-trained VGG network \cite{simonyan2014very} to extract base features $\mathbf{F} \in \mathbb{R}^{C \times H' \times W'}$. A series of convolutional image-to-image networks refines belief predictions by allowing each network to work on the basis of outputs from the previous network and VGG base features.
+    Our model, outlined in Figure \ref{fig:jointmodel}, is based on the architecture proposed by Heindl et al. \cite{cheind2019disp}, which in turn is an extension to methods developed for human pose estimation \cite{cao2017realtime, newell2016stacked}. Instead of predicting sparse joint pixel coordinates, we train the network to predict dense belief maps per joint $\hat{\mathbf{B}} \in \mathbb{R}^{J \times H' \times W'}$ in the following way. Color images $\mathbf{X} \in \mathbb{R}^{3 \times H\times W}$ are input to a pre-trained VGG network \cite{simonyan2014very} to extract base features $\mathbf{F} \in \mathbb{R}^{C \times H' \times W'}$. A series of convolutional image-to-image networks refines belief predictions by allowing each network to work on the basis of outputs from the previous network and VGG base features.
 
     \begin{figure} [!h]
         \centering
