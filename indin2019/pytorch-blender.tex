@@ -95,11 +95,24 @@ In this paper we propose method of generating artificial training data from a si
     \end{figure}
 
 
-\subsection{Artificial data and data loaders}
+\subsection{Artificial Data for Training}
 
-TODO: Outline Python-support of Blender, Explain scripting in Blender, creation of meta-data (joint locations, etc.)...
-TODO: Explain basic concepts of PyTorch and DataLoaders, etc.
-TODO: Explain ZMQ pipeline, publish/subscribe
+    Conceptually, it makes sense to think of the rendering process as a probabilistic graphical model.
+    
+    In the context of robot joint localization, we think of training image generation as a process that includes random and deterministic calculations. Hence, we describe the image generation process in terms of a probabilistic graphical model that describes relationships of hidden $h$ and observed variables $x$ in terms of prior and conditional probability distributions. The observed variables in our model correspond to pixels in the generated images. The hidden variables describe the model behind these images. The hidden variables in the example that we show in this paper include robot joint angles and the virtual camera position. Robot joint angles are represented as vector $J$ of - in our case - six joint angles. These joint angles determine the actual locations of robot joints $R$. Virtual camera position $C$ describes varying camera positions in the scene. We parameterize $C$ by angles and distances. The virtual camera position $C$ can easily be converted to a roto-translation matrix $T$ describing the virtual camera position in the scene. Given the robot joint locations $R$ and camera location $T$, we can describe the corresponding 3D scene in Blender. The Blender rendering engine is then used to create the final images $X$. Figure \ref{fig:probModel} illustrates this as a graphical model. Note that the arrows in the figure in our case correspond to deterministic calculations. Therefore, the only probability distributions involved relate to $J$ and $C$. 
+
+    \begin{figure}[htbp]
+        \centerline{\includegraphics[width=0.9\columnwidth]{figures/probModel/probModel.pdf}}
+        \caption{\label{fig:probModel} The image rendering process as probabilistic model.}
+    \end{figure}
+    
+    To be more explicit, we model $C$ as a vector of variables: $C = (\theta, \phi, d, \mathbf{c}, \mathbf{r})$. $\theta$ and $\phi$ are elevation and azimuth angles for the vector pointing from world coordinate origin to the camera position. $d$ is the distance of the camera from the origin. The position at which the virtual camera is looking is chosen close to the origin. A fixed point is specified and a random deviation from that point with a maximum distance of $r$ is sampled.
+    
+    Values for individual paramters... (?)
+
+    For many problems in computer vision there is some kind of "expert knowledge" available that can help to build some kind of model of the image formation process. In the example reviewed within this paper, such expert knowledge involves the known CAD model of a robot, possible joint configurations, possible camera locations, etc. So we argue that with some effort it is often possible to describe the forward model. However, when we want to infer hidden variables from observed ones, this typically is very difficult to do. This is especially true when a complex rendering process is involved.
+    
+    
 
 \subsection{Localization Model and Training}
 
