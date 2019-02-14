@@ -10,6 +10,7 @@
 \usepackage[binary-units=true]{siunitx}
 \usepackage{subcaption}
 \usepackage{booktabs}
+\usepackage{hyperref}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
@@ -73,9 +74,9 @@ Exposed to this bottleneck, new fields of research have opened up. Active learni
 
 % https://hazyresearch.github.io/snorkel/blog/ws_blog_post.html
 
-In contrast to the methods mentioned above, synthetic data generation drops the necessity for real world annotated data in favor of artificial data sources. Synthesized data is available in virtually infinite variety and is de-facto auto-labelled. This has led to variety of successful applications in different domains: Jaderberg et al. \cite{jaderberg2014synthetic} have demonstrated natural scene text recognition from synthetic data, Peng et al. \cite{peng2015learning} trained object detectors from 3D models and Johnson et al. \cite{2017_Johnson_DrivingInTheMatrix} used photo-realistic computer rendering captured from a game engine to train car detectors. 
+In contrast to the methods mentioned above, synthetic data generation drops the necessity for real world annotated data in favor of artificial data sources. Synthesized data is available in virtually infinite variety and is de-facto auto-labelled. This has led to variety of successful applications in different domains: Jaderberg et al. \cite{jaderberg2014synthetic} have demonstrated natural scene text recognition from synthetic data, Peng et al. \cite{peng2015learning} trained object detectors from 3D models and Johnson et al. \cite{2017_Johnson_DrivingInTheMatrix} used photo-realistic computer rendering captured from a game engine to train car detectors. A common theme to all of these synthetic approaches is the following: (a) a simulator engine generators artificial training data, (b) the generated data is stored to disk and (c) the offline data stack is used for training. The shortcomings to this procedure are early training data commitment and the lack of adaptability of data generation to training demands.
 
-A common theme to all of these synthetic approaches is the following: (a) a simulator engine generators artificial training data, (b) the generated data is stored to disk and (c) the offline data stack is used for training. The shortcomings to this procedure are early training data commitment and the lack of adaptability of data generation to training demands.
+Locating joint and body parts of humans in color images has long tradition. Pictorial approaches \cite{fischler1973representation, felzenszwalb2005pictorial} represent individual parts of the body arranged in a flexible network. With the success of deep learning, convolutional networks \cite{oliveira2016deep} predicting all body part locations superseded individually trained detectors. In multi pose detection two approaches have become established: in the top-down approach \cite{gkioxari2014using, sun2011articulated} an upstream detector singles out individual instances. The bottom-up approach identifies instance independent features, such as joint locations, and fusions them into body instances \cite{insafutdinov2016deepercut, wei2016convolutional}. Our network is based on the work of Heindl et al. \cite{cheind2019disp} which builds upon work done by Cao et al. \cite{cao2017realtime}.
 
 In this paper we propose method of generating artificial training data from a simulator engine that is directly looped into the training procedure, thereby avoiding early data commitment. A bi-directional communication channel enables adaptive random data generation. We demonstrate the usefulness of our approach to the detection of robot poses in color images trained from non-realistic computer generated images.
 
@@ -135,7 +136,7 @@ TODO: Explain ZMQ pipeline, publish/subscribe
     %http://stillbreeze.github.io/Uncertainty-Estimation-in-Deep-Learning/
 
 \subsection{Implementation Notes}
-    We use Blender \cite{blender} as a simulator engine for robotic scenes. Blender offers great scripting support, that allows us to hook into the rendering process. Our localization model is defined and trained using PyTorch \cite{paszke2017automatic}. As communication layer we use the distributed messaging library ZeroMQ \cite{zeromq_guide}. In particular, publisher/subscriber patterns are used for broadcasting simulation results to the training loop. We limit the number of outstanding messages at the subscriber to prevent the training loop from running out of memory. The control signal is based a simple request/reply pattern. As outlined in figure \ref{fig:architecture}, TCP/IP is used as transport layer. 
+    We use Blender \cite{blender} as a simulator engine for robotic scenes. Blender offers great scripting support, that allows us to hook into the rendering process. Our localization model is defined and trained using PyTorch \cite{paszke2017automatic}. As communication layer we use the distributed messaging library ZeroMQ \cite{zeromq_guide}. In particular, publisher/subscriber patterns are used for broadcasting simulation results to the training loop. We limit the number of outstanding messages at the subscriber to prevent the training loop from running out of memory. The control signal is based a simple request/reply pattern. As outlined in figure \ref{fig:architecture}, TCP/IP is used as transport layer \footnote{A minimal working sample is available at \url{https://github.com/cheind/pytorch-blender}}.
 
 \section{Results}
 
