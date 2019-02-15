@@ -23,7 +23,7 @@
 \newif\iffinalcopy
 
 % comment this lind to make paper valid for blind review
-\finalcopytrue
+%\finalcopytrue
 
 \iffinalcopy
 
@@ -100,7 +100,7 @@ In this paper we propose to train solely on non-photorealistic artificial genera
 
     Conceptually, the process of creating randomized artificial training data can be expressed in terms of a  probabilistic graphical model. Such a model describes probabilistic relationships between hidden and observed variables in terms of prior and conditional probability distributions. The observed variables in our model correspond to pixels in the generated images $\mathbf{X}$. The hidden variables describe the model behind these images. Hidden variables $\mathbf{H}$ consist of robot joint angles and virtual camera position. To be more specific, we can write the hidden parameters of the model as a vector of random variables $\mathbf{H} = (J_1, \dots, J_6, R, \Delta, \Gamma, D, B)$. $J_i$ denote the individual joint angles for different poses of the robot. $\Delta$, $\Gamma$  represent azimuth and polar angles of polar coordinates of the virtual camera position. $R$ denotes the distance from the origin to complete polar coordinates. The camera orientation is chosen such that the camera looks at a point with random distance $D$ relative to a pre-defined look-at point. 
     
-    Initially, we assign uniform distributions (within pre-defined ranges) as priors for random variables in $\mathbf{H}$. For example, the first robot joint angle $J_1$ is uniformly distributed between -90\textdegree and +90\textdegree: $J_1 \sim U(-\frac{\pi}{2}, +\frac{\pi}{2})$. The probability density function of this distribution is represented as a simple histogram.  With training feedback enabled (explained in detail in chapter \ref{TODO}), this density is modified. The weight of individual histogram bins are part of parameter $\theta$. Similarly, $\theta$ also governs the distributions of other robot joint angles and camera position parameters.
+    Initially, we assign uniform distributions (within pre-defined ranges) as priors for random variables in $\mathbf{H}$. For example, the first robot joint angle $J_1$ is uniformly distributed between -90\textdegree and +90\textdegree: $J_1 \sim U(-\frac{\pi}{2}, +\frac{\pi}{2})$. The probability density function of this distribution is represented as a simple histogram.  With training feedback enabled (explained in detail in section \ref{sec:feedback}), this density is modified. The weight of individual histogram bins are part of parameter $\theta$. Similarly, $\theta$ also governs the distributions of other robot joint angles and camera position parameters.
     
     When setting up a model, one is interested in controlling parameters that are relevant for the specific application. In our case we address robot joint locations. In order to obtain realistic background of synthesized images, we are not interested in creating a detailed model for this as well. We therefore make use of the ability of the rendering engine to provide masks for rendered objects. We use the masks of rendered robots to draw these over some random background images. From a set of real photos, we select one randomly in the rendering process and draw the robot over it. Examples of artificially rendered images (with and without background) are shown in figure~\ref{fig:ur10examples}.
     
