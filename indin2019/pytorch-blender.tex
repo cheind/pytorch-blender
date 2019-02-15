@@ -112,11 +112,11 @@ In this paper we propose to train solely on non-photorealistic artificial genera
     
     When setting up a model, one is interested in controlling parameters that are relevant for the specific application. In our case we address robot joint locations. In order to obtain realistic background of synthesized images, we are not interested in creating a detailed model for this as well. We therefore make use of the ability of the rendering engine to provide masks for rendered objects. We use the masks of rendered robots to draw these over some random background images. From a set of real photos, we select one randomly in the rendering process and draw the robot over it. Examples of artificially rendered images (with and without background) are shown in figure~\ref{fig:ur10examples}.
     
-    Figure \ref{fig:probModel} illustrates the simulator as a graphical model. Note that the arrows in the figure in our case correspond to deterministic calculations. Therefore, the only actual probability distributions involved relate to $\mathbf{H}$. The arrow from $\mathbf{H}$ to $\mathbf{X}$ represents a complex process that is based on 3D image rendering. Intrinsic camera parameters are assumed fixed and are not explicitly shown. The joint probability distribution of the model factorizes in the following as follows.
+    Figure \ref{fig:probModel} illustrates the simulator as a graphical model. Note that the arrows in the figure in our case correspond to deterministic calculations. Therefore, the only actual probability distributions involved relate to $\mathbf{H}$. The arrow from $\mathbf{H}$ to $\mathbf{X}$ represents a complex process that is based on 3D image rendering. Intrinsic camera parameters are assumed fixed and are not explicitly shown. The joint probability distribution of the model factorizes as follows:
     
-    \begin{equation}
+    \begin{equation*}
     \mathrm{P}(\mathbf{X}, \mathbf{Y}, \mathbf{H}; \theta) = \mathrm{P}(\mathbf{X}, \mathbf{Y} | \mathbf{H}) \mathrm{P}(\mathbf{H}; \theta)
-    \end{equation}
+    \end{equation*}
 
     \begin{figure}[htbp]
         \centerline{\includegraphics[width=0.33\columnwidth]{figures/probModel/probModel.pdf}}
