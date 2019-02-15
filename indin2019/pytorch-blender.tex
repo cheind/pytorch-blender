@@ -151,7 +151,7 @@ In this paper we propose to train solely on non-photorealistic artificial genera
     \subsection{Evaluation}
     We test the joint localization model on synthetic and real world images (see \ref{fig:posresults} for exemplary results). For comparison we extract joint locations from prediction belief maps $\hat{\mathbf{B}}$ by performing smoothed non-maximum suppression, followed by extracting the maximum peak per joint channel. For real-world images we asked a human export to annotate the joint locations. Synthetic images are auto-labelled by the simulation engine. Figure  gives some sample results.
     
-    We define the localization error to be the Euclidean distance between predicted and target pixel locations and report it in percent of the image diagonal. Figure \ref{fig:pixelerror} shows the localization error on two distinct test sets: synthetic with random backgrounds (Figure \ref{fig:locationerror_synth}) and real-world images (Figure \ref{fig:locationerror_real}). As expected our system performs better on synthetic data than real data. 
+    We define the localization error to be the Euclidean distance between predicted and target pixel locations and report it in percent of the image diagonal. Figure \ref{fig:pixelerror} shows the localization error on two distinct test sets: synthetic with random backgrounds (Figure \ref{fig:locationerror_synth}) and real-world images (Figure \ref{fig:locationerror_real}). As expected our system performs better on synthetic data than real data.
     \begin{figure}[!h]
         \centering
         \begin{subfigure}[t]{0.49\columnwidth}
