@@ -51,7 +51,7 @@
 \maketitle
 
 \begin{abstract}
-    Impressive results have been achieved in computer vision via deep learning methods over the last years. However, the lack of supervised data has led to a slowdown in the use of deep learning in many specialized areas. This work considers the task of robot pose estimation in color images using artificial training data. We propose a highly parallel data generation workflow, in which the simulator engine is directly looped into the training procedure. We show how a feedback mechanism, from training to the data generation process, leads to more effective model learning. Finally, we demonstrate that out model trained on artificial robot images is able to generalize to real world images. 
+    Impressive results have been achieved in computer vision via deep learning methods over the last years. However, the lack of supervised data has led to a slowdown in the use of deep learning in many specialized areas. This work considers the task of robot pose estimation in color images using artificial training data. We propose a highly parallel data generation workflow, in which the simulator engine is directly looped into the training procedure. A feedback mechanism leads to more effective model learning, by focusing the simulator on highly valuable samples for training. We demonstrate that our model, trained on artificial robot images, is able to generalize to real world images. 
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -59,7 +59,7 @@ machine learning, artificial data, data augmentation
 \end{IEEEkeywords}
 
 \section{Introduction and Related Work}
-The impressive results of supervised deep learning in the field of robotics and computer vision are to large extent due to the availability of annotated data sets. Up until recently most of the annotation was carried out by domain experts. This time consuming process significantly slows down the progress of deep learning efforts. In many tasks it is difficult, in most niche areas impossible, to obtain strong supervision because of the high costs.
+The remarkable results of supervised deep learning in the field of robotics and computer vision are to large extent due to the availability of annotated data sets. Up until recently most of the annotation was carried out by domain experts. This time consuming process significantly slows down the progress of deep learning efforts. In many tasks it is difficult, in most niche areas impossible, to obtain strong supervision because of the high costs.
 
 Exposed to this bottleneck, new fields of research have opened up. Active learning \cite{druck2009active, settles2012active, cakmak2012designing} attempts to use human experts in a more targeted way by focusing on samples that seem to of highest value for learning task. Semi-supervised learning \cite{chapelle2009semi, salimans2016improved, zhu2006semi} combines large unlabeled data sets with smaller labeled data sets through structural assumptions, such as smoothness or low-dimensionality constraints. Transfer learning \cite{pratt1993discriminability, ventura2007theoretical, pan2010survey} exploits the fact that models trained on specific tasks can be adapted to related problems using fewer training samples. Weak supervision \cite{ratner2016data, zhou2017brief} is motivated by leveraging less precise, higher level supervision that is often easier to obtain. This includes heuristics, weak or biased classifiers, unreliable non-experts. 
 
