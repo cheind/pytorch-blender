@@ -75,6 +75,11 @@ The remarkable results of supervised deep learning in the field of robotics and 
 
 Exposed to this bottleneck, new fields of research have opened up. Active learning \cite{druck2009active, settles2012active, cakmak2012designing} attempts to use human experts in a more targeted way by focusing on samples that seem to be of highest value for learning task. Semi-supervised learning \cite{chapelle2009semi, salimans2016improved, zhu2006semi} combines large unlabeled data sets with smaller labeled data sets through structural assumptions, such as smoothness or low-dimensionality constraints. Transfer learning \cite{pratt1993discriminability, ventura2007theoretical, pan2010survey} exploits the fact that models trained on specific tasks can be adapted to related problems using fewer training samples. Weak supervision \cite{ratner2016data, zhou2017brief} is motivated by leveraging less precise, higher level supervision that is often easier to obtain. This includes heuristics, weak or biased classifiers, unreliable non-experts. 
 
+\begin{figure}[htbp]
+    \centerline{\includegraphics[width=0.9\columnwidth]{figures/examplesUR10/renderedImages.png}}
+    \caption{\label{fig:ur10examples} Examples of training images with UR10 robots rendered in Blender (left) and with random background images added (right).}
+\end{figure}
+
 % https://hazyresearch.github.io/snorkel/blog/ws_blog_post.html
 
 In contrast to the methods mentioned above, synthetic data generation drops the necessity for real world annotated data in favor of artificial data sources. Synthesized data is available in virtually infinite variety and is de-facto auto-labelled. This has led to variety of successful applications in different domains: Jaderberg et al. \cite{jaderberg2014synthetic} have demonstrated natural scene text recognition from synthetic data, Peng et al. \cite{peng2015learning} trained object detectors from 3D models and Johnson et al. \cite{2017_Johnson_DrivingInTheMatrix} used photo-realistic computer rendering captured from a game engine to train car detectors. A common theme to all of these synthetic approaches is the following: (a) a simulator engine generates artificial training data, (b) the generated data is stored to disk and (c) the offline data stack is used for training. The main shortcomings to this approach are early training data commitment and the lack of adaptability of data generation to training demands.
@@ -83,7 +88,7 @@ Considering pose estimation from images, the majority of the machine learning ap
 
 In contrast to human pose datasets, image based databases for robot pose detection are not standardized for various reasons: (a) robots are expensive in acquisition, (b) the required infrastructure and personal for operating them is complex and (c) accurate annotation through crowdsourcing is more difficult to obtain. The research has therefore focused on training based on smaller hand-labelled datasets \cite{miseikis2018multi, miseikis2018transfer, garcia2013guidance, varhegyivisual}, or highly specialized data sets \cite{levine2018learning}.
 
-In this paper we propose to train solely on non-photorealistic artificial generated data, which is much simpler to produce. We propose a learning framework composed of a simulator engine is directly looped into mini-batch learning. This allows us to avoid early data commitment. Additionally, a bi-directional communication channel enables the simulation to adapt sampling towards training needs. We demonstrate the usefulness of our approach in detection of robot poses.
+In this paper we propose to train solely on non-photorealistic artificial generated image data (figure \ref{fig:ur10examples}). Such data is much simpler to produce. We propose a learning framework composed of a simulator engine that is directly looped into mini-batch learning. This allows us to avoid early data commitment. Additionally, a bi-directional communication channel enables the simulation to adapt sampling towards training needs. We demonstrate the usefulness of our approach in detection of robot poses.
 
 
 \section{Method}
@@ -103,11 +108,6 @@ In this paper we propose to train solely on non-photorealistic artificial genera
     Initially, we assign uniform distributions (within pre-defined ranges) as priors for random variables in $\mathbf{H}$. For example, the first robot joint angle $J_1$ is uniformly distributed between -90\textdegree and +90\textdegree: $J_1 \sim U(-\frac{\pi}{2}, +\frac{\pi}{2})$. The probability density function of this distribution is represented as a simple histogram.  With training feedback enabled (explained in detail in section \ref{sec:feedback}), this density is modified. The weight of individual histogram bins are part of parameter $\theta$. Similarly, $\theta$ also governs the distributions of other robot joint angles and camera position parameters.
     
     When setting up a model, one is interested in controlling parameters that are relevant for the specific application. In our case we address robot joint locations. In order to obtain realistic background of synthesized images, we are not interested in creating a detailed model for this as well. We therefore make use of the ability of the rendering engine to provide masks for rendered objects. We use the masks of rendered robots to draw these over some random background images. From a set of real photos, we select one randomly in the rendering process and draw the robot over it. Examples of artificially rendered images (with and without background) are shown in figure~\ref{fig:ur10examples}.
-    
-    \begin{figure}[htbp]
-        \centerline{\includegraphics[width=0.9\columnwidth]{figures/examplesUR10/renderedImages.png}}
-        \caption{\label{fig:ur10examples} Examples of training images rendered with Blender (left) and with random background images added (right).}
-    \end{figure}
     
     Figure \ref{fig:probModel} illustrates the simulator as a graphical model. Note that the arrows in the figure in our case correspond to deterministic calculations. Therefore, the only actual probability distributions involved relate to $\mathbf{H}$. The arrow from $\mathbf{H}$ to $\mathbf{X}$ represents a complex process that is based on 3D image rendering. Intrinsic camera parameters are assumed fixed and are not explicitly shown. The joint probability distribution of the model factorizes in the following as follows.
     
