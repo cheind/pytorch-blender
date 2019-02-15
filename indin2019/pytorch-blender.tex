@@ -51,7 +51,7 @@
 \maketitle
 
 \begin{abstract}
-    Impressive results have been achieved in computer vision via deep learning methods over the last years. However, the lack of supervised data has led to a slowdown in the use of deep learning in many specialized areas. This work considers the task of robot pose estimation in color images using artificial training data. We propose a highly parallel data generation workflow, in which the simulator engine is directly looped into the training procedure. A feedback mechanism enables more effective model learning, by focusing the simulator on highly valuable samples for training. We demonstrate that our model, trained on artificial robot images, is able to generalize to real world images. 
+    Impressive results have been achieved in computer vision via deep learning methods over the last years. However, the lack of supervised data has led to a slowdown in the progress of deep learning in many specialized areas. This work considers the task of robot pose estimation in color images using artificial training data. We propose a highly parallel data generation workflow, in which the simulator engine is directly looped into the training procedure. A feedback mechanism enables more effective model learning, by focusing the simulator on highly valuable samples for training. We demonstrate that our model, trained on artificial robot images, is able to generalize to real world images. 
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -126,9 +126,9 @@ In this paper we propose to train solely on non-photorealistic artificial genera
 
     We generate target belief maps $\mathbf{B}$ by pixel-wise maximization over the contributions from $J$ squared exponential kernels
     \begin{equation}
-        k_{\textrm{SE}}(\mathbf{x};\mathbf{y}) = \sigma^2e^{-\frac{\lVert \mathbf{x} - \mathbf{y} \rVert^2_2}{l^2}}
+        k_{\textrm{SE}}(\mathbf{p};\mathbf{y}) = \sigma^2e^{-\frac{\lVert \mathbf{p} - \mathbf{y} \rVert^2_2}{l^2}} \;\;,{\mathbf{p} \in \mathbb{R}^{H\times W}}
     \end{equation}
-    centered at sparse image joint locations $\{\mathbf{y}_0,\ldots,\mathbf{y}_J\}$. The output variance $\sigma^2$ determines the average distance away from its mean, the length-scale $l$ determines the width of the kernel. During training, an objective functions penalizes pixel-wise differences between belief predictions $\hat{\mathbf{B}}$ and targets $\mathbf{B}$ after each stage. Usually, $L_2$ or smooth $L_1$ loss functions are used. These intermediate losses help the network to train more effectively, as the effect of vanishing gradients in deep architectures is minimized \cite{newell2016stacked, wei2016convolutional}. 
+    centered at sparse image joint locations ${\{\mathbf{y}_0,\ldots,\mathbf{y}_J\} \subseteq \mathbb{R}^{H\times W}}$. The output variance $\sigma^2$ determines the average distance away from its mean, the length-scale $l$ determines the width of the kernel. During training, an objective functions penalizes pixel-wise differences between belief predictions $\hat{\mathbf{B}}$ and targets $\mathbf{B}$ after each stage. Usually, $L_2$ or smooth $L_1$ loss functions are used. These intermediate losses help the network to train more effectively, as the effect of vanishing gradients in deep architectures is minimized \cite{newell2016stacked, wei2016convolutional}. 
     
     When predicting from the network only the output of the last stage is used. For partial scale invariance of image features, we additionally average the belief predictions of input images scaled to different resolutions.
 
@@ -155,7 +155,7 @@ In this paper we propose to train solely on non-photorealistic artificial genera
     \subsection{Evaluation}
     We test the joint localization model on synthetic and real world images (see \ref{fig:posresults} for exemplary results). For comparison we extract joint locations from prediction belief maps $\hat{\mathbf{B}}$ by performing smoothed non-maximum suppression, followed by extracting the maximum peak per joint channel. For real-world images we asked a human export to annotate the joint locations. Synthetic images are auto-labelled by the simulation engine. Figure  gives some sample results.
     
-    We define the localization error to be the Euclidean distance between predicted and target pixel locations and report it in percent of the image diagonal. Figure \ref{fig:pixelerror} shows the localization error on two distinct test sets: synthetic with random backgrounds (Figure \ref{fig:locationerror_synth}) and real-world images (Figure \ref{fig:locationerror_real}). As expected our system performs better on synthetic data than real data. 
+    We define the localization error to be the Euclidean distance between predicted and target pixel locations and report it in percent of the image diagonal. Figure \ref{fig:pixelerror} shows the localization error on two distinct test sets: synthetic with random backgrounds (Figure \ref{fig:locationerror_synth}) and real-world images (Figure \ref{fig:locationerror_real}). As expected our system performs better on synthetic data than real data.
     \begin{figure}[!h]
         \centering
         \begin{subfigure}[t]{0.49\columnwidth}
