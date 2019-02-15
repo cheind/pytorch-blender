@@ -76,7 +76,7 @@ In this paper we propose to train solely on non-photorealistic artificial genera
 
 \section{Method}
 
-    Our approach is outlined in Figure \ref{fig:architecture}. Without loss of generality we consider a supervised regression task. One or more simulator engines generate $iid$ training tuples $\{(\textbf{x},\textbf{y},\textbf{h})\} \sim P(\textbf{X},\textbf{Y},\textbf{H};\theta)$ by sampling from a probabilistic graphical model parametrized by $\theta$. The training samples $\{(\textbf{x},\textbf{y})\}$ are used for mini-batch updating the parameters $\phi$ of a neural network $P(\textbf{Y} \lvert \textbf{X};\phi)$. Finally, the simulation parameters $\theta$ are adapted via a feedback signal emitted from control unit.
+    Our approach is outlined in Figure \ref{fig:architecture}. Without loss of generality we consider a supervised regression task. One or more simulator engines generate independent and identically distributed training tuples $\{(\textbf{x},\textbf{y},\textbf{h})\} \sim P(\textbf{X},\textbf{Y},\textbf{H};\theta)$ by sampling from a probabilistic graphical model parametrized by $\theta$. The training samples $\{(\textbf{x},\textbf{y})\}$ are used for mini-batch updating the parameters $\phi$ of a neural network $P(\textbf{Y} \lvert \textbf{X};\phi)$. Finally, the simulation parameters $\theta$ are adapted via a feedback signal emitted from control unit.
 
     \begin{figure}[htbp]
         \centerline{\includegraphics[width=0.9\columnwidth]{figures/architecture/overview.pdf}}
