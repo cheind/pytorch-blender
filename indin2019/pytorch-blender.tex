@@ -99,9 +99,12 @@ In this paper we propose to train solely on non-photorealistic artificial genera
         \centerline{\includegraphics[width=0.9\columnwidth]{figures/architecture/overview.pdf}}
         \caption{\label{fig:architecture} Architecture of our system.}
     \end{figure}
+    
+    In the following we outline individual elements of our system. In section \ref{sec:artificialData} we describe the simulator. In section \ref{sec:model} we outline details about the neural network model. We explain the control block for feedback in section \ref{sec:feedback} and finally provide implementation details in section \ref{sec:impl}.
 
 
 \subsection{Artificial Data for Training}
+    \label{sec:artificialData}
 
     Conceptually, the process of creating randomized artificial training data can be expressed in terms of a  probabilistic graphical model. Such a model describes probabilistic relationships between hidden and observed variables in terms of prior and conditional probability distributions. The observed variables in our model correspond to pixels in the generated images $\mathbf{X}$. The hidden variables describe the model behind these images. Hidden variables $\mathbf{H}$ consist of robot joint angles and virtual camera position. To be more specific, we can write the hidden parameters of the model as a vector of random variables $\mathbf{H} = (J_1, \dots, J_6, R, \Delta, \Gamma, D, B)$. $J_i$ denote the individual joint angles for different poses of the robot. $\Delta$, $\Gamma$  represent azimuth and polar angles of polar coordinates of the virtual camera position. $R$ denotes the distance from the origin to complete polar coordinates. The camera orientation is chosen such that the camera looks at a point with random distance $D$ relative to a pre-defined look-at point. 
     
@@ -126,6 +129,7 @@ In this paper we propose to train solely on non-photorealistic artificial genera
     
 
 \subsection{Localization Model and Training}
+    \label{sec:model}
 
     Joint localization deals with the task of estimating positions of articulated body parts that constitute kinematic chains. In this work, we define joint localization as the process of predicting 2D pixel coordinates of robotic revolute joints from color image input. 
     
@@ -157,6 +161,7 @@ In this paper we propose to train solely on non-photorealistic artificial genera
     %http://stillbreeze.github.io/Uncertainty-Estimation-in-Deep-Learning/
 
 \subsection{Implementation Notes}
+    \label{sec:impl}
     We use Blender 2.79 \cite{blender} as a simulator engine for robotic scenes. Blender offers great scripting support, that allows us to hook into the rendering process. Our localization model is defined and trained using PyTorch \cite{paszke2017automatic}. As communication layer we use the distributed messaging library ZeroMQ \cite{zeromq_guide}. In particular, publisher/subscriber patterns are used for broadcasting simulation results to the training loop. We limit the number of outstanding messages at the subscriber to prevent the training loop from running out of memory. The control signal is based a simple request/reply pattern. As outlined in figure \ref{fig:architecture}, TCP/IP is used as transport layer \footnote{A minimal working sample is available at \iffinalcopy \texttt{https://github.com/cheind/pytorch-blender} \else \texttt{link removed for blind review.} \fi}. We note that all relevant training data is transmitted via the communication channels without the need for temporary files.
     % TODO
     %\url{https://github.com/cheind/pytorch-blender}}.
