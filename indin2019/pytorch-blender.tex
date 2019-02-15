@@ -114,9 +114,9 @@ In this paper we propose to train solely on non-photorealistic artificial genera
     
     Figure \ref{fig:probModel} illustrates the simulator as a graphical model. Note that the arrows in the figure in our case correspond to deterministic calculations. Therefore, the only actual probability distributions involved are included in $\mathbf{H}$. The arrow from $\mathbf{H}$ to $\mathbf{X}$ represents a complex process that is based on 3D image rendering. Intrinsic camera parameters are assumed fixed and are not explicitly shown. The joint probability distribution of the model factorizes as follows:
     
-    \begin{equation*}
-    \mathrm{P}(\mathbf{X}, \mathbf{Y}, \mathbf{H}; \theta) = \mathrm{P}(\mathbf{X}, \mathbf{Y} | \mathbf{H}) \mathrm{P}(\mathbf{H}; \theta).
-    \end{equation*}
+    \begin{equation}
+    \mathrm{P}(\mathbf{X}, \mathbf{Y}, \mathbf{H}; \theta) = \mathrm{P}(\mathbf{X}, \mathbf{Y} | \mathbf{H}) \mathrm{P}(\mathbf{H}; \theta)
+    \end{equation}
 
     \begin{figure}[htbp]
         \centerline{\includegraphics[width=0.33\columnwidth]{figures/probModel/probModel.pdf}}
