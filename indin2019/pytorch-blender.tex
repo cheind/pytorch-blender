@@ -51,7 +51,7 @@
 \maketitle
 
 \begin{abstract}
-Impressive results have been achieved in computer vision via deep learning methods over the last years. However, for many highly specialized industrial applications these methods cannot easily be applied due to the lack of large amounts of training data. In this paper we propose a software framework that provides artificial image data via simulation. This approach opens the door for machine learning even when it is hard or impossible to acquire real (labelled) images. Our system supports parallelized data generation and direct feedback from neural network training to adaptively put focus on critical parameter ranges. We demonstrate that the model trained on artificial robot images is able to generalize to real world images. 
+    Impressive results have been achieved in computer vision via deep learning methods over the last years. However, the lack of supervised data has led to a slowdown in the use of deep learning in many specialized areas. This work considers the task of robot pose estimation in color images using artificial training data. We propose a highly parallel data generation workflow, in which the simulator engine is directly looped into the training procedure. We show how a feedback mechanism, from training to the data generation process, leads to more effective model learning. Finally, we demonstrate that out model trained on artificial robot images is able to generalize to real world images. 
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -245,7 +245,7 @@ In this paper we propose method of generating artificial training data from a si
     \end{table}
 
 \section{Discussion}
-This work considers an novel approach to train from artificial images. In particular we consider the task of robot pose estimation. We show that an non photo-realistic simulation suffices to detect robots in arbitrary poses in real world images. Further, our architecture enables the training procedure to directly communicate with the simulator. This leads to more effective training as samples can be generated on the fly based on the requirements of model learning.
+This work considers an new approach to train from artificial images. In particular we consider the task of robot pose estimation. We show that an non photo-realistic simulation suffices to detect robots in arbitrary poses in real world images. Further, our architecture enables the training procedure to directly communicate with the simulator. This leads to more effective training as samples can be generated on the fly based on the requirements of model learning.
 
 In the future we would like to investigate additional methods to constrain robot poses in images. The prediction of joint angles would help to reconstruct 3D poses of robots in 2D color images. One of the drawbacks of the current method is that it only reliably works for a single robot in the scene. While multi-pose detectors for robots have been considered in the past \cite{cheind2019disp}, these methods are not independent of the number robots in the scene (with respect to runtime complexity). We therefore see the need for more research in this direction, paving the way to real-time pose detection in the wild.
 
