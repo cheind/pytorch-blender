@@ -32,7 +32,10 @@ class BlenderLauncher():
         self.start_port = start_port
         self.bind_addr = bind_addr
         self.prot = prot
-        self.scene = scene
+        if scene is None:
+            self.scene = ''
+        else:
+            self.scene = scene
         self.instance_args = instance_args
         self.script = script
         if instance_args is None:
