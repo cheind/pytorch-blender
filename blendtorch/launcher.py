@@ -48,8 +48,8 @@ class BlenderLauncher():
         self.processes = [Popen(f'blender {self.scene} --background --python {self.script} -- {addr} {args}', 
             shell=False,
             stdin=None, 
-            stdout=open(f'./tmp/out_{idx}.txt', 'w'), 
-            stderr=open(f'./tmp/err_{idx}.txt', 'w'), 
+            stdout=open(f'/tmp/out_{idx}.txt', 'w'),
+            stderr=open(f'/tmp/err_{idx}.txt', 'w'),
             close_fds=True) for idx, (addr, args) in enumerate(zip(self.addresses, add_args))]
         
         ctx = zmq.Context()
