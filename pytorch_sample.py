@@ -45,7 +45,7 @@ def main():
         # Note, in the following num_workers must be 0
         dl = data.DataLoader(ds, batch_size=4, num_workers=0, shuffle=False)
 
-        for idx in enumerate(dl)range(10):
+        for idx in enumerate(dl):
             x, coords, ids = next(iter(dl))
             print(f'Received from {ids}')
 
