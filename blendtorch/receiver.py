@@ -1,6 +1,6 @@
 
 class Receiver:
-    '''A dataset that reads from Blender publishers.'''
+    '''Base class for reading from blender instances'''
 
     def __init__(self, blender_launcher):
         '''Initialize instance
