@@ -1,6 +1,7 @@
 import zmq
 from subprocess import Popen
 import sys
+import os
 
 class BlenderLauncher():
     '''Opens and closes Blender instances.
@@ -45,12 +46,15 @@ class BlenderLauncher():
         self.addresses = [f'{self.prot}://{self.bind_addr}:{p}' for p in ports]
         add_args = [' '.join(a) for a in self.instance_args]
 
+        my_env = os.environ.copy()
+
         self.processes = [Popen(f'blender {self.scene} --background --python {self.script} -- {addr} {args}', 
             shell=False,
             stdin=None, 
             stdout=open(f'./tmp/out_{idx}.txt', 'w'), 
             stderr=open(f'./tmp/err_{idx}.txt', 'w'), 
-            close_fds=True) for idx, (addr, args) in enumerate(zip(self.addresses, add_args))]
+            close_fds=True,
+            env=my_env) for idx, (addr, args) in enumerate(zip(self.addresses, add_args))]
         
         ctx = zmq.Context()
         self.s = ctx.socket(zmq.SUB)
