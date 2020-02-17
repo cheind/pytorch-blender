@@ -47,7 +47,7 @@ def main():
         width = bpy.context.scene.render.resolution_x 
         height = bpy.context.scene.render.resolution_y
 
-        img = Image.open('.' + scene.render.filepath[1:]).convert('RGB')
+        img = Image.open('./' + scene.render.filepath[2:]).convert('RGB')
         xy = get_pixels(scene, cube)
 
         # Send dictionary of data to subscribers
