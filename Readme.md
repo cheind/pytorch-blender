@@ -43,21 +43,24 @@ class MyDataset:
         # Data is a dictionary of {image, xy, id}, 
         # see publisher script
         d = self.recv(timeoutms=5000)   
-        return d['image'], d['xy'], d['id']
+        return d['image'], d['xy'], d['btid']
 
 kwargs = {
-    'num_instances': 2,
-    'script': 'blender.py',
-    'scene': 'scene.blend',
+    'num_instances': 4,         # Number of parallel instances
+    'scene': 'scene.blend',     # Scene to render in Blender
+    'script': 'blender.py',     # Script to run in Blender
+    'blend_path': '.',          # Additional path to look for Blender
 }
 
 with bt.BlenderLauncher(**kwargs) as bl:        
     ds = MyDataset(bl)        
     dl = data.DataLoader(ds, batch_size=4, num_workers=0)
 
-    for idx in range(10):
-        x, coords, ids = next(iter(dl))
-        print(f'Received from {ids}')
+    gen = iter(dl)
+
+    for _ in range(10):
+        (x, coords, ids) = next(gen)
+        print(f'Received from {ids.numpy()}')        
 ```
 
 ## Runtimes
@@ -88,7 +91,7 @@ Both packages are installable via `pip`. In order add packages to your Blender p
 ```
 where `<BLENDERPATH>` is the file path to the directory containing the Blender executable.
 
-**Note** The Blender executable needs to be in your PATH. On Windows it does not suffice to temporarily modify the PATH variable, as no derived shell is spawned and temporary environment variables are not passed on.
+**Note** If `<BLENDERPATH>` is not in your `PATH` then set `blend_path=...` in `BlenderLauncher`.
 
 ## How it works
 An instance of [BlenderLaunch](blendtorch/launcher.py) is responsible for starting and stopping background Blender instances. The script `blender.py` and additional arguments are passed to the starting Blender instance. `blender.py` creates a publisher socket for communication and starts producing random renderings. Meanwhile, a PyTorch dataset uses a [Receiver](blendtorch/receiver.py) instance to read data from publishers.

@@ -1,6 +1,12 @@
 import zmq
 from subprocess import Popen
 import sys
+import os
+import logging
+
+from blendtorch import finder
+
+logger = logging.getLogger('blendtorch')
 
 class BlenderLauncher():
     '''Opens and closes Blender instances.
@@ -9,7 +15,7 @@ class BlenderLauncher():
     processes.
     '''
 
-    def __init__(self, num_instances=3, start_port=11000, bind_addr='127.0.0.1', scene='scene.blend', script='blender.py', instance_args=None, prot='tcp'):
+    def __init__(self, num_instances=3, start_port=11000, bind_addr='127.0.0.1', scene='scene.blend', script='blender.py', instance_args=None, prot='tcp', blend_path=None):
         '''Initialize instance.
         
         Kwargs
@@ -27,6 +33,8 @@ class BlenderLauncher():
             line arguments.
         script: string
             Script to be called from Blender
+        blend_path: string
+            Additional paths to look for Blender
         '''
         self.num_instances = num_instances
         self.start_port = start_port
@@ -35,6 +43,7 @@ class BlenderLauncher():
         self.scene = scene
         self.instance_args = instance_args
         self.script = script
+        self.blend_path = blend_path
         if instance_args is None:
             self.instance_args = [[] for _ in range(num_instances)]
         assert num_instances > 0
@@ -43,14 +52,27 @@ class BlenderLauncher():
     def __enter__(self):
         ports = list(range(self.start_port, self.start_port + self.num_instances))
         self.addresses = [f'{self.prot}://{self.bind_addr}:{p}' for p in ports]
+        
+        # Add blendtorch instance identifiers to instances
+        [iargs.append(f'-btid {idx}') for idx,iargs in enumerate(self.instance_args)]        
+        # Combine args
         add_args = [' '.join(a) for a in self.instance_args]
 
-        self.processes = [Popen(f'blender {self.scene} --background --python {self.script} -- {addr} {args}', 
-            shell=False,
+        blender = finder.discover_blender(self.blend_path)
+        if blender is None:
+            logger.warning('Launching Blender failed; Blender not found.')
+            raise ValueError('Blender not found or misconfigured.') 
+        else:
+            logger.info(f'Blender found {blender["path"]} version {blender["major"]}.{blender["minor"]}')
+
+        env = os.environ.copy()        
+        self.processes = [Popen(f'"{blender["path"]}" {self.scene} --background --python-exit-code 255 --python {self.script} -- {addr} {args}', 
+            shell=True,
             stdin=None, 
             stdout=open(f'./tmp/out_{idx}.txt', 'w'), 
             stderr=open(f'./tmp/err_{idx}.txt', 'w'), 
-            close_fds=True) for idx, (addr, args) in enumerate(zip(self.addresses, add_args))]
+            close_fds=True,
+            env=env) for idx, (addr, args) in enumerate(zip(self.addresses, add_args))]
         
         ctx = zmq.Context()
         self.s = ctx.socket(zmq.SUB)
