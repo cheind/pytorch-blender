@@ -2,6 +2,8 @@ import torch
 import torch.utils.data as data
 import numpy as np
 import matplotlib.pyplot as plt
+import logging
+import argparse
 
 import blendtorch as bt
 
@@ -31,6 +33,11 @@ class MyDataset:
         return x, coords, d['id']
 
 def main():
+    logging.basicConfig(level=logging.INFO)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--blend-path', help='Directory to locate Blender')
+    args = parser.parse_args()
 
     instance_args = [
         ['-id', '0'], 
@@ -39,7 +46,7 @@ def main():
         ['-id', '3']
     ]
 
-    with bt.BlenderLauncher(num_instances=4, instance_args=instance_args, script='blender.py', scene='scene.blend') as bl:        
+    with bt.BlenderLauncher(num_instances=4, instance_args=instance_args, script='blender.py', scene='scene.blend', blend_path=args.blend_path) as bl:        
         ds = MyDataset(bl)
 
         # Note, in the following num_workers must be 0
