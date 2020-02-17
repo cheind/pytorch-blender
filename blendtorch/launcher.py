@@ -61,12 +61,12 @@ class BlenderLauncher():
         blender = finder.discover_blender(self.blend_path)
         if blender is None:
             logger.warning('Launching Blender failed; Blender not found.')
-            raise 'Blender not found.' 
+            raise ValueError('Blender not found or misconfigured.') 
         else:
             logger.info(f'Blender found {blender["path"]} version {blender["major"]}.{blender["minor"]}')
 
         env = os.environ.copy()        
-        self.processes = [Popen(f'"{blender["path"]}" {self.scene} --background --python {self.script} -- {addr} {args}', 
+        self.processes = [Popen(f'"{blender["path"]}" {self.scene} --background --python-exit-code 255 --python {self.script} -- {addr} {args}', 
             shell=True,
             stdin=None, 
             stdout=open(f'./tmp/out_{idx}.txt', 'w'), 
