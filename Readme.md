@@ -26,13 +26,13 @@ Note = {To be published at ETFA 2019},
 ```Python
 import torch.utils.data as data
 
-import blendtorch as bt
+from blendtorch.torch import BlenderLauncher, Receiver
 
 # Standard PyTorch Dataset convention
 class MyDataset:
 
     def __init__(self, blender_launcher, transforms=None):
-        self.recv = bt.Receiver(blender_launcher)
+        self.recv = Receiver(blender_launcher)
         self.transforms = transforms
 
     def __len__(self):
@@ -52,7 +52,7 @@ kwargs = {
     'blend_path': '.',          # Additional path to look for Blender
 }
 
-with bt.BlenderLauncher(**kwargs) as bl:        
+with BlenderLauncher(**kwargs) as bl:        
     ds = MyDataset(bl)        
     dl = data.DataLoader(ds, batch_size=4, num_workers=0)
 
