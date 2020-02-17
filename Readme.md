@@ -86,12 +86,12 @@ Both packages are installable via `pip`. In order add packages to your Blender p
 
 ```
 "<BLENDERPATH>2.79\python\bin\python.exe" -m ensurepip
-"<BLENDERPATH>2.79\python\bin\python.exe" -m pip install pyzmq
-"<BLENDERPATH>2.79\python\bin\python.exe" -m pip install pillow
+"<BLENDERPATH>2.79\python\bin\python.exe" -m pip install pyzmq pillow
 ```
-where `<BLENDERPATH>` is the file path to the directory containing the Blender executable.
+where `<BLENDERPATH>` is the file path to the directory containing the Blender executable. 
 
-**Note** If `<BLENDERPATH>` is not in your `PATH` then set `blend_path=...` in `BlenderLauncher`.
+**Note** you might need to add the `--user` switch to above commands in case you are not allowed to write to Blender directory.
+If `<BLENDERPATH>` is not in your `PATH` then set `blend_path=...` in `BlenderLauncher`.
 
 ## How it works
 An instance of [BlenderLaunch](blendtorch/launcher.py) is responsible for starting and stopping background Blender instances. The script `blender.py` and additional arguments are passed to the starting Blender instance. `blender.py` creates a publisher socket for communication and starts producing random renderings. Meanwhile, a PyTorch dataset uses a [Receiver](blendtorch/receiver.py) instance to read data from publishers.

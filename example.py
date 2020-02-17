@@ -39,14 +39,15 @@ def main():
     parser.add_argument('--blend-path', help='Directory to locate Blender')
     args = parser.parse_args()
 
-    with bt.BlenderLauncher(num_instances=4, script='blender.py', scene='scene.blend', blend_path=args.blend_path) as bl:        
+
+    with bt.BlenderLauncher(num_instances=4, script='blender27/blender.py', scene='blender27/scene.blend', blend_path=args.blend_path) as bl:        
         ds = MyDataset(bl)
 
         # Note, in the following num_workers must be 0
         dl = data.DataLoader(ds, batch_size=4, num_workers=0, shuffle=False)
 
         for idx, (x, coords, ids) in enumerate(dl):
-            print(f'Received from Blender process {ids.cpu().numpy()}')
+            print(f'Received from Blender processes {ids.cpu().numpy()}')
 
             # Drawing is the slow part ...
             fig, axs = plt.subplots(2,2,frameon=False, figsize=(16*2,9*2))

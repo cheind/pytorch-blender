@@ -61,7 +61,7 @@ class BlenderLauncher():
         args = [' '.join(a) for a in self.instance_args]
         
         if self.blender_info is None:
-            logger.warning('Launching Blender failed; Blender not found.')
+            logger.warning('Launching Blender failed;')
             raise ValueError('Blender not found or misconfigured.') 
         else:
             logger.info(f'Blender found {self.blender_info["path"]} version {self.blender_info["major"]}.{self.blender_info["minor"]}')
@@ -74,7 +74,7 @@ class BlenderLauncher():
         else:
             env['PYTHONPATH'] = this_package_path
 
-        self.processes = [Popen(f'"{self.blender_info["path"]}" {self.scene} --background --python-exit-code 255 --python {self.script} -- {args}', 
+        self.processes = [Popen(f'"{self.blender_info["path"]}" {self.scene} --background --python {self.script} -- {args}', 
             shell=True,
             stdin=None, 
             stdout=open(f'./tmp/out_{idx}.txt', 'w'), 
@@ -111,6 +111,7 @@ class BlenderLauncher():
         return self.s.recv_pyobj()
 
     def __exit__(self, exc_type, exc_value, exc_traceback):        
-        [p.terminate() for p in self.processes]
+        [p.terminate() for p in self.processes]        
         assert not any([p.poll() for p in self.processes]), 'Blender instance still open'
-        print('Blender instances closed')
+        logger.info('Blender instances closed')
+        
