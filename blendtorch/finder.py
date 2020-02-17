@@ -3,24 +3,35 @@ import subprocess
 import re
 import shutil
 import logging
+import tempfile
 from pathlib import Path
 
 logger = logging.getLogger('blendtorch')
 
+script = r'''
+import zmq
+from PIL import Image
+
+'''
+
 def discover_blender(additional_blender_paths=None):
-    '''Return Blender version as tuple (major, minor).'''
+    '''Return Blender info as dict with keys `path`, `major`, `minor`.'''
 
     my_env = os.environ.copy()
     if additional_blender_paths is not None:
         my_env['PATH'] = additional_blender_paths + os.pathsep + my_env['PATH']
 
-    exe = shutil.which('blender', path=my_env['PATH'])
-    if exe is None:
+    # Determine path
+
+    bpath = shutil.which('blender', path=my_env['PATH'])
+    if bpath is None:
         logger.warning('Could not find Blender.')
         return None
-    exe = Path(exe).resolve()
+    else:
+        logger.info(f'Discovered Blender in {bpath}')
+    bpath = Path(bpath).resolve()
     
-    p = subprocess.Popen(f'"{exe}" --version', 
+    p = subprocess.Popen(f'"{bpath}" --version', 
             shell=True,
             stdout=subprocess.PIPE, 
             stderr=subprocess.PIPE,
@@ -28,6 +39,8 @@ def discover_blender(additional_blender_paths=None):
 
     out, err = p.communicate()
     errcode = p.returncode
+
+    # Determine version
 
     r = re.compile(r'Blender\s(\d+)\.(\d+)', re.IGNORECASE)
     g = re.search(r, str(out))
@@ -39,7 +52,27 @@ def discover_blender(additional_blender_paths=None):
         logger.warning('Failed to parse Blender version.')
         return None
 
-    return {'path':exe, 'major':version[0], 'minor':version[1]}      
+    # Check if a minimal Python script works 
+    with tempfile.TemporaryFile(mode='w', delete=False) as fp:
+        fp.write(script)
+    
+    p = subprocess.Popen(f'"{bpath}" --background --python-exit-code 255 --python {fp.name}', 
+        shell=True,
+        stdout=subprocess.PIPE, 
+        stderr=subprocess.PIPE,
+        env=my_env)
+    out, err = p.communicate()
+    errcode = p.returncode
+    os.remove(fp.name)
+
+    if errcode != 0:
+        logger.warning('Failed to run minimal Blender script; ensure Python requirements are installed.')
+        return None
+
+    return {'path':bpath, 'major':version[0], 'minor':version[1]}      
+
+def _main():
+    print(discover_blender())
 
 if __name__ == '__main__':
-    print(discover_blender('c:/dev/blender279'))
+    _main()
