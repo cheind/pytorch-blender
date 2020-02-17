@@ -30,7 +30,7 @@ class MyDataset:
 
         if self.transforms:
             x = self.transforms(x)
-        return x, coords, d['id']
+        return x, coords, d['btid']
 
 def main():
     logging.basicConfig(level=logging.INFO)
@@ -39,14 +39,7 @@ def main():
     parser.add_argument('--blend-path', help='Directory to locate Blender')
     args = parser.parse_args()
 
-    instance_args = [
-        ['-id', '0'], 
-        ['-id', '1'], 
-        ['-id', '2'], 
-        ['-id', '3']
-    ]
-
-    with bt.BlenderLauncher(num_instances=4, instance_args=instance_args, script='blender.py', scene='scene.blend', blend_path=args.blend_path) as bl:        
+    with bt.BlenderLauncher(num_instances=4, script='blender.py', scene='scene.blend', blend_path=args.blend_path) as bl:        
         ds = MyDataset(bl)
 
         # Note, in the following num_workers must be 0

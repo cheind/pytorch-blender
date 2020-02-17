@@ -52,6 +52,10 @@ class BlenderLauncher():
     def __enter__(self):
         ports = list(range(self.start_port, self.start_port + self.num_instances))
         self.addresses = [f'{self.prot}://{self.bind_addr}:{p}' for p in ports]
+        
+        # Add blendtorch instance identifiers to instances
+        [iargs.append(f'-btid {idx}') for idx,iargs in enumerate(self.instance_args)]        
+        # Combine args
         add_args = [' '.join(a) for a in self.instance_args]
 
         blender = finder.discover_blender(self.blend_path)
@@ -61,7 +65,7 @@ class BlenderLauncher():
         else:
             logger.info(f'Blender found {blender["path"]} version {blender["major"]}.{blender["minor"]}')
 
-        env = os.environ.copy()
+        env = os.environ.copy()        
         self.processes = [Popen(f'"{blender["path"]}" {self.scene} --background --python {self.script} -- {addr} {args}', 
             shell=True,
             stdin=None, 

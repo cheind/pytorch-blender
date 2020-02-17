@@ -43,10 +43,10 @@ class MyDataset:
         # Data is a dictionary of {image, xy, id}, 
         # see publisher script
         d = self.recv(timeoutms=5000)   
-        return d['image'], d['xy'], d['id']
+        return d['image'], d['xy'], d['btid']
 
 kwargs = {
-    'num_instances': 2,         # Number of parallel instances
+    'num_instances': 4,         # Number of parallel instances
     'scene': 'scene.blend',     # Scene to render in Blender
     'script': 'blender.py',     # Script to run in Blender
     'blend_path': '.',          # Additional path to look for Blender
@@ -56,9 +56,11 @@ with bt.BlenderLauncher(**kwargs) as bl:
     ds = MyDataset(bl)        
     dl = data.DataLoader(ds, batch_size=4, num_workers=0)
 
-    for idx in range(10):
-        x, coords, ids = next(iter(dl))
-        print(f'Received from {ids}')
+    gen = iter(dl)
+
+    for _ in range(10):
+        (x, coords, ids) = next(gen)
+        print(f'Received from {ids.numpy()}')        
 ```
 
 ## Runtimes
