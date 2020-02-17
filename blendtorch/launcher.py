@@ -47,9 +47,10 @@ class BlenderLauncher():
         add_args = [' '.join(a) for a in self.instance_args]
 
         my_env = os.environ.copy()
+        # os.environ["PATH"] += os.pathsep + path
 
         self.processes = [Popen(f'blender {self.scene} --background --python {self.script} -- {addr} {args}', 
-            shell=False,
+            shell=True,
             stdin=None, 
             stdout=open(f'./tmp/out_{idx}.txt', 'w'), 
             stderr=open(f'./tmp/err_{idx}.txt', 'w'), 
