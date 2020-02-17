@@ -45,9 +45,8 @@ def main():
         # Note, in the following num_workers must be 0
         dl = data.DataLoader(ds, batch_size=4, num_workers=0, shuffle=False)
 
-        for idx in enumerate(dl):
-            x, coords, ids = next(iter(dl))
-            print(f'Received from {ids}')
+        for idx, (x, coords, ids) in enumerate(dl):
+            print(f'Received from Blender process {ids.cpu().numpy()}')
 
             # Drawing is the slow part ...
             fig, axs = plt.subplots(2,2,frameon=False, figsize=(16*2,9*2))
@@ -57,7 +56,7 @@ def main():
                 axs[i].imshow(x[i], aspect='auto', origin='upper')
                 axs[i].scatter(coords[i][:, 0], coords[i][:, 1], s=100)
                 axs[i].set_axis_off()
-            fig.savefig(f'tmp/output_{idx}.png')
+            fig.savefig(f'./tmp/output_{idx}.png')
             plt.close(fig)
 
 if __name__ == '__main__':
