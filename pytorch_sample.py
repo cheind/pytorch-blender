@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import logging
 import argparse
 
-import blendtorch as bt
+from blendtorch import torch as bt
 
 class MyDataset:
     '''A dataset that reads from Blender publishers.'''

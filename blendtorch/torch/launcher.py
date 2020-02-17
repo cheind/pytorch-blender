@@ -4,7 +4,7 @@ import sys
 import os
 import logging
 
-from blendtorch import finder
+from blendtorch.torch.finder import discover_blender
 
 logger = logging.getLogger('blendtorch')
 
@@ -49,30 +49,38 @@ class BlenderLauncher():
         assert num_instances > 0
         assert len(self.instance_args) == num_instances
 
+        self.blender_info = discover_blender(self.blend_path)
+
     def __enter__(self):
         ports = list(range(self.start_port, self.start_port + self.num_instances))
         self.addresses = [f'{self.prot}://{self.bind_addr}:{p}' for p in ports]
         
         # Add blendtorch instance identifiers to instances
-        [iargs.append(f'-btid {idx}') for idx,iargs in enumerate(self.instance_args)]        
-        # Combine args
-        add_args = [' '.join(a) for a in self.instance_args]
-
-        blender = finder.discover_blender(self.blend_path)
-        if blender is None:
+        [iargs.append(f'-btid {idx}') for idx,iargs in enumerate(self.instance_args)]      
+        [iargs.append(f'-bind-address {addr}') for addr,iargs in zip(self.addresses,self.instance_args)]
+        args = [' '.join(a) for a in self.instance_args]
+        
+        if self.blender_info is None:
             logger.warning('Launching Blender failed; Blender not found.')
             raise ValueError('Blender not found or misconfigured.') 
         else:
-            logger.info(f'Blender found {blender["path"]} version {blender["major"]}.{blender["minor"]}')
+            logger.info(f'Blender found {self.blender_info["path"]} version {self.blender_info["major"]}.{self.blender_info["minor"]}')
 
-        env = os.environ.copy()        
-        self.processes = [Popen(f'"{blender["path"]}" {self.scene} --background --python-exit-code 255 --python {self.script} -- {addr} {args}', 
+        # Update python path to find this package within Blender python.
+        env = os.environ.copy()  
+        this_package_path = os.pathsep + os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
+        if 'PYTHONPATH' in env:
+            env['PYTHONPATH'] += this_package_path
+        else:
+            env['PYTHONPATH'] = this_package_path
+
+        self.processes = [Popen(f'"{self.blender_info["path"]}" {self.scene} --background --python-exit-code 255 --python {self.script} -- {args}', 
             shell=True,
             stdin=None, 
             stdout=open(f'./tmp/out_{idx}.txt', 'w'), 
             stderr=open(f'./tmp/err_{idx}.txt', 'w'), 
             close_fds=True,
-            env=env) for idx, (addr, args) in enumerate(zip(self.addresses, add_args))]
+            env=env) for idx,args in enumerate(args)]
         
         ctx = zmq.Context()
         self.s = ctx.socket(zmq.SUB)

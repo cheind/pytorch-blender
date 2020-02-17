@@ -7,32 +7,22 @@ import numpy as np
 import os
 from PIL import Image
 
+
+from blendtorch.blender.arguments import parse_script_args
+from blendtorch.blender.publisher import Publisher
+
 def main():
-    ''' Sample script publishing random scene renderings.'''
-    argv = sys.argv[1:]
-    if '--' in sys.argv:
-        sys.argv.index("--")
-        argv = sys.argv[sys.argv.index("--") + 1:]
 
-    import argparse
-    parser = argparse.ArgumentParser(description='Blender render script.')
-    parser.add_argument('bind', help='Bind-to address')
-    parser.add_argument('-btid', type=int, help='Identifier for this Blender instance', default=int(os.getpid()))
-    args = parser.parse_args(argv)
-
-    # Create a publisher
-    ctx = zmq.Context()
-    s = ctx.socket(zmq.PUB)
-    s.setsockopt(zmq.LINGER, 0)
-    s.bind(args.bind)
-
-    # We use our pid as identifier for temporary data
-    pid = args.btid
-
+    # Parse script arguments
+    args, remainder = parse_script_args()
+    
+    # Create a publisher       
+    pub = Publisher(args.bind_address, args.btid)
+        
     # Setup scene and random material
     scene = bpy.data.scenes["Scene"]
     scene.render.resolution_percentage = 100
-    scene.render.filepath = '//tmp/image_%d.png' % pid
+    scene.render.filepath = '//tmp/image_%d.png' % args.btid
     cube = bpy.data.objects['Cube']
     mat = bpy.data.materials.new('RandomMeshMaterial')
     mat.diffuse_color = np.random.rand(3).tolist()
@@ -51,10 +41,9 @@ def main():
         xy = get_pixels(scene, cube)
 
         # Send dictionary of data to subscribers
-        s.send_pyobj({
+        pub.publish({
             'image': np.asarray(img),
             'xy': xy,
-            'btid': args.btid
         })
 
 def get_pixels(scene, obj):
