@@ -22,7 +22,7 @@ def main():
     # Setup scene and random material
     scene = bpy.data.scenes["Scene"]
     scene.render.resolution_percentage = 100
-    scene.render.filepath = '//tmp/image_%d.png' % args.btid
+    scene.render.filepath = '//../tmp/image_%d.png' % args.btid
     cube = bpy.data.objects['Cube']
     mat = bpy.data.materials.new('RandomMeshMaterial')
     mat.diffuse_color = np.random.rand(3).tolist()
@@ -37,7 +37,7 @@ def main():
         width = bpy.context.scene.render.resolution_x 
         height = bpy.context.scene.render.resolution_y
 
-        img = Image.open('./' + scene.render.filepath[2:]).convert('RGB')
+        img = Image.open(os.path.join('./', scene.render.filepath[5:])).convert('RGB')
         xy = get_pixels(scene, cube)
 
         # Send dictionary of data to subscribers
