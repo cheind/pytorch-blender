@@ -28,7 +28,7 @@ def discover_blender(additional_blender_paths=None):
         logger.warning('Could not find Blender.')
         return None
     else:
-        logger.info(f'Discovered Blender in {bpath}')
+        logger.debug(f'Discovered Blender in {bpath}')
     bpath = Path(bpath).resolve()
     
     p = subprocess.Popen(f'"{bpath}" --version', 
