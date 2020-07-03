@@ -2,6 +2,7 @@ import numpy as np
 import bpy, bpy_extras, gpu, bgl
 from functools import partial
 from OpenGL.GL import glGetTexImage
+from PIL import ImageDraw2
 
 
 class PlayAnimationOnce:
@@ -65,6 +66,9 @@ class OffScreenRenderer:
         # https://docs.blender.org/api/blender2.8/gpu.html       
         # That's why we use PyOpenGL at this point instead.     
         glGetTexImage(bgl.GL_TEXTURE_2D, 0, bgl.GL_RGBA, bgl.GL_UNSIGNED_BYTE, self.buffer)        
+
+        pimg = Image.fromarray(np.flipud(self.buffer))  
+        pimg.save('c:/tmp/image.png') 
         
         print('done')
         bpy.types.SpaceView3D.draw_handler_remove(self.handle, 'WINDOW') 
