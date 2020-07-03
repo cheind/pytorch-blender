@@ -11,6 +11,7 @@ class MyDataset:
     '''A dataset that reads from Blender publishers.'''
 
     def __init__(self, blender_launcher, transforms=None):
+        self.addr = blender_launcher.addresses
         self.recv = bt.Receiver()
         self.recv.connect(blender_launcher.addresses)
         self.transforms = transforms
@@ -49,10 +50,11 @@ def main():
         dl = data.DataLoader(ds, batch_size=2, num_workers=0, shuffle=False)
 
         import time
-        t = time.time()
+        t = None
         idx = 0
         for imgs, ids in dl:
-            
+            if t is None:
+                t = time.time()
             print(ids)
 
         print(time.time() - t)
