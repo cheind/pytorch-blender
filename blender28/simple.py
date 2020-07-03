@@ -5,22 +5,22 @@ from OpenGL.GL import glGetTexImage
 from PIL import Image
 
 
-class PlayAnimationOnce:
+class AnimationControl:
         
-    def play(self, startfn=None, finishedfn=None):
+    def play_once(self, startfn=None, finishedfn=None):
         bpy.context.scene.frame_set(bpy.context.scene.frame_start)
-        self.pstop = partial(self.stop, finishedfn=finishedfn)
-        bpy.app.handlers.frame_change_pre.append(self.pstop)                
+        self._partial_on_frame_pre = partial(self._on_frame_pre, finishedfn=finishedfn)
+        bpy.app.handlers.frame_change_pre.append(self._partial_on_frame_pre)                
         
         if startfn is not None:
             startfn()
         bpy.ops.screen.animation_play()                
         
                         
-    def stop(self, scene, *args, finishedfn=None):
+    def _on_frame_pre(self, scene, *args, finishedfn=None):
         if bpy.context.scene.frame_current == bpy.context.scene.frame_end:
             bpy.ops.screen.animation_cancel()
-            bpy.app.handlers.frame_change_pre.remove(self.pstop)
+            bpy.app.handlers.frame_change_pre.remove(self._partial_on_frame_pre)
             if finishedfn is not None:
                 finishedfn()        
 
@@ -39,6 +39,7 @@ class OffScreenRenderer:
         self.buffer = np.zeros((shape[0], shape[1], 4), dtype=np.uint8)
         self.update_camera()
         self.area, self.space = self.find_view3d()
+        self.handle = None
         
     def update_camera(self):
         self.view_matrix = self.camera.matrix_world.inverted()
@@ -79,15 +80,23 @@ class OffScreenRenderer:
     def set_render_options(self, shading='RENDERED', overlays=False):
         self.space.shading.type = shading
         self.space.overlay.show_overlays = overlays
+        
+    @property
+    def enabled(self):
+        return self.handle != None
+    
+    @enabled.setter 
+    def enabled(self, toggle):
+        if toggle and self.handle is None:
+            self.handle = bpy.types.SpaceView3D.draw_handler_add(off.render, (), 'WINDOW', 'POST_PIXEL')
+        elif not toggle and self.handle is not None:
+            bpy.types.SpaceView3D.draw_handler_remove(self.handle, 'WINDOW')
+            self.handle = None
 
 
 off = OffScreenRenderer()
 off.set_render_options()
 
-#off.handle = handle
-
-
-#off.handle = handle
 
 obj = bpy.data.objects["Cube"]
 randomrot = lambda: np.random.uniform(0,2*np.pi)    
@@ -98,18 +107,18 @@ for i in range(3):
     drv.driver.expression = f'randomrot()'
 
 bpy.context.scene.frame_start = 0
-bpy.context.scene.frame_end = 100
+bpy.context.scene.frame_end = 10
 
 def started():
-    off.handle = bpy.types.SpaceView3D.draw_handler_add(off.render, (), 'WINDOW', 'POST_PIXEL')
+    off.enabled = True
     print('started')
     
 def stopped():
-    bpy.types.SpaceView3D.draw_handler_remove(off.handle, 'WINDOW')
+    off.enabled = False
     print('stopped')
 
-anim = PlayAnimationOnce()
-anim.play(started, stopped)
+anim = AnimationControl()
+anim.play_once(started, stopped)
 
 #off.enabled = True
 #for i in range(0,10):
