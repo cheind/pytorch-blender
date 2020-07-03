@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import logging
 import argparse
 
-from blendtorch import torch as bt
+from blendtorch import torch as bt  
 
 class MyDataset:
     '''A dataset that reads from Blender publishers.'''
@@ -41,15 +41,18 @@ def main():
     parser.add_argument('--blend-path', help='Directory to locate Blender')
     args = parser.parse_args()
 
-
     with bt.BlenderLauncher(num_instances=4, script='blender28/simple.py', scene='blender28/scene.blend', blend_path=args.blend_path) as bl:        
         ds = MyDataset(bl)
 
         # Note, in the following num_workers must be 0
         dl = data.DataLoader(ds, batch_size=4, num_workers=0, shuffle=False)
 
+        import time
+        t = time.time()
         for ids in dl:
             print(ids)
+
+        print(time.time() - t)
 
         # for idx, (x, coords, ids) in enumerate(dl):
         #     print(f'Received from Blender processes {ids.cpu().numpy()}')
