@@ -7,9 +7,6 @@ from PIL import Image
 from blendtorch.blender.controller import Controller
 from blendtorch.blender.offscreen import OffScreenRenderer
 
-
-
-
 obj = bpy.data.objects["Cube"]
 randomrot = lambda: np.random.uniform(0,2*np.pi)    
 bpy.app.driver_namespace["randomrot"] = randomrot
@@ -35,11 +32,11 @@ def after_image(arr):
 
 off = OffScreenRenderer()
 off.set_render_options()
-off.after_image(after_image)
+off.after_image.add(after_image)
 
 anim = Controller()
-anim.before_animation(started, off)
-anim.after_animation(stopped, off)
+anim.before_animation.add(started, off)
+anim.after_animation.add(stopped, off)
 anim.play_once()
 
 #off.enabled = True

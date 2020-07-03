@@ -68,7 +68,7 @@ class OffScreenRenderer:
     @enabled.setter 
     def enabled(self, toggle):
         if toggle and self.handle is None:
-            self.handle = bpy.types.SpaceView3D.draw_handler_add(off.render, (), 'WINDOW', 'POST_PIXEL')
+            self.handle = bpy.types.SpaceView3D.draw_handler_add(self.render, (), 'WINDOW', 'POST_PIXEL')
         elif not toggle and self.handle is not None:
             bpy.types.SpaceView3D.draw_handler_remove(self.handle, 'WINDOW')
             self.handle = None
