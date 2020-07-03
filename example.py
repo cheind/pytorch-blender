@@ -11,19 +11,20 @@ class MyDataset:
     '''A dataset that reads from Blender publishers.'''
 
     def __init__(self, blender_launcher, transforms=None):
-        self.recv = bt.Receiver(blender_launcher)
+        self.recv = bt.Receiver()
+        self.recv.connect(blender_launcher.addresses)
         self.transforms = transforms
 
     def __len__(self):
         # Virtually anything you'd like to end episodes.
-        return 100 
+        return 20
 
     def __getitem__(self, idx):        
         # Data is a dictionary of {image, coordinates, id},
         # see publisher script
         d = self.recv(timeoutms=5000)    
 
-        return d['btid']
+        return d['image'], d['btid']
         
         # x, coords = d['image'], d['xy']        
         # h,w = x.shape[0], x.shape[1]
@@ -41,15 +42,17 @@ def main():
     parser.add_argument('--blend-path', help='Directory to locate Blender')
     args = parser.parse_args()
 
-    with bt.BlenderLauncher(num_instances=4, script='blender28/simple.py', scene='blender28/scene.blend', blend_path=args.blend_path) as bl:        
+    with bt.BlenderLauncher(num_instances=2, script='blender28/simple.py', scene='blender28/scene.blend', blend_path=args.blend_path) as bl:        
         ds = MyDataset(bl)
 
         # Note, in the following num_workers must be 0
-        dl = data.DataLoader(ds, batch_size=4, num_workers=0, shuffle=False)
+        dl = data.DataLoader(ds, batch_size=2, num_workers=0, shuffle=False)
 
         import time
         t = time.time()
-        for ids in dl:
+        idx = 0
+        for imgs, ids in dl:
+            
             print(ids)
 
         print(time.time() - t)
