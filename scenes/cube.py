@@ -14,9 +14,6 @@ def main():
         drv = obj.driver_add('rotation_euler', i)
         drv.driver.expression = f'randomrot()'
 
-    bpy.context.scene.frame_start = 0
-    bpy.context.scene.frame_end = 10
-
     def started(offscreen):
         offscreen.enabled = True
         print('started')
@@ -37,6 +34,6 @@ def main():
     anim = btb.Controller()
     anim.before_animation.add(started, off)
     anim.after_animation.add(stopped, off)
-    anim.play(once=False)
+    anim.play(once=False, startframe=0, endframe=10)
 
 main()
