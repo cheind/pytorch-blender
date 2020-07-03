@@ -1,43 +1,53 @@
 import numpy as np
-import bpy, gpu, bgl
-from functools import partial
-from OpenGL.GL import glGetTexImage
+import bpy
 from PIL import Image
   
 from blendtorch.blender.controller import Controller
 from blendtorch.blender.offscreen import OffScreenRenderer
+from blendtorch.blender.publisher import Publisher
+from blendtorch.blender.arguments import parse_script_args
 
-obj = bpy.data.objects["Cube"]
-randomrot = lambda: np.random.uniform(0,2*np.pi)    
-bpy.app.driver_namespace["randomrot"] = randomrot
+def main():
+    args, remainder = parse_script_args()
 
-for i in range(3):
-    drv = obj.driver_add('rotation_euler', i)
-    drv.driver.expression = f'randomrot()'
+    obj = bpy.data.objects["Cube"]
+    randomrot = lambda: np.random.uniform(0,2*np.pi)    
+    bpy.app.driver_namespace["randomrot"] = randomrot
 
-bpy.context.scene.frame_start = 0
-bpy.context.scene.frame_end = 10
+    for i in range(3):
+        drv = obj.driver_add('rotation_euler', i)
+        drv.driver.expression = f'randomrot()'
 
-def started(offscreen):
-    offscreen.enabled = True
-    print('started')
-    
-def stopped(offscreen):
-    offscreen.enabled = False
-    print('stopped')
+    bpy.context.scene.frame_start = 0
+    bpy.context.scene.frame_end = 10
 
-def after_image(arr):    
-    pimg = Image.fromarray(np.flipud(arr))  
-    pimg.save(f'c:/tmp/{bpy.context.scene.frame_current:05d}_image.bmp')
+    def started(offscreen):
+        offscreen.enabled = True
+        print('started')
+        
+    def stopped(offscreen):
+        offscreen.enabled = False
+        print('stopped')
+        
+    def after_image(arr, pub):    
+        pub.publish(image=arr)
+        print('published')
+        # pimg = Image.fromarray(np.flipud(arr))  
+        # pimg.save(f'c:/tmp/{bpy.context.scene.frame_current:05d}_image.bmp')
 
-off = OffScreenRenderer()
-off.set_render_options()
-off.after_image.add(after_image)
+    pub = Publisher(args.bind_address, args.btid)
+    print(args.bind_address, args.btid)
 
-anim = Controller()
-anim.before_animation.add(started, off)
-anim.after_animation.add(stopped, off)
-anim.play_once()
+    off = OffScreenRenderer()
+    off.set_render_options()
+    off.after_image.add(after_image, pub=pub)
+
+    anim = Controller()
+    anim.before_animation.add(started, off)
+    anim.after_animation.add(stopped, off)
+    anim.play(once=False)
+
+main()
 
 #off.enabled = True
 #for i in range(0,10):
