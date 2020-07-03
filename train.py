@@ -10,10 +10,9 @@ from blendtorch import torch as bt
 class MyDataset:
     '''A dataset that reads from Blender publishers.'''
 
-    def __init__(self, blender_launcher, transforms=None):
-        self.addr = blender_launcher.addresses
+    def __init__(self, addresses, transforms=None):
         self.recv = bt.Receiver()
-        self.recv.connect(blender_launcher.addresses)
+        self.recv.connect(addresses)
         self.transforms = transforms
 
     def __len__(self):
@@ -21,9 +20,8 @@ class MyDataset:
         return 20
 
     def __getitem__(self, idx):        
-        # Data is a dictionary of {image, coordinates, id},
-        # see publisher script
-        d = self.recv(timeoutms=5000)    
+        # Data is a dictionary of {image, coordinates, id} see publisher script
+        d = self.recv(timeoutms=5000)
 
         return d['image'], d['btid']
         
@@ -37,17 +35,20 @@ class MyDataset:
         # return x, coords, d['btid']
 
 def main():
+    # Requires blender to be in path
+    # set PATH=c:\Program Files\Blender Foundation\Blender 2.83\;%PATH%
+
     logging.basicConfig(level=logging.INFO)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--blend-path', help='Directory to locate Blender')
+    parser.add_argument('scene', help='Blender scene to run')
     args = parser.parse_args()
 
-    with bt.BlenderLauncher(num_instances=2, script='blender28/simple.py', scene='blender28/scene.blend', blend_path=args.blend_path) as bl:        
-        ds = MyDataset(bl)
+    with bt.BlenderLauncher(num_instances=2, script=f'scenes/{args.scene}.py', scene='scenes/{args.scene}.blend') as bl:
+        ds = MyDataset(bl.addresses)
 
         # Note, in the following num_workers must be 0
-        dl = data.DataLoader(ds, batch_size=2, num_workers=0, shuffle=False)
+        dl = data.DataLoader(ds, batch_size=4, num_workers=0, shuffle=False)
 
         import time
         t = None
@@ -72,7 +73,6 @@ def main():
             #     axs[i].set_axis_off()
             # fig.savefig(f'./tmp/output_{idx}.png')
             # plt.close(fig)
-        print('done')
 
 if __name__ == '__main__':
     main()
