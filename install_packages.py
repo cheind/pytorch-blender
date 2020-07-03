@@ -10,6 +10,7 @@ def install(name):
 
 install('PyOpenGL')
 install('Pillow')
+install('PyZMQ')
 
 # need to start blender like this: 
 # "c:\Program Files\Blender Foundation\Blender 2.83\blender.exe" --python-use-system-env --python blender28\simple.py
