@@ -55,7 +55,7 @@ class BlenderLauncher():
         ports = list(range(self.start_port, self.start_port + self.num_instances))
         self.addresses = [f'{self.prot}://{self.bind_addr}:{p}' for p in ports]
         
-        # Add blendtorch instance identifiers to instances
+        # Add blendtorch instance identifiers to instances        
         [iargs.append(f'-btid {idx}') for idx,iargs in enumerate(self.instance_args)]      
         [iargs.append(f'-bind-address {addr}') for addr,iargs in zip(self.addresses,self.instance_args)]
         args = [' '.join(a) for a in self.instance_args]
@@ -74,11 +74,11 @@ class BlenderLauncher():
         else:
             env['PYTHONPATH'] = this_package_path
 
-        self.processes = [Popen(f'"{self.blender_info["path"]}" {self.scene} --background --python {self.script} -- {args}', 
-            shell=True,
+        self.processes = [Popen(f'"{self.blender_info["path"]}" {self.scene} --python-use-system-env --log-file ./tmp/log_{idx}.txt --python {self.script} -- {args}', 
+            shell=False,
             stdin=None, 
-            stdout=open(f'./tmp/out_{idx}.txt', 'w'), 
-            stderr=open(f'./tmp/err_{idx}.txt', 'w'), 
+            stdout=open(f'./tmp/out_{idx}.txt', 'w'),
+            stderr=None, 
             close_fds=True,
             env=env) for idx,args in enumerate(args)]
         
@@ -110,7 +110,7 @@ class BlenderLauncher():
         assert self.s in socks, 'No response within timeout interval.'
         return self.s.recv_pyobj()
 
-    def __exit__(self, exc_type, exc_value, exc_traceback):        
+    def __exit__(self, exc_type, exc_value, exc_traceback):    
         [p.terminate() for p in self.processes]        
         assert not any([p.poll() for p in self.processes]), 'Blender instance still open'
         logger.info('Blender instances closed')

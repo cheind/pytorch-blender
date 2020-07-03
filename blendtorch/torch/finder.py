@@ -10,7 +10,6 @@ logger = logging.getLogger('blendtorch')
 
 script = r'''
 import zmq
-from PIL import Image
 
 '''
 
@@ -56,7 +55,7 @@ def discover_blender(additional_blender_paths=None):
     with tempfile.TemporaryFile(mode='w', delete=False) as fp:
         fp.write(script)
     
-    p = subprocess.Popen(f'"{bpath}" --background --python-exit-code 255 --python {fp.name}', 
+    p = subprocess.Popen(f'"{bpath}" --background --python-use-system-env --python-exit-code 255 --python {fp.name}', 
         shell=True,
         stdout=subprocess.PIPE, 
         stderr=subprocess.PIPE,

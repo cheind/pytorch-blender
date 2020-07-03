@@ -10,7 +10,7 @@ class Publisher:
         self.sock.bind(bind_address)
         self.btid = btid
         
-    def publish(self, kwargs):
+    def publish(self, **kwargs):
         data = dict(btid=self.btid)
         data.update(kwargs)
         self.sock.send_pyobj(data)
