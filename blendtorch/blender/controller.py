@@ -24,7 +24,6 @@ class Controller:
         bpy.context.scene.frame_start = startframe
         bpy.context.scene.frame_end = endframe
         bpy.context.scene.frame_set(bpy.context.scene.frame_start)
-
                         
     def _on_pre_frame(self, scene, *args):
         if self.once and bpy.context.scene.frame_current == bpy.context.scene.frame_end:

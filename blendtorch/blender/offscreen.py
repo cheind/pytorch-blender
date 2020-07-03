@@ -3,30 +3,22 @@ import bpy, gpu, bgl
 from OpenGL.GL import glGetTexImage
 
 from .signal import Signal
+from .camera import image_shape, view_projection_matrix
 
 class OffScreenRenderer:
-    def __init__(self, shape=None):        
-        if shape is None:
-            scale = bpy.context.scene.render.resolution_percentage / 100.0
-            shape = (
-                int(bpy.context.scene.render.resolution_y * scale),
-                int(bpy.context.scene.render.resolution_x * scale)
-            )
-            
-        self.shape = shape        
-        self.offscreen = gpu.types.GPUOffScreen(shape[1], shape[0])
+    def __init__(self):
+        self.shape = image_shape()
+        self.offscreen = gpu.types.GPUOffScreen(self.shape[1], self.shape[0])
         self.camera = bpy.context.scene.camera
-        self.buffer = np.zeros((shape[0], shape[1], 4), dtype=np.uint8)
-        self.update_camera()
+        self.buffer = np.zeros((self.shape[0], self.shape[1], 4), dtype=np.uint8)
         self.area, self.space = self.find_view3d()
         self.handle = None
-
         self.after_image = Signal()
-        
-    def update_camera(self):
-        self.view_matrix = self.camera.matrix_world.inverted()
-        self.proj_matrix = self.camera.calc_matrix_camera(bpy.context.evaluated_depsgraph_get(), x=self.shape[1], y=self.shape[0])
-                
+        self.update_perspective()
+
+    def update_perspective(self, camera=None):
+        self.view_matrix, self.proj_matrix = view_projection_matrix(camera)
+
     def render(self):
         if not bpy.context.space_data == self.space:
             return
