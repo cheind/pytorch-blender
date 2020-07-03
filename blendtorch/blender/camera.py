@@ -20,6 +20,7 @@ def view_projection_matrix(camera=None):
 def project_points(obj, camera=None):
     # https://docs.blender.org/api/current/bpy_extras.object_utils.html
     # https://github.com/dfelinto/blender/blob/master/release/scripts/modules/bpy_extras/object_utils.py
+    # https://blender.stackexchange.com/questions/15102/what-is-blenders-camera-projection-matrix-model
     '''Get 2D projection coordinates object's vertex coordinates.'''
     camera = camera or bpy.context.scene.camera
     scene = bpy.context.scene
