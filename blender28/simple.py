@@ -2,15 +2,14 @@ import numpy as np
 import bpy, bpy_extras, gpu, bgl
 from functools import partial
 from OpenGL.GL import glGetTexImage
-from PIL import ImageDraw2
+from PIL import Image
 
 
 class PlayAnimationOnce:
         
-    def play(self, renderfn, renderfn_args=(), startfn=None, finishedfn=None):
+    def play(self, startfn=None, finishedfn=None):
         bpy.context.scene.frame_set(bpy.context.scene.frame_start)
-        handle = bpy.types.SpaceView3D.draw_handler_add(renderfn, renderfn_args, 'WINDOW', 'POST_PIXEL')
-        self.pstop = partial(self.stop, handle=handle, finishedfn=finishedfn)
+        self.pstop = partial(self.stop, finishedfn=finishedfn)
         bpy.app.handlers.frame_change_pre.append(self.pstop)                
         
         if startfn is not None:
@@ -18,13 +17,12 @@ class PlayAnimationOnce:
         bpy.ops.screen.animation_play()                
         
                         
-    def stop(self, scene, handle, finishedfn):
+    def stop(self, scene, *args, finishedfn=None):
         if bpy.context.scene.frame_current == bpy.context.scene.frame_end:
             bpy.ops.screen.animation_cancel()
-            bpy.types.SpaceView3D.draw_handler_remove(handle, 'WINDOW')
             bpy.app.handlers.frame_change_pre.remove(self.pstop)
             if finishedfn is not None:
-                finishedfn()
+                finishedfn()        
 
 class OffScreenRenderer:
     def __init__(self, shape=None):        
@@ -40,7 +38,7 @@ class OffScreenRenderer:
         self.camera = bpy.context.scene.camera
         self.buffer = np.zeros((shape[0], shape[1], 4), dtype=np.uint8)
         self.update_camera()
-        self.space = self.first_view3d_space_()
+        self.area, self.space = self.find_view3d()
         
     def update_camera(self):
         self.view_matrix = self.camera.matrix_world.inverted()
@@ -68,25 +66,63 @@ class OffScreenRenderer:
         glGetTexImage(bgl.GL_TEXTURE_2D, 0, bgl.GL_RGBA, bgl.GL_UNSIGNED_BYTE, self.buffer)        
 
         pimg = Image.fromarray(np.flipud(self.buffer))  
-        pimg.save('c:/tmp/image.png') 
-        
-        print('done')
-        bpy.types.SpaceView3D.draw_handler_remove(self.handle, 'WINDOW') 
+        pimg.save(f'c:/tmp/{bpy.context.scene.frame_current:05d}_image.bmp')
 
-    def first_view3d_space_(self):
+
+    def find_view3d(self):
         areas = [a for a in bpy.context.screen.areas if a.type == 'VIEW_3D']
         assert len(areas) > 0
         spaces = [s for s in areas[0].spaces if s.type == 'VIEW_3D']
         assert len(spaces) > 0
-        return spaces[0]
+        return areas[0], spaces[0]
 
     def set_render_options(self, shading='RENDERED', overlays=False):
-        s = self.first_view3d_space_()
-        s.shading.type = shading
-        s.overlay.show_overlays = overlays
+        self.space.shading.type = shading
+        self.space.overlay.show_overlays = overlays
+
 
 off = OffScreenRenderer()
 off.set_render_options()
 
-handle = bpy.types.SpaceView3D.draw_handler_add(off.render, (), 'WINDOW', 'POST_PIXEL')
-off.handle = handle
+#off.handle = handle
+
+
+#off.handle = handle
+
+obj = bpy.data.objects["Cube"]
+randomrot = lambda: np.random.uniform(0,2*np.pi)    
+bpy.app.driver_namespace["randomrot"] = randomrot
+
+for i in range(3):
+    drv = obj.driver_add('rotation_euler', i)
+    drv.driver.expression = f'randomrot()'
+
+bpy.context.scene.frame_start = 0
+bpy.context.scene.frame_end = 100
+
+def started():
+    off.handle = bpy.types.SpaceView3D.draw_handler_add(off.render, (), 'WINDOW', 'POST_PIXEL')
+    print('started')
+    
+def stopped():
+    bpy.types.SpaceView3D.draw_handler_remove(off.handle, 'WINDOW')
+    print('stopped')
+
+anim = PlayAnimationOnce()
+anim.play(started, stopped)
+
+#off.enabled = True
+#for i in range(0,10):
+#    xy = np.random.uniform(-2,2,size=2)
+#    #x = random.randrange(spawn_range[0][0], spawn_range[0][1])
+#    #y = random.randrange(spawn_range[1][0], spawn_range[1][1])
+#    #print(x)
+#    #z = (-0.2)
+#    bpy.context.scene.frame_set(i)
+#    ob.location = (xy[0], xy[1], 0)
+#    ob.keyframe_insert(data_path="location",index=-1)
+#    #frame_number += 2
+##    off.area.tag_redraw()
+#    bpy.context.view_layer.update()
+#off.enabled = False
+#bpy.types.SpaceView3D.draw_handler_remove(off.handle, 'WINDOW') 
