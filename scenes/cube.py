@@ -6,7 +6,13 @@ from blendtorch import blender as btb
 def main():
     args, remainder = btb.parse_blendtorch_args()
 
+    cam = bpy.context.scene.camera
     obj = bpy.data.objects["Cube"]
+    mat = bpy.data.materials.new(name='random')
+    mat.diffuse_color = np.concatenate((np.random.random(size=3), [1.]))
+    obj.data.materials.append(mat)
+    obj.active_material = mat
+    
     randomrot = lambda: np.random.uniform(0,2*np.pi)    
     bpy.app.driver_namespace["randomrot"] = randomrot
 
@@ -23,11 +29,12 @@ def main():
         print('stopped')
         
     def after_image(arr, pub):    
-        pub.publish(image=arr)
+        pub.publish(image=arr, xy=btb.camera.project_points(obj, camera=cam))
 
     pub = btb.Publisher(args.bind_address, args.btid)
 
     off = btb.OffScreenRenderer()
+    off.update_perspective(cam)
     off.set_render_options()
     off.after_image.add(after_image, pub=pub)
 
