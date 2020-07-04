@@ -1,7 +1,7 @@
 import zmq
 
-class Receiver:
-    '''Base class for reading from blender instances'''
+class Subscriber:
+    '''Base class for reading from blender publishers.'''
 
     def __init__(self):
         self.ctx = zmq.Context()
