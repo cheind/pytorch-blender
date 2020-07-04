@@ -23,7 +23,7 @@ def main():
         print('stopped')
         
     def after_image(arr, pub):    
-        pub.publish(image=np.flipud(arr))
+        pub.publish(image=arr)
 
     pub = btb.Publisher(args.bind_address, args.btid)
 
