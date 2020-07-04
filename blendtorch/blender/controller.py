@@ -10,11 +10,13 @@ class Controller:
         self.before_animation = Signal()
         self.before_frame = Signal()
         self.after_animation = Signal()
+        self.is_playing = False
         self.h_pre_frame = bpy.app.handlers.frame_change_pre.append(self._on_pre_frame)
         
     def play(self, once=True, startframe=None, endframe=None):
         self._set_frame_range(startframe, endframe)
         self.once = once
+        self.is_playing = True
         self.before_animation()
         bpy.ops.screen.animation_play()       
 
@@ -26,8 +28,12 @@ class Controller:
         bpy.context.scene.frame_set(bpy.context.scene.frame_start)
                         
     def _on_pre_frame(self, scene, *args):
+        if not self.is_playing:
+            return
+
         if self.once and bpy.context.scene.frame_current == bpy.context.scene.frame_end:
             bpy.ops.screen.animation_cancel()
-            self.after_animation()
+            self.is_playing = False
+            self.after_animation()            
         else:
             self.before_frame()
