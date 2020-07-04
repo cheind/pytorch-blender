@@ -33,7 +33,7 @@ def main():
     parser.add_argument('scene', help='Blender scene to run')
     args = parser.parse_args()
 
-    with bt.BlenderLauncher(num_instances=2, script=f'scenes/{args.scene}.py', scene=f'scenes/{args.scene}.blend') as bl:
+    with bt.BlenderLauncher(num_instances=4, script=f'scenes/{args.scene}.py', scene=f'scenes/{args.scene}.blend') as bl:
         ds = MyDataset(bl.addresses)
 
         # Note, in the following num_workers must be 0
