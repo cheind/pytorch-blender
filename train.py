@@ -41,7 +41,7 @@ def main():
 
         for step, (img, xy, btid) in enumerate(dl):
             print(f'Received batch from Blender processes {btid}')
-            #Drawing is the slow part ...
+            #Drawing is the slow part. It slows down blender rendering to ~8FPS/instance
             fig, axs = plt.subplots(2,2,frameon=False, figsize=(16*2,9*2))
             fig.subplots_adjust(left=0, right=1, top=1, bottom=0, wspace=0.0, hspace=0.0)
             axs = axs.reshape(-1)
