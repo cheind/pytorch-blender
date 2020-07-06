@@ -1,10 +1,12 @@
 import numpy as np
 import bpy
+import logging
 
 from blendtorch import blender as btb
-  
+
 def main():
     args, remainder = btb.parse_blendtorch_args()
+
 
     cam = bpy.context.scene.camera
     obj = bpy.data.objects["Cube"]
@@ -22,11 +24,9 @@ def main():
 
     def started(offscreen):
         offscreen.enabled = True
-        print('started')
         
     def stopped(offscreen):
         offscreen.enabled = False
-        print('stopped')
 
     def before_frame():
         mat.diffuse_color = np.concatenate((np.random.random(size=3), [1.]))
