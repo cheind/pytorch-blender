@@ -73,13 +73,19 @@ class BlenderLauncher():
         else:
             env['PYTHONPATH'] = this_package_path
 
-        self.processes = [Popen(f'"{self.blender_info["path"]}" {self.scene} --python-use-system-env --log-file ./tmp/log_{idx}.txt --python {self.script} -- {args}', 
-            shell=False,
-            stdin=None, 
-            stdout=open(f'./tmp/out_{idx}.txt', 'w'),
-            stderr=None, 
-            close_fds=True,
-            env=env) for idx,args in enumerate(args)]
+        self.processes = []
+        for idx,arg in enumerate(args):
+            cmd = f'"{self.blender_info["path"]}" {self.scene} --python-use-system-env --python {self.script} -- {arg}'
+            self.processes.append(Popen(
+                cmd,
+                shell=False,
+                stdin=None, 
+                stdout=open(f'./tmp/out_{idx}.txt', 'w'),
+                stderr=None, 
+                close_fds=True,
+                env=env
+            ))
+            logger.info(f'Started instance: {cmd}')
 
         return self
 
