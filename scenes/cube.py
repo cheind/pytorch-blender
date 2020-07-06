@@ -9,7 +9,7 @@ def main():
     cam = bpy.context.scene.camera
     obj = bpy.data.objects["Cube"]
     mat = bpy.data.materials.new(name='random')
-    mat.diffuse_color = np.concatenate((np.random.random(size=3), [1.]))
+    mat.diffuse_color = (1,1,1,1)
     obj.data.materials.append(mat)
     obj.active_material = mat
     
@@ -27,6 +27,9 @@ def main():
     def stopped(offscreen):
         offscreen.enabled = False
         print('stopped')
+
+    def before_frame():
+        mat.diffuse_color = np.concatenate((np.random.random(size=3), [1.]))
         
     def after_image(arr, pub):    
         pub.publish(image=arr, xy=btb.camera.project_points(obj, camera=cam))
@@ -41,6 +44,7 @@ def main():
     anim = btb.Controller()
     anim.before_animation.add(started, off)
     anim.after_animation.add(stopped, off)
+    anim.before_frame.add(before_frame)
     anim.play(once=False, startframe=0, endframe=10)
 
 main()
