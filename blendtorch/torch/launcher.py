@@ -1,7 +1,9 @@
-from subprocess import Popen
+import subprocess
 import sys
 import os
 import logging
+import platform
+import signal
 
 from .finder import discover_blender
 
@@ -75,22 +77,23 @@ class BlenderLauncher():
 
         self.processes = []
         for idx,arg in enumerate(args):
-            cmd = f'"{self.blender_info["path"]}" {self.scene} --python-use-system-env --python {self.script} -- {arg}'
-            self.processes.append(Popen(
+            cmd = f'"{self.blender_info["path"]}" {self.scene} --python-use-system-env  --python {self.script} -- {arg}'
+            p = subprocess.Popen(
                 cmd,
                 shell=False,
                 stdin=None, 
-                stdout=open(f'./tmp/out_{idx}.txt', 'w'),
-                stderr=None, 
-                close_fds=True,
-                env=env
-            ))
+                stdout=None,
+                stderr=None,
+                env=env,
+                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
+            )
+
+            self.processes.append(p)
             logger.info(f'Started instance: {cmd}')
 
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):    
-        [p.terminate() for p in self.processes]        
+        [p.terminate() for p in self.processes]
         assert not any([p.poll() for p in self.processes]), 'Blender instance still open'
         logger.info('Blender instances closed')
-        
