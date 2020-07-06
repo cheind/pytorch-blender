@@ -13,7 +13,7 @@ class Subscriber:
 
     def connect(self, addresses):
         if not isinstance(addresses, list):
-            addr = [addr]
+            addresses = [addresses]
         for addr in addresses:
             self.s.connect(addr)
 
