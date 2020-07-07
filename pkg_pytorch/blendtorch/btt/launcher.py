@@ -68,12 +68,12 @@ class BlenderLauncher():
             logger.info(f'Blender found {self.blender_info["path"]} version {self.blender_info["major"]}.{self.blender_info["minor"]}')
 
         # Update python path to find this package within Blender python.
-        env = os.environ.copy()  
-        this_package_path = os.pathsep + os.path.abspath(os.path.join(os.path.dirname(__file__), '../../pkg_blender'))
-        if 'PYTHONPATH' in env:
-            env['PYTHONPATH'] += this_package_path
-        else:
-            env['PYTHONPATH'] = this_package_path
+        # env = os.environ.copy()  
+        # this_package_path = os.pathsep + os.path.abspath(os.path.join(os.path.dirname(__file__), '../../pkg_blender'))
+        # if 'PYTHONPATH' in env:
+        #     env['PYTHONPATH'] += this_package_path
+        # else:
+        #     env['PYTHONPATH'] = this_package_path
 
         self.processes = []
         for idx,arg in enumerate(args):
