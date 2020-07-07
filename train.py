@@ -27,7 +27,7 @@ class MyDataset:
     def __getitem__(self, idx):        
         # Data is a dictionary of {image, coordinates, id} see publisher script
         d = self.recv(timeoutms=10000)
-        return gamma_correct(d['image']), d['xy'], d['btid']
+        return gamma_correct(d['image']), d['xy'], d['btid'], d['frameid']
         
 def main():
     # Requires blender to be in path
@@ -40,14 +40,14 @@ def main():
     parser.add_argument('scene', help='Blender scene to run')
     args = parser.parse_args()
 
-    with btt.BlenderLauncher(num_instances=1, script=f'scenes/{args.scene}.py', scene=f'scenes/{args.scene}.blend') as bl:
+    with btt.BlenderLauncher(num_instances=2, script=f'scenes/{args.scene}.py', scene=f'scenes/{args.scene}.blend') as bl:
         ds = MyDataset(bl.addresses)
 
         # Note, in the following num_workers must be 0
         dl = data.DataLoader(ds, batch_size=4, num_workers=0, shuffle=False)
 
-        for step, (img, xy, btid) in enumerate(dl):
-            print(f'Received batch from Blender processes {btid}')
+        for step, (img, xy, btid, fid) in enumerate(dl):
+            print(f'Received batch from Blender processes {btid.numpy()}, frames {fid.numpy()}')
             # Drawing is the slow part ~1.2s, Blender results may be dropped.
             H,W = img.shape[1], img.shape[2]
             fig = plt.figure(frameon=False, figsize=(W*2/DPI,H*2/DPI), dpi=96)

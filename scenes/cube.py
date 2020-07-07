@@ -32,7 +32,7 @@ def main():
         mat.diffuse_color = np.concatenate((np.random.random(size=3), [1.]))
         
     def after_image(arr, pub):    
-        pub.publish(image=arr, xy=btb.camera.project_points(obj, camera=cam))
+        pub.publish(image=arr, xy=btb.camera.project_points(obj, camera=cam), frameid=bpy.context.scene.frame_current)
 
     pub = btb.Publisher(args.bind_address, args.btid)
 
@@ -45,6 +45,6 @@ def main():
     anim.before_animation.add(started, off)
     anim.after_animation.add(stopped, off)
     anim.before_frame.add(before_frame)
-    anim.play(once=False, startframe=0, endframe=10)
+    anim.play(once=False, startframe=0, endframe=100)
 
 main()
