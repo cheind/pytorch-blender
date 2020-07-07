@@ -5,9 +5,8 @@ class Subscriber:
 
     def __init__(self):
         self.ctx = zmq.Context()
-        self.s = self.ctx.socket(zmq.SUB)
-        self.s.setsockopt(zmq.SUBSCRIBE, b'')
-        self.s.setsockopt(zmq.RCVHWM, 20)
+        self.s = self.ctx.socket(zmq.PULL)
+        self.s.setsockopt(zmq.RCVHWM, 10)
         self.poller = zmq.Poller()
         self.poller.register(self.s, zmq.POLLIN)
 

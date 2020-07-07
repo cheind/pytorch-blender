@@ -5,8 +5,8 @@ class Publisher:
 
     def __init__(self, bind_address, btid):
         self.ctx = zmq.Context()
-        self.sock = self.ctx.socket(zmq.PUB)
-        self.sock.setsockopt(zmq.LINGER, 0)
+        self.sock = self.ctx.socket(zmq.PUSH)
+        self.sock.setsockopt(zmq.SNDHWM, 10)
         self.sock.bind(bind_address)
         self.btid = btid
         
