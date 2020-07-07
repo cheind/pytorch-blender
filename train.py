@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import logging
 import argparse
 
-from blendtorch import torch as bt
+from blendtorch import btt
 
 def gamma_correct(x):
     '''Return sRGB image.'''
@@ -17,7 +17,7 @@ class MyDataset:
     '''A dataset that reads from Blender publishers.'''
 
     def __init__(self, addresses):
-        self.recv = bt.Subscriber()
+        self.recv = btt.Subscriber()
         self.recv.connect(addresses)
 
     def __len__(self):
@@ -32,6 +32,7 @@ class MyDataset:
 def main():
     # Requires blender to be in path
     # set PATH=c:\Program Files\Blender Foundation\Blender 2.83\;%PATH%
+    # set PYTHONPATH=c:\dev\pytorch-blender\pkg_pytorch;c:\dev\pytorch-blender\pkg_blender
     logging.basicConfig(level=logging.INFO)
     DPI=96
 
@@ -39,7 +40,7 @@ def main():
     parser.add_argument('scene', help='Blender scene to run')
     args = parser.parse_args()
 
-    with bt.BlenderLauncher(num_instances=2, script=f'scenes/{args.scene}.py', scene=f'scenes/{args.scene}.blend') as bl:
+    with btt.BlenderLauncher(num_instances=1, script=f'scenes/{args.scene}.py', scene=f'scenes/{args.scene}.blend') as bl:
         ds = MyDataset(bl.addresses)
 
         # Note, in the following num_workers must be 0

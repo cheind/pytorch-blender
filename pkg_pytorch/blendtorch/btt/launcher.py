@@ -69,7 +69,7 @@ class BlenderLauncher():
 
         # Update python path to find this package within Blender python.
         env = os.environ.copy()  
-        this_package_path = os.pathsep + os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
+        this_package_path = os.pathsep + os.path.abspath(os.path.join(os.path.dirname(__file__), '../../pkg_blender'))
         if 'PYTHONPATH' in env:
             env['PYTHONPATH'] += this_package_path
         else:
