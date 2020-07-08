@@ -1,7 +1,4 @@
-import torch
 import torch.utils.data as data
-import numpy as np
-import matplotlib.pyplot as plt
 import argparse
 import time
 from contextlib import ExitStack
