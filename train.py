@@ -52,6 +52,9 @@ def iterate(dl):
         fig.savefig(f'./tmp/output_{step}.png')
         plt.close(fig)
 
+BATCH = 4
+BLENDER_INSTANCES = 2
+WORKER_INSTANCES = 2
         
 def main():
     # Requires blender to be in path
@@ -62,33 +65,38 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('scene', help='Blender scene name to run')
     parser.add_argument('--replay', action='store_true', help='Replay from disc instead of launching from Blender')
+    parser.add_argument('--record', action='store_true', help='Record raw blender data')
     args = parser.parse_args()
 
     with ExitStack() as es:
         if not args.replay:
+            global WORKER_INSTANCES
+            # Initiate Blender instance     
             bl = es.enter_context(
                 btt.BlenderLauncher(
-                    num_instances=2, 
+                    num_instances=BLENDER_INSTANCES, 
                     script=f'scenes/{args.scene}.py', 
                     scene=f'scenes/{args.scene}.blend'
                 )
             )
-            rec = es.enter_context(
-                btt.Recorder('./tmp/record.mpkl')
-            )
-            receiver = es.enter_context(
-                btt.BlenderReceiver(                    
-                    recorder=rec
+            # Add recording if needed
+            rec = None
+            if args.record:
+                rec = es.enter_context(
+                    btt.Recorder('./tmp/record.mpkl')
                 )
+                WORKER_INSTANCES = 0            
+            # Add receiver
+            receiver = btt.BlenderReceiver(                    
+                recorder=rec,
+                addresses=bl.addresses
             )
-            receiver.connect(bl.addresses)
         else:
-            receiver = es.enter_context(btt.FileReceiver('./tmp/record.mpkl'))
-
+            receiver = btt.FileReceiver('./tmp/record.mpkl')
         
         ds = MyDataset(receiver, image_transform=gamma_correct)
         # Note, in the following num_workers must be 0
-        dl = data.DataLoader(ds, batch_size=4, num_workers=0, shuffle=False)
+        dl = data.DataLoader(ds, batch_size=BATCH, num_workers=WORKER_INSTANCES, shuffle=False)
         # Process data
         iterate(dl)
 

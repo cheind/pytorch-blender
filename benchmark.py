@@ -5,10 +5,11 @@ from contextlib import ExitStack
 
 from blendtorch import btt
 
-from train import MyDataset
+from train import MyDataset, gamma_correct
 
 BATCH = 8
 INSTANCES = 2
+WORKER_INSTANCES = 2
         
 def main():
     # Requires blender to be in path
@@ -27,13 +28,9 @@ def main():
                 scene=f'scenes/{args.scene}.blend'
             )
         )
-        receiver = es.enter_context(
-            btt.BlenderReceiver()
-        )
-        receiver.connect(bl.addresses)
-        
-        ds = MyDataset(receiver, stream_length=256)
-        dl = data.DataLoader(ds, batch_size=BATCH, num_workers=0, shuffle=False)
+        receiver = btt.BlenderReceiver(addresses=bl.addresses)        
+        ds = MyDataset(receiver, stream_length=256, image_transform=gamma_correct)
+        dl = data.DataLoader(ds, batch_size=BATCH, num_workers=WORKER_INSTANCES, shuffle=False)
         
         t0 = None
         imgshape = None

@@ -2,7 +2,8 @@ import zmq
 import pickle
 import io
 import numpy as np
-import sys
+import weakref
+from torch.utils import data
 
 class ReceiverBase:
     def __init__(self, is_stream):
@@ -11,17 +12,13 @@ class ReceiverBase:
 class BlenderReceiver(ReceiverBase):
     '''Base class for reading from blender publishers.'''
 
-    def __init__(self, recorder=None, queue_size=10):
+    def __init__(self, addresses, recorder=None, queue_size=10):
         super().__init__(is_stream=True)
+        self.addresses = addresses
         self.recorder = recorder
         self.queue_size = queue_size
         self.is_stream = True
-
-    def connect(self, addresses):
-        if not isinstance(addresses, list):
-            addresses = [addresses]
-        for addr in addresses:
-            self.s.connect(addr)
+        self.ctx = None
 
     def recv(self, index=0, timeoutms=-1):
         '''Receive from Blender instances.
@@ -35,6 +32,11 @@ class BlenderReceiver(ReceiverBase):
         timeoutms: int
             Timeout in milliseconds for the next data bundle to arrive.
         '''
+        if self.ctx is None:
+            # Lazly creating file object here to ensure PyTorch 
+            # multiprocessing compatibility (i.e num_workers > 0)
+            self._create()
+
         socks = dict(self.poller.poll(timeoutms))
         assert self.s in socks, 'No response within timeout interval.'
 
@@ -45,16 +47,22 @@ class BlenderReceiver(ReceiverBase):
         else:
             return self.s.recv_pyobj()
 
-    def __enter__(self):
+    def _create(self):
         self.ctx = zmq.Context()
         self.s = self.ctx.socket(zmq.PULL)
         self.s.setsockopt(zmq.RCVHWM, self.queue_size)
         self.poller = zmq.Poller()
         self.poller.register(self.s, zmq.POLLIN)
-        return self
+        for addr in self.addresses:
+            self.s.connect(addr)
+        weakref.finalize(self, self._destroy)
 
-    def __exit__(self, *args):
-        self.s.close()
+    def _destroy(self):
+        if self.s is not None:
+            self.s.close()
+            self.s = None
+            self.ctx = None
+        
 
 
 class FileReceiver(ReceiverBase):
@@ -63,7 +71,8 @@ class FileReceiver(ReceiverBase):
     def __init__(self, record_path):
         super().__init__(is_stream=False)
         self.record_path = record_path
-        self.num_messages = 0
+        self.file = None
+        self._peek_header()
         
     def __len__(self):
         return self.num_messages
@@ -78,19 +87,31 @@ class FileReceiver(ReceiverBase):
         timeoutms: int
             Timeout in milliseconds, ignored.
         '''
+        if self.file is None:
+            # Lazly creating file object here to ensure PyTorch 
+            # multiprocessing compatibility (i.e num_workers > 0)
+            self._create()
+            
         self.file.seek(self.offsets[index])
         return self.unpickler.load()
 
-    def __enter__(self):
+    def _create(self):        
         self.file = io.open(self.record_path, 'rb')
         self.unpickler = pickle.Unpickler(self.file)
-        self.offsets = self.unpickler.load()
-        m = np.where(self.offsets==-1)[0]
-        if len(m)==0:
-            self.num_messages = len(self.offsets)
-        else:
-            self.num_messages = m[0] 
-        return self
+        weakref.finalize(self, self._destroy)
+    
+    def _peek_header(self):
+        with io.open(self.record_path, 'rb') as f:
+            unpickler = pickle.Unpickler(f)
+            self.offsets = unpickler.load()
+            m = np.where(self.offsets==-1)[0]
+            if len(m)==0:
+                self.num_messages = len(self.offsets)
+            else:
+                self.num_messages = m[0]
 
-    def __exit__(self, *args):
-        self.file.close()
+
+    def _destroy(self):
+        if self.file is not None:
+            self.file.close()
+            self.file = None
