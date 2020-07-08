@@ -53,8 +53,6 @@ def main():
     # set PATH=c:\Program Files\Blender Foundation\Blender 2.83\;%PATH%
     # set PYTHONPATH=c:\dev\pytorch-blender\pkg_pytorch;c:\dev\pytorch-blender\pkg_blender
     logging.basicConfig(level=logging.INFO)
-    
-    BATCH=4
 
     parser = argparse.ArgumentParser()
     parser.add_argument('scene', help='Blender scene name to run')
@@ -85,7 +83,7 @@ def main():
         
         ds = MyDataset(receiver)
         # Note, in the following num_workers must be 0
-        dl = data.DataLoader(ds, batch_size=BATCH, num_workers=0, shuffle=False)
+        dl = data.DataLoader(ds, batch_size=4, num_workers=0, shuffle=False)
         # Process data
         iterate(dl)
 
