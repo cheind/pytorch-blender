@@ -21,7 +21,10 @@ class MyDataset:
         self.receiver = receiver
 
     def __len__(self):
-        return len(self.receiver)
+        if self.receiver.is_stream:
+            return 64
+        else:
+            return len(self.receiver)
 
     def __getitem__(self, index):        
         # Data is a dictionary of {image, coordinates, id} see publisher script
@@ -52,33 +55,40 @@ def main():
     logging.basicConfig(level=logging.INFO)
     
     BATCH=4
-    MAX_MESSAGES=10
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('scene', help='Blender scene to run')
+    parser.add_argument('scene', help='Blender scene name to run')
+    parser.add_argument('--replay', action='store_true', help='Replay from disc instead of launching from Blender')
     args = parser.parse_args()
 
     with ExitStack() as es:
-        bl = es.enter_context(btt.BlenderLauncher(num_instances=2, script=f'scenes/{args.scene}.py', scene=f'scenes/{args.scene}.blend'))
-        rec = es.enter_context(btt.Recorder('record.mpkl', num_messages=MAX_MESSAGES))
-        receiver = es.enter_context(btt.BlenderReceiver(batch_size=BATCH, num_messages=MAX_MESSAGES, recorder=rec))
-        receiver.connect(bl.addresses)
+        if not args.replay:
+            bl = es.enter_context(
+                btt.BlenderLauncher(
+                    num_instances=2, 
+                    script=f'scenes/{args.scene}.py', 
+                    scene=f'scenes/{args.scene}.blend'
+                )
+            )
+            rec = es.enter_context(
+                btt.Recorder('./tmp/record.mpkl')
+            )
+            receiver = es.enter_context(
+                btt.BlenderReceiver(                    
+                    recorder=rec
+                )
+            )
+            receiver.connect(bl.addresses)
+        else:
+            receiver = es.enter_context(btt.FileReceiver('./tmp/record.mpkl'))
 
-        ds = MyDataset(receiver)
-        # Note, in the following num_workers must be 0
-        dl = data.DataLoader(ds, batch_size=BATCH, num_workers=0, shuffle=False)
-
-        # Process data
-        iterate(dl)
-
-    with ExitStack() as es:
-        receiver = es.enter_context(btt.FileReceiver('record.mpkl'))
-        ds = MyDataset(receiver)
-        # Note, in the following num_workers must be 0
-        dl = data.DataLoader(ds, batch_size=BATCH, num_workers=0, shuffle=False)
-        # Process data
-        iterate(dl)
         
+        ds = MyDataset(receiver)
+        # Note, in the following num_workers must be 0
+        dl = data.DataLoader(ds, batch_size=BATCH, num_workers=0, shuffle=False)
+        # Process data
+        iterate(dl)
+
 
 if __name__ == '__main__':
     main()

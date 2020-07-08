@@ -1,15 +1,19 @@
 from pathlib import Path
 import io
 import pickle
+import logging
 import numpy as np
 
+_logger = logging.getLogger('blendtorch')
+
 class Recorder:
-    def __init__(self, outpath='blendtorch.mpkl', num_messages=1000):
+    def __init__(self, outpath='blendtorch.mpkl', max_messages=100000):
         outpath = Path(outpath)
         outpath.parent.mkdir(parents=True, exist_ok=True)
         self.outpath = outpath
-        self.capacity = num_messages
-        
+        self.capacity = max_messages
+        _logger.info(f'Recording configured for path {outpath}, max_messages {max_messages}.')
+
     def save(self, data, is_pickled=False):
         if self.num_messages < self.capacity:
             offset = self.file.tell()

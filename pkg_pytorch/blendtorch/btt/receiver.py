@@ -4,22 +4,24 @@ import io
 import numpy as np
 import sys
 
-class BlenderReceiver:
+class ReceiverBase:
+    def __init__(self, is_stream):
+        self.is_stream = is_stream
+
+class BlenderReceiver(ReceiverBase):
     '''Base class for reading from blender publishers.'''
 
-    def __init__(self, recorder=None, batch_size=10, num_messages=sys.maxsize):
+    def __init__(self, recorder=None, queue_size=10):
+        super().__init__(is_stream=True)
         self.recorder = recorder
-        self.batch_size = batch_size        
-        self.num_messages = num_messages
+        self.queue_size = queue_size
+        self.is_stream = True
 
     def connect(self, addresses):
         if not isinstance(addresses, list):
             addresses = [addresses]
         for addr in addresses:
             self.s.connect(addr)
-
-    def __len__(self):
-        return self.num_messages
 
     def recv(self, index=0, timeoutms=-1):
         '''Receive from Blender instances.
@@ -46,7 +48,7 @@ class BlenderReceiver:
     def __enter__(self):
         self.ctx = zmq.Context()
         self.s = self.ctx.socket(zmq.PULL)
-        self.s.setsockopt(zmq.RCVHWM, self.batch_size)
+        self.s.setsockopt(zmq.RCVHWM, self.queue_size)
         self.poller = zmq.Poller()
         self.poller.register(self.s, zmq.POLLIN)
         return self
@@ -55,10 +57,11 @@ class BlenderReceiver:
         self.s.close()
 
 
-class FileReceiver:
+class FileReceiver(ReceiverBase):
     '''Base class to read from previously recorded messages.'''
 
     def __init__(self, record_path):
+        super().__init__(is_stream=False)
         self.record_path = record_path
         self.num_messages = 0
         
