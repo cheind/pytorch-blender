@@ -4,19 +4,14 @@ import pickle
 import numpy as np
 
 class Recorder:
-    def __init__(self, outpath='blendtorch.mpkl', max_messages=1000):
+    def __init__(self, outpath='blendtorch.mpkl', num_messages=1000):
         outpath = Path(outpath)
         outpath.parent.mkdir(parents=True, exist_ok=True)
-        self.file = io.open(outpath, 'wb')
-        self.pickler = pickle.Pickler(self.file)        
-        self.offsets = np.full(max_messages, -1, dtype=int)
-        self.num_messages = 0
-        self.max_messages = max_messages
-        self.pickler.dump(self.offsets) # We fix this once we close the file.
-        # https://gist.github.com/marekyggdrasil/14bbb9e2ca91f9a1fad8495b5ac59354
-
+        self.outpath = outpath
+        self.capacity = num_messages
+        
     def save(self, data, is_pickled=False):
-        if self.num_messages < self.max_messages:
+        if self.num_messages < self.capacity:
             offset = self.file.tell()
             if not is_pickled:
                 self.pickler.dump(data)
@@ -25,11 +20,18 @@ class Recorder:
             self.offsets[self.num_messages] = offset
             self.num_messages += 1
 
-    def close(self):
+    def __enter__(self):
+        self.file = io.open(self.outpath, 'wb')
+        self.pickler = pickle.Pickler(self.file)        
+        self.offsets = np.full(self.capacity, -1, dtype=int)
+        self.num_messages = 0
+        self.pickler.dump(self.offsets) # We fix this once we close the file.
+        return self
+
+    def __exit__(self, *args):
         self.file.seek(0)
         # need to re-create unpickler
         pickle.Pickler(self.file).dump(self.offsets)
         self.file.close()
         self.file = None
-
 

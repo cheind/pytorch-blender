@@ -4,7 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import logging
 import argparse
-from contextlib import closing
+from contextlib import ExitStack
+
 from blendtorch import btt
 
 def gamma_correct(x):
@@ -16,48 +17,68 @@ def gamma_correct(x):
 class MyDataset:
     '''A dataset that reads from Blender publishers.'''
 
-    def __init__(self, addresses, recorder=None):
-        self.recv = btt.Subscriber(recorder=recorder)
-        self.recv.connect(addresses)
+    def __init__(self, receiver):
+        self.receiver = receiver
 
     def __len__(self):
-        # Virtually anything you'd like to end episodes.
-        return 10
+        return len(self.receiver)
 
-    def __getitem__(self, idx):        
+    def __getitem__(self, index):        
         # Data is a dictionary of {image, coordinates, id} see publisher script
-        d = self.recv(timeoutms=10000)
+        d = self.receiver.recv(index, timeoutms=10000)
         return gamma_correct(d['image']), d['xy'], d['btid'], d['frameid']
+
+
+def iterate(dl):
+    DPI=96
+    for step, (img, xy, btid, fid) in enumerate(dl):
+        print(f'Received batch from Blender processes {btid.numpy()}, frames {fid.numpy()}')
+        # Drawing is the slow part ~1.2s, Blender results may be dropped.
+        H,W = img.shape[1], img.shape[2]
+        fig = plt.figure(frameon=False, figsize=(W*2/DPI,H*2/DPI), dpi=DPI)
+        axs = [fig.add_axes([0,0,0.5,0.5]), fig.add_axes([0.5,0.0,0.5,0.5]), fig.add_axes([0.0,0.5,0.5,0.5]), fig.add_axes([0.5,0.5,0.5,0.5])]
+        for i in range(img.shape[0]):
+            axs[i].imshow(img[i], origin='upper')
+            axs[i].scatter(xy[i, :, 0], xy[i, :, 1], s=100)
+            axs[i].set_axis_off()
+        fig.savefig(f'./tmp/output_{step}.png')
+        plt.close(fig)
+
         
 def main():
     # Requires blender to be in path
     # set PATH=c:\Program Files\Blender Foundation\Blender 2.83\;%PATH%
     # set PYTHONPATH=c:\dev\pytorch-blender\pkg_pytorch;c:\dev\pytorch-blender\pkg_blender
     logging.basicConfig(level=logging.INFO)
-    DPI=96
+    
+    BATCH=4
+    MAX_MESSAGES=10
 
     parser = argparse.ArgumentParser()
     parser.add_argument('scene', help='Blender scene to run')
     args = parser.parse_args()
 
-    with btt.BlenderLauncher(num_instances=2, script=f'scenes/{args.scene}.py', scene=f'scenes/{args.scene}.blend') as bl, closing(btt.Recorder('record.mpkl')) as rec:
-        ds = MyDataset(bl.addresses, recorder=rec)
+    with ExitStack() as es:
+        bl = es.enter_context(btt.BlenderLauncher(num_instances=2, script=f'scenes/{args.scene}.py', scene=f'scenes/{args.scene}.blend'))
+        rec = es.enter_context(btt.Recorder('record.mpkl', num_messages=MAX_MESSAGES))
+        receiver = es.enter_context(btt.BlenderReceiver(batch_size=BATCH, num_messages=MAX_MESSAGES, recorder=rec))
+        receiver.connect(bl.addresses)
 
+        ds = MyDataset(receiver)
         # Note, in the following num_workers must be 0
-        dl = data.DataLoader(ds, batch_size=4, num_workers=0, shuffle=False)
+        dl = data.DataLoader(ds, batch_size=BATCH, num_workers=0, shuffle=False)
 
-        for step, (img, xy, btid, fid) in enumerate(dl):
-            print(f'Received batch from Blender processes {btid.numpy()}, frames {fid.numpy()}')
-            # Drawing is the slow part ~1.2s, Blender results may be dropped.
-            H,W = img.shape[1], img.shape[2]
-            fig = plt.figure(frameon=False, figsize=(W*2/DPI,H*2/DPI), dpi=96)
-            axs = [fig.add_axes([0,0,0.5,0.5]), fig.add_axes([0.5,0.0,0.5,0.5]), fig.add_axes([0.0,0.5,0.5,0.5]), fig.add_axes([0.5,0.5,0.5,0.5])]
-            for i in range(img.shape[0]):
-                axs[i].imshow(img[i], origin='upper')
-                axs[i].scatter(xy[i, :, 0], xy[i, :, 1], s=100)
-                axs[i].set_axis_off()
-            fig.savefig(f'./tmp/output_{step}.png')
-            plt.close(fig)
+        # Process data
+        iterate(dl)
+
+    with ExitStack() as es:
+        receiver = es.enter_context(btt.FileReceiver('record.mpkl'))
+        ds = MyDataset(receiver)
+        # Note, in the following num_workers must be 0
+        dl = data.DataLoader(ds, batch_size=BATCH, num_workers=0, shuffle=False)
+        # Process data
+        iterate(dl)
+        
 
 if __name__ == '__main__':
     main()
