@@ -42,7 +42,7 @@ def iterate(dl):
         axs = [fig.add_axes([0,0,0.5,0.5]), fig.add_axes([0.5,0.0,0.5,0.5]), fig.add_axes([0.0,0.5,0.5,0.5]), fig.add_axes([0.5,0.5,0.5,0.5])]
         for i in range(img.shape[0]):
             axs[i].imshow(img[i], origin='upper')
-            axs[i].scatter(xy[i, :, 0], xy[i, :, 1], s=100)
+            axs[i].scatter(xy[i, :, 0], xy[i, :, 1], s=30)
             axs[i].set_axis_off()
         fig.savefig(f'./tmp/output_{step}.png')
         plt.close(fig)
