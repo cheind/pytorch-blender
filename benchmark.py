@@ -8,21 +8,7 @@ from contextlib import ExitStack
 
 from blendtorch import btt
 
-class MyDataset:
-    '''A dataset that reads from Blender publishers.'''
-
-    def __init__(self, receiver):
-        self.receiver = receiver
-
-    def __len__(self):
-        if self.receiver.is_stream:
-            return 256
-        else:
-            return len(self.receiver)
-
-    def __getitem__(self, index):        
-        d = self.receiver.recv(index, timeoutms=10000)
-        return d['image'], d['xy'], d['btid'], d['frameid']
+from train import MyDataset
 
 BATCH = 8
 INSTANCES = 2
@@ -48,14 +34,12 @@ def main():
             btt.BlenderReceiver()
         )
         receiver.connect(bl.addresses)
-
         
-        ds = MyDataset(receiver)
+        ds = MyDataset(receiver, stream_length=256)
         dl = data.DataLoader(ds, batch_size=BATCH, num_workers=0, shuffle=False)
         
         t0 = None
         imgshape = None
-        fids = []
 
         for item in dl:
             if t0 is None: # 1st is warmup

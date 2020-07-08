@@ -17,19 +17,24 @@ def gamma_correct(x):
 class MyDataset:
     '''A dataset that reads from Blender publishers.'''
 
-    def __init__(self, receiver):
+    def __init__(self, receiver, image_transform=None, stream_length=64):
         self.receiver = receiver
+        self.image_transform = image_transform
+        self.stream_length = stream_length
 
     def __len__(self):
         if self.receiver.is_stream:
-            return 64
+            return self.stream_length
         else:
             return len(self.receiver)
 
     def __getitem__(self, index):        
-        # Data is a dictionary of {image, coordinates, id} see publisher script
+        # Data is a dictionary of {image, coordinates, process id, frame id} see publisher script
         d = self.receiver.recv(index, timeoutms=10000)
-        return gamma_correct(d['image']), d['xy'], d['btid'], d['frameid']
+        if self.image_transform:
+            d['image'] = self.image_transform(d['image'])
+        
+        return d['image'], d['xy'], d['btid'], d['frameid']
 
 
 def iterate(dl):
@@ -81,7 +86,7 @@ def main():
             receiver = es.enter_context(btt.FileReceiver('./tmp/record.mpkl'))
 
         
-        ds = MyDataset(receiver)
+        ds = MyDataset(receiver, image_transform=gamma_correct)
         # Note, in the following num_workers must be 0
         dl = data.DataLoader(ds, batch_size=4, num_workers=0, shuffle=False)
         # Process data
