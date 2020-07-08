@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import logging
 import argparse
-
+from contextlib import closing
 from blendtorch import btt
 
 def gamma_correct(x):
@@ -16,13 +16,13 @@ def gamma_correct(x):
 class MyDataset:
     '''A dataset that reads from Blender publishers.'''
 
-    def __init__(self, addresses):
-        self.recv = btt.Subscriber()
+    def __init__(self, addresses, recorder=None):
+        self.recv = btt.Subscriber(recorder=recorder)
         self.recv.connect(addresses)
 
     def __len__(self):
         # Virtually anything you'd like to end episodes.
-        return 64
+        return 10
 
     def __getitem__(self, idx):        
         # Data is a dictionary of {image, coordinates, id} see publisher script
@@ -40,8 +40,8 @@ def main():
     parser.add_argument('scene', help='Blender scene to run')
     args = parser.parse_args()
 
-    with btt.BlenderLauncher(num_instances=2, script=f'scenes/{args.scene}.py', scene=f'scenes/{args.scene}.blend') as bl:
-        ds = MyDataset(bl.addresses)
+    with btt.BlenderLauncher(num_instances=2, script=f'scenes/{args.scene}.py', scene=f'scenes/{args.scene}.blend') as bl, closing(btt.Recorder('record.mpkl')) as rec:
+        ds = MyDataset(bl.addresses, recorder=rec)
 
         # Note, in the following num_workers must be 0
         dl = data.DataLoader(ds, batch_size=4, num_workers=0, shuffle=False)

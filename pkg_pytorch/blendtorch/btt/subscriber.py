@@ -1,14 +1,16 @@
 import zmq
+import pickle
 
 class Subscriber:
     '''Base class for reading from blender publishers.'''
 
-    def __init__(self):
+    def __init__(self, recorder=None):
         self.ctx = zmq.Context()
         self.s = self.ctx.socket(zmq.PULL)
         self.s.setsockopt(zmq.RCVHWM, 10)
         self.poller = zmq.Poller()
         self.poller.register(self.s, zmq.POLLIN)
+        self.recorder = recorder
 
     def connect(self, addresses):
         if not isinstance(addresses, list):
@@ -19,10 +21,7 @@ class Subscriber:
     def recv(self, timeoutms=-1):
         '''Receive from Blender instances.
         
-        Receives and unpickles the next message. When connected
-        to multiple publishers, data is interleaved. When a maximum
-        number of message (currently 20) are pending, new messages
-        are dropped.
+        Receives and unpickles the next message.
 
         Kwargs
         ------
@@ -31,7 +30,13 @@ class Subscriber:
         '''
         socks = dict(self.poller.poll(timeoutms))
         assert self.s in socks, 'No response within timeout interval.'
-        return self.s.recv_pyobj()
+
+        if self.recorder:
+            data = self.s.recv()
+            self.recorder.save(data, is_pickled=True)
+            return pickle.loads(data)
+        else:
+            return self.s.recv_pyobj()
 
     def __call__(self, timeoutms=-1):
         return self.recv(timeoutms)
