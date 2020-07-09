@@ -23,7 +23,6 @@ def projection_matrix(camera=None):
 
 def project_points(obj, camera=None):
     '''Returns 2D pixel coordinates object's vertex coordinates.
-    
     Quite inefficient, consider only for demonstration purposes.
     '''
     camera = camera or bpy.context.scene.camera
