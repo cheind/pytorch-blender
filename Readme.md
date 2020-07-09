@@ -9,11 +9,11 @@ Feature summary
 - Builtin recording capability to replay data without Blender.
 
 ## Minimal sample
-Running [demo](./demo.py) using the [cube](./scenes/) scene
+Running [demo.py](./demo.py) using the [cube](./scenes/) scene
 ```
 python demo.py cube
 ```
-will generate batch sample images in `./tmp/output_##.png` like the following
+will generate batch visualizations in `./tmp/output_##.png` like the following
 
 ![](etc/result.png)
 
@@ -68,6 +68,15 @@ The following tables show the mean runtimes per batch (8) and per image for a si
 | 1  | 0.236 | 0.030|
 | 2  | 0.14 | 0.018|
 | 4  | 0.099 | 0.012|
+
+## Architecture
+**blendtorch** is composed of two distinct sub-packages: `bendtorch.btt`, in folder [pkg_pytorch](./pkg_pytorch]) and `blendtorch.btb`,in folder [pkg_blender](./pkg_blender]), providing the PyTorch and Blender views on **blendtorch**.
+
+### PyTorch
+At a top level `blendtorch.btt` provides `BlenderLauncher` to launch and close Blender instances, and communication a channel `BlenderInputChannel` to receive from those instances. Communication is based on [ZMQ](https://zeromq.org/) utilizing a `PUSH/PULL` pattern to support various kinds of parallelism. Besides, `blendtorch.btb` provides a raw `Recorder` that saves pickled Blender messages which can later be replayed using `FileInputChannel`.
+
+### Blender
+The package `blendtorch.btb` provides offscreen rendering capabilities `OffScreenRenderer`, animation control `Controller` and `BlenderOutputChannel` to publish any pickle-able message. When Blender instances are launched by `blendtorch.btt.BlenderLauncher`, each instance receives specific arguments to determine binding addresses and **blendtorch** instance ids that can later be used determine which instance sent specific messages.
 
 ## Caveats
 - Despite offscreen rendering is supported in Blender 2.8x it requires a UI frontend and thus cannot run in `--background` mode.
