@@ -74,7 +74,7 @@ def main():
                     scene=f'scenes/{args.scene}.blend'
                 )
             )
-            # Add recording if needed
+            # Add recording if needed (requires num_workers=0)
             rec = None
             if args.record:
                 rec = es.enter_context(
