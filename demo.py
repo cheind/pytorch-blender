@@ -1,4 +1,3 @@
-import torch
 import torch.utils.data as data
 import numpy as np
 import matplotlib.pyplot as plt
@@ -57,9 +56,6 @@ BLENDER_INSTANCES = 2
 WORKER_INSTANCES = 2
         
 def main():
-    # Requires blender to be in path
-    # set PATH=c:\Program Files\Blender Foundation\Blender 2.83\;%PATH%
-    # set PYTHONPATH=c:\dev\pytorch-blender\pkg_pytorch;c:\dev\pytorch-blender\pkg_blender
     logging.basicConfig(level=logging.INFO)
 
     parser = argparse.ArgumentParser()
