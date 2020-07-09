@@ -16,7 +16,7 @@ def gamma_correct(x):
 class MyDataset:
     '''A dataset that reads from Blender publishers.'''
 
-    def __init__(self, inchannel, image_transform=None, stream_length=64):
+    def __init__(self, inchannel, image_transform=None, stream_length=256):
         self.inchannel = inchannel
         self.image_transform = image_transform
         self.stream_length = stream_length
@@ -40,14 +40,15 @@ def iterate(dl):
     DPI=96
     for step, (img, xy, btid, fid) in enumerate(dl):
         print(f'Received batch from Blender processes {btid.numpy()}, frames {fid.numpy()}')
-        # Drawing is the slow part ~1.2s, Blender results may be dropped.
         H,W = img.shape[1], img.shape[2]
         fig = plt.figure(frameon=False, figsize=(W*2/DPI,H*2/DPI), dpi=DPI)
         axs = [fig.add_axes([0,0,0.5,0.5]), fig.add_axes([0.5,0.0,0.5,0.5]), fig.add_axes([0.0,0.5,0.5,0.5]), fig.add_axes([0.5,0.5,0.5,0.5])]
         for i in range(img.shape[0]):
             axs[i].imshow(img[i], origin='upper')
-            axs[i].scatter(xy[i, :, 0], xy[i, :, 1], s=30)
+            axs[i].scatter(xy[i, :, 0], xy[i, :, 1], s=15)
             axs[i].set_axis_off()
+            axs[i].set_xlim(0,W)
+            axs[i].set_ylim(H,0)
         fig.savefig(f'./tmp/output_{step}.png')
         plt.close(fig)
         
@@ -61,8 +62,8 @@ def main():
     args = parser.parse_args()
 
     BATCH = 4
-    BLENDER_INSTANCES = 2
-    WORKER_INSTANCES = 2
+    BLENDER_INSTANCES = 4
+    WORKER_INSTANCES = 1
 
     with ExitStack() as es:
         if not args.replay:
