@@ -3,7 +3,7 @@ import argparse
 import os
 
 def parse_blendtorch_args(argv=None):
-    '''Returns blendtorch-ID and other remainder of script arguments passed.'''
+    '''Parses blendtorch instance parameters and returns the remainder arguments.'''    
     argv = argv or sys.argv
     if '--' in argv:
         argv = argv[argv.index("--") + 1:]
