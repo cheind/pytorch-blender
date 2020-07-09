@@ -7,7 +7,6 @@ from blendtorch import btb
 def main():
     args, remainder = btb.parse_blendtorch_args()
 
-
     cam = bpy.context.scene.camera
     obj = bpy.data.objects["Cube"]
     mat = bpy.data.materials.new(name='random')
@@ -34,7 +33,7 @@ def main():
     def after_image(arr, pub):    
         pub.publish(image=arr, xy=btb.camera.project_points(obj, camera=cam), frameid=bpy.context.scene.frame_current)
 
-    pub = btb.Publisher(args.bind_address, args.btid)
+    pub = btb.BlenderOutputChannel(args.bind_address, args.btid)
 
     off = btb.OffScreenRenderer()
     off.update_perspective(cam)

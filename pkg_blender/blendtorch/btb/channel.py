@@ -1,6 +1,6 @@
 import zmq
 
-class Publisher:
+class BlenderOutputChannel:
     '''Data publisher to be used within Blender scripts.'''
 
     def __init__(self, bind_address, btid):
