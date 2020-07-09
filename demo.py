@@ -50,10 +50,6 @@ def iterate(dl):
             axs[i].set_axis_off()
         fig.savefig(f'./tmp/output_{step}.png')
         plt.close(fig)
-
-BATCH = 4
-BLENDER_INSTANCES = 2
-WORKER_INSTANCES = 2
         
 def main():
     logging.basicConfig(level=logging.INFO)
@@ -64,9 +60,12 @@ def main():
     parser.add_argument('--record', action='store_true', help='Record raw blender data')
     args = parser.parse_args()
 
+    BATCH = 4
+    BLENDER_INSTANCES = 2
+    WORKER_INSTANCES = 2
+
     with ExitStack() as es:
         if not args.replay:
-            global WORKER_INSTANCES
             # Initiate Blender instance     
             bl = es.enter_context(
                 btt.BlenderLauncher(
