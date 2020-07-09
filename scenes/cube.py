@@ -31,7 +31,10 @@ def main():
         mat.diffuse_color = np.concatenate((np.random.random(size=3), [1.]))
         
     def post_image(arr, pub):    
-        pub.publish(image=arr, xy=btb.camera.project_points(obj, camera=cam))
+        pub.publish(
+            image=arr, 
+            xy=btb.camera.project_points(obj, camera=cam),
+            frameid=bpy.context.scene.frame_current)
 
     pub = btb.BlenderOutputChannel(args.bind_address, args.btid)
 

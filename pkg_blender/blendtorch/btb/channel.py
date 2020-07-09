@@ -12,6 +12,17 @@ class BlenderOutputChannel:
         self.btid = btid
         
     def publish(self, **kwargs):
-        data = dict(btid=self.btid, frameid=bpy.context.scene.frame_current)
+        '''Publish message.
+
+        This method will implicitly add bendtorch instance id 
+        `btid` to the send dictionary.
+
+        Params
+        ------
+        kwargs: optional
+            Dictionary of pickable objects composing the message.
+        '''
+
+        data = dict(btid=self.btid)
         data.update(kwargs)
         self.sock.send_pyobj(data)
