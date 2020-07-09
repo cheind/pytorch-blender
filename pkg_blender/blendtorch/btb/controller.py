@@ -26,7 +26,8 @@ class Controller:
         self._set_frame_range(startframe, endframe)
         self.once = once
         self.is_playing = True        
-        bpy.ops.screen.animation_play()       
+        self._on_pre_frame(bpy.context.scene)
+        bpy.ops.screen.animation_play()
 
     def _set_frame_range(self, startframe, endframe):
         startframe = startframe or bpy.context.scene.frame_start
