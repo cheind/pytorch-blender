@@ -17,20 +17,20 @@ def gamma_correct(x):
 class MyDataset:
     '''A dataset that reads from Blender publishers.'''
 
-    def __init__(self, receiver, image_transform=None, stream_length=64):
-        self.receiver = receiver
+    def __init__(self, inchannel, image_transform=None, stream_length=64):
+        self.inchannel = inchannel
         self.image_transform = image_transform
         self.stream_length = stream_length
 
     def __len__(self):
-        if self.receiver.is_stream:
+        if self.inchannel.is_stream:
             return self.stream_length
         else:
-            return len(self.receiver)
+            return len(self.inchannel)
 
     def __getitem__(self, index):        
         # Data is a dictionary of {image, coordinates, process id, frame id} see publisher script
-        d = self.receiver.recv(index, timeoutms=10000)
+        d = self.inchannel.recv(index, timeoutms=10000)
         if self.image_transform:
             d['image'] = self.image_transform(d['image'])
         
@@ -87,14 +87,14 @@ def main():
                 )
                 WORKER_INSTANCES = 0            
             # Add receiver
-            receiver = btt.BlenderReceiver(                    
+            inchan = btt.BlenderInputChannel(                    
                 recorder=rec,
                 addresses=bl.launch_info.addresses
             )
         else:
-            receiver = btt.FileReceiver('./tmp/record.mpkl')
+            inchan = btt.FileInputChannel('./tmp/record.mpkl')
         
-        ds = MyDataset(receiver, image_transform=gamma_correct)
+        ds = MyDataset(inchan, image_transform=gamma_correct)
         # Note, in the following num_workers must be 0
         dl = data.DataLoader(ds, batch_size=BATCH, num_workers=WORKER_INSTANCES, shuffle=False)
         # Process data

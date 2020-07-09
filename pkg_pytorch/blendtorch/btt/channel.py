@@ -5,11 +5,11 @@ import numpy as np
 import weakref
 from torch.utils import data
 
-class ReceiverBase:
+class InputChannelBase:
     def __init__(self, is_stream):
         self.is_stream = is_stream
 
-class BlenderReceiver(ReceiverBase):
+class BlenderInputChannel(InputChannelBase):
     '''Base class for reading from blender publishers.'''
 
     def __init__(self, addresses, recorder=None, queue_size=10):
@@ -70,7 +70,7 @@ class BlenderReceiver(ReceiverBase):
         
 
 
-class FileReceiver(ReceiverBase):
+class FileInputChannel(InputChannelBase):
     '''Base class to read from previously recorded messages.'''
 
     def __init__(self, record_path):

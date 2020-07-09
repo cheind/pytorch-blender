@@ -1,4 +1,4 @@
 from .launcher import BlenderLauncher
-from .receiver import BlenderReceiver, FileReceiver
+from .channel import BlenderInputChannel, FileInputChannel
 from .finder import discover_blender
 from .recorder import Recorder
