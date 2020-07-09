@@ -6,7 +6,11 @@ from .signal import Signal
 from . import camera
 
 class OffScreenRenderer:
-    '''Provides off-screen scene rendering.'''
+    '''Provides off-screen scene rendering.
+    
+    Exposes the following signals
+     - post_image(np.array) invoked after image is rendered.    
+    '''
     
     def __init__(self, flip=True):
         self.shape = camera.image_shape()
