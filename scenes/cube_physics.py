@@ -19,10 +19,10 @@ def main():
 
     def pre_anim(offscreen):
         # Random initial positions
-        #xyz = np.random.uniform((-3,-3,6),(3,3,12.),size=(len(cubes),3))
+        xyz = np.random.uniform((-3,-3,6),(3,3,12.),size=(len(cubes),3))
         rot = np.random.uniform(-np.pi, np.pi, size=(len(cubes),3))
         for idx, c in enumerate(cubes):
-            #c.location = xyz[idx]
+            c.location = xyz[idx]
             c.rotation_euler = rot[idx]
         offscreen.enabled = True
         
@@ -46,6 +46,6 @@ def main():
     anim = btb.Controller()
     anim.pre_animation.add(pre_anim, off)
     anim.post_animation.add(post_anim, off)
-    anim.play(once=False, startframe=0, endframe=120)
+    anim.play(once=False, startframe=0, endframe=200)
 
 main()
