@@ -4,7 +4,7 @@
 
 Feature summary
 - Blender Eevee support for real-time rendering.
-- Seamless PyTorch integration without intermediate files.
+- Seamless streaming into PyTorch data pipelines.
 - Supports arbitrary pickle-able objects to be send alongside images/videos.
 - Builtin recording capability to replay data without Blender.
 
