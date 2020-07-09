@@ -61,9 +61,8 @@ export PYTHONPATH="${PYTHONPATH}:<SRC>/pkg_pytorch:<SRC>/pkg_blender"
 ```
 
 ## Runtimes
-The following tables show the mean runtimes per batch (8) and per image for a simple Cube scene. See [benchmark.py](./benchmark.py) for details. The timings include rendering, transfer, decoding and batch collating.
+The following tables show the mean runtimes per batch (8) and per image for a simple Cube scene (640x480xRGBA). See [benchmark.py](./benchmark.py) for details. The timings include rendering, transfer, decoding and batch collating.
 
-*640x480xRGBA*
 | Blender Instances  | Runtime sec/batch | Runtime sec/image
 |:-:|:-:|:-:|
 | 1  | 0.236 | 0.030|
