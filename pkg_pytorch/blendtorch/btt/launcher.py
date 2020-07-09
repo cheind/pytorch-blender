@@ -4,6 +4,7 @@ import os
 import logging
 import platform
 import signal
+import numpy as np
 
 from .finder import discover_blender
 
@@ -23,7 +24,7 @@ class BlenderLauncher():
     processes.
     '''
 
-    def __init__(self, num_instances=3, start_port=11000, bind_addr='127.0.0.1', scene='scene.blend', script='blender.py', instance_args=None, prot='tcp', blend_path=None):
+    def __init__(self, num_instances=3, start_port=11000, bind_addr='127.0.0.1', scene='scene.blend', script='blender.py', instance_args=None, prot='tcp', blend_path=None, seed=None):
         '''Initialize instance.
         
         Kwargs
@@ -53,6 +54,7 @@ class BlenderLauncher():
         self.script = script
         self.blend_path = blend_path
         self.launch_info = None
+        self.seed = seed
         if instance_args is None:
             self.instance_args = [[] for _ in range(num_instances)]
         assert num_instances > 0
@@ -69,9 +71,14 @@ class BlenderLauncher():
         assert self.launch_info is None, 'Already launched.'
         ports = list(range(self.start_port, self.start_port + self.num_instances))
         addresses = [f'{self.prot}://{self.bind_addr}:{p}' for p in ports]
+        if self.seed is None:
+            seeds = np.random.randint(0, 10000, dtype=int, size=self.num_instances)
+        else:
+            seeds = [self.seed + i for i in range(self.num_instances)]
         
         # Add blendtorch instance identifiers to instances        
         [iargs.append(f'-btid {idx}') for idx,iargs in enumerate(self.instance_args)]      
+        [iargs.append(f'-btseed {seed}') for seed,iargs in zip(seeds,self.instance_args)]
         [iargs.append(f'-bind-address {addr}') for addr,iargs in zip(addresses,self.instance_args)]
         args = [' '.join(a) for a in self.instance_args]
        

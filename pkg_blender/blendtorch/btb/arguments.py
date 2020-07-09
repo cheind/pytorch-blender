@@ -12,6 +12,7 @@ def parse_blendtorch_args(argv=None):
 
     parser = argparse.ArgumentParser()    
     parser.add_argument('-btid', type=int, help='Identifier for this Blender instance')    
+    parser.add_argument('-btseed', type=int, help='Random number seed')
     parser.add_argument('-bind-address', help='Address to bind to.')
     args, remainder = parser.parse_known_args(argv)
     return args, remainder
