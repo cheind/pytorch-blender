@@ -47,8 +47,8 @@ def iterate(dl):
             axs[i].imshow(img[i], origin='upper')
             axs[i].scatter(xy[i, :, 0], xy[i, :, 1], s=15)
             axs[i].set_axis_off()
-            axs[i].set_xlim(0,W)
-            axs[i].set_ylim(H,0)
+            axs[i].set_xlim(0,W-1)
+            axs[i].set_ylim(H-1,0)
         fig.savefig(f'./tmp/output_{step}.png')
         plt.close(fig)
         
