@@ -5,17 +5,13 @@ from contextlib import ExitStack
 
 from blendtorch import btt
 
-from train import MyDataset, gamma_correct
+from demo import MyDataset, gamma_correct
 
 BATCH = 8
-INSTANCES = 2
+INSTANCES = 4
 WORKER_INSTANCES = 2
         
 def main():
-    # Requires blender to be in path
-    # set PATH=c:\Program Files\Blender Foundation\Blender 2.83\;%PATH%
-    # set PYTHONPATH=c:\dev\pytorch-blender\pkg_pytorch;c:\dev\pytorch-blender\pkg_blender
-
     parser = argparse.ArgumentParser()
     parser.add_argument('scene', help='Blender scene name to run')
     args = parser.parse_args()
