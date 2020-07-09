@@ -7,17 +7,16 @@ class Controller:
     '''Animation controller with fine-grained callbacks.'''
     
     def __init__(self):
-        self.before_animation = Signal()
-        self.before_frame = Signal()
-        self.after_animation = Signal()
+        self.pre_animation = Signal()
+        self.pre_frame = Signal()
+        self.post_animation = Signal()
         self.is_playing = False
         self.h_pre_frame = bpy.app.handlers.frame_change_pre.append(self._on_pre_frame)
         
     def play(self, once=True, startframe=None, endframe=None):
         self._set_frame_range(startframe, endframe)
         self.once = once
-        self.is_playing = True
-        self.before_animation()
+        self.is_playing = True        
         bpy.ops.screen.animation_play()       
 
     def _set_frame_range(self, startframe, endframe):
@@ -31,9 +30,15 @@ class Controller:
         if not self.is_playing:
             return
 
-        if self.once and bpy.context.scene.frame_current == bpy.context.scene.frame_end:
+        cur = bpy.context.scene.frame_current
+        pre_first = (cur == bpy.context.scene.frame_start)
+        post_last = (bpy.context.scene.frame_current == bpy.context.scene.frame_end + 1)
+
+        if self.once and post_last:
             bpy.ops.screen.animation_cancel()
             self.is_playing = False
-            self.after_animation()            
+            self.post_animation()
         else:
-            self.before_frame()
+            if pre_first:
+                self.pre_animation()
+            self.pre_frame()

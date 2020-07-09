@@ -21,29 +21,29 @@ def main():
         drv = obj.driver_add('rotation_euler', i)
         drv.driver.expression = f'randomrot()'
 
-    def started(offscreen):
+    def pre_anim(offscreen):
         offscreen.enabled = True
         
-    def stopped(offscreen):
+    def post_anim(offscreen):
         offscreen.enabled = False
 
-    def before_frame():
+    def pre_frame():
         mat.diffuse_color = np.concatenate((np.random.random(size=3), [1.]))
         
-    def after_image(arr, pub):    
-        pub.publish(image=arr, xy=btb.camera.project_points(obj, camera=cam), frameid=bpy.context.scene.frame_current)
+    def post_image(arr, pub):    
+        pub.publish(image=arr, xy=btb.camera.project_points(obj, camera=cam))
 
     pub = btb.BlenderOutputChannel(args.bind_address, args.btid)
 
     off = btb.OffScreenRenderer()
     off.update_perspective(cam)
     off.set_render_options()
-    off.after_image.add(after_image, pub=pub)
+    off.post_image.add(post_image, pub=pub)
 
     anim = btb.Controller()
-    anim.before_animation.add(started, off)
-    anim.after_animation.add(stopped, off)
-    anim.before_frame.add(before_frame)
+    anim.pre_animation.add(pre_anim, off)
+    anim.post_animation.add(post_anim, off)
+    anim.pre_frame.add(pre_frame)
     anim.play(once=False, startframe=0, endframe=100)
 
 main()

@@ -18,7 +18,7 @@ class OffScreenRenderer:
         self.flip = flip        
         self.update_perspective()
 
-        self.after_image = Signal()
+        self.post_image = Signal()
 
     def update_perspective(self, camera=None):
         self.view_matrix, self.proj_matrix = view_projection_matrix(camera)
@@ -48,7 +48,7 @@ class OffScreenRenderer:
         if self.flip:
             buffer = np.flipud(buffer)
 
-        self.after_image(buffer)
+        self.post_image(buffer)
 
     def find_view3d(self):
         areas = [a for a in bpy.context.screen.areas if a.type == 'VIEW_3D']
