@@ -1,6 +1,6 @@
 # blendtorch
 
-**blendtorch**, is a Python framework to seamlessly integrate [Blender](http://blender.orf) renderings into [PyTorch](http://pytorch.org) datasets for deep learning from artificial visual data. We utilize Eevee, a new physically based real-time renderer, to synthesize images and annotations at 60FPS and thus avoid stalling model training in many cases.
+**blendtorch** is a Python framework to seamlessly integrate [Blender](http://blender.orf) renderings into [PyTorch](http://pytorch.org) datasets for deep learning from artificial visual data. We utilize Eevee, a new physically based real-time renderer, to synthesize images and annotations at 60FPS and thus avoid stalling model training in many cases.
 
 Feature summary
 - Blender Eevee support for real-time rendering.
