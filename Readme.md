@@ -71,4 +71,4 @@ The following tables show the mean runtimes per batch (8) and per image for a si
 
 ## Caveats
 - Despite offscreen rendering is supported in Blender 2.8x it requires a UI frontend and thus cannot run in `--background` mode.
-- The renderings produced by Blender are in linear color space and thus will appear dark when displayed. See `gamma_correct` transform [demo.py](./demo.py) to fix this.
+- The renderings produced by Blender are in linear color space and thus will appear darker than expected when displayed. See `gamma_correct` transform [demo.py](./demo.py) to fix this.
