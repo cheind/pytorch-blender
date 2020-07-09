@@ -89,3 +89,4 @@ The package `blendtorch.btb` provides offscreen rendering capabilities `OffScree
 ## Caveats
 - Despite offscreen rendering is supported in Blender 2.8x it requires a UI frontend and thus cannot run in `--background` mode.
 - The renderings produced by Blender are in linear color space and thus will appear darker than expected when displayed. See `gamma_correct` transform [demo.py](./demo.py) to fix this.
+- Currently we do not have support for a feedback channel from PyTorch to Blender.
