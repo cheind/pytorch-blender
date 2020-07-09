@@ -9,6 +9,13 @@ from .finder import discover_blender
 
 logger = logging.getLogger('blendtorch')
 
+class LaunchInfo:
+    def __init__(self, addresses, processes, commands):
+        self.addresses = addresses
+        self.processes = processes
+        self.commands = commands
+
+
 class BlenderLauncher():
     '''Opens and closes Blender instances.
     
@@ -45,29 +52,31 @@ class BlenderLauncher():
         self.instance_args = instance_args
         self.script = script
         self.blend_path = blend_path
+        self.launch_info = None
         if instance_args is None:
             self.instance_args = [[] for _ in range(num_instances)]
         assert num_instances > 0
         assert len(self.instance_args) == num_instances
 
         self.blender_info = discover_blender(self.blend_path)
-
-    def __enter__(self):
-        ports = list(range(self.start_port, self.start_port + self.num_instances))
-        self.addresses = [f'{self.prot}://{self.bind_addr}:{p}' for p in ports]
-        
-        # Add blendtorch instance identifiers to instances        
-        [iargs.append(f'-btid {idx}') for idx,iargs in enumerate(self.instance_args)]      
-        [iargs.append(f'-bind-address {addr}') for addr,iargs in zip(self.addresses,self.instance_args)]
-        args = [' '.join(a) for a in self.instance_args]
-        
         if self.blender_info is None:
             logger.warning('Launching Blender failed;')
             raise ValueError('Blender not found or misconfigured.') 
         else:
             logger.info(f'Blender found {self.blender_info["path"]} version {self.blender_info["major"]}.{self.blender_info["minor"]}')
 
-        self.processes = []
+    def __enter__(self):
+        assert self.launch_info is None, 'Already launched.'
+        ports = list(range(self.start_port, self.start_port + self.num_instances))
+        addresses = [f'{self.prot}://{self.bind_addr}:{p}' for p in ports]
+        
+        # Add blendtorch instance identifiers to instances        
+        [iargs.append(f'-btid {idx}') for idx,iargs in enumerate(self.instance_args)]      
+        [iargs.append(f'-bind-address {addr}') for addr,iargs in zip(addresses,self.instance_args)]
+        args = [' '.join(a) for a in self.instance_args]
+       
+        processes = []
+        commands = []
         env = os.environ.copy()
         for idx,arg in enumerate(args):
             cmd = f'"{self.blender_info["path"]}" {self.scene} --python-use-system-env  --python {self.script} -- {arg}'
@@ -81,12 +90,15 @@ class BlenderLauncher():
                 creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
             )
 
-            self.processes.append(p)
+            processes.append(p)
+            commands.append(cmd)
             logger.info(f'Started instance: {cmd}')
 
+        self.launch_info = LaunchInfo(addresses, processes, commands)
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):    
-        [p.terminate() for p in self.processes]
-        assert not any([p.poll() for p in self.processes]), 'Blender instance still open'
+        [p.terminate() for p in self.launch_info.processes]
+        assert not any([p.poll() for p in self.launch_info.processes]), 'Blender instance still open'
+        self.launch_info = None
         logger.info('Blender instances closed')

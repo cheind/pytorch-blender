@@ -28,8 +28,8 @@ def main():
                 scene=f'scenes/{args.scene}.blend'
             )
         )
-        receiver = btt.BlenderReceiver(addresses=bl.addresses)        
-        ds = MyDataset(receiver, stream_length=256, image_transform=gamma_correct)
+        receiver = btt.BlenderReceiver(addresses=bl.launch_info.addresses)        
+        ds = MyDataset(receiver, stream_length=256)
         dl = data.DataLoader(ds, batch_size=BATCH, num_workers=WORKER_INSTANCES, shuffle=False)
         
         t0 = None

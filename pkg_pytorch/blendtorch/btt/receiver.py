@@ -48,6 +48,11 @@ class BlenderReceiver(ReceiverBase):
             return self.s.recv_pyobj()
 
     def _create(self):
+        '''Create communication channels.
+        Note, PyTorch dataloaders do not offer a principled way to
+        cleanly shut down datasets (and thus blendtorch receivers).
+        Therefore we register a finalizer through weakref to cleanup.
+        '''
         self.ctx = zmq.Context()
         self.s = self.ctx.socket(zmq.PULL)
         self.s.setsockopt(zmq.RCVHWM, self.queue_size)
@@ -72,7 +77,7 @@ class FileReceiver(ReceiverBase):
         super().__init__(is_stream=False)
         self.record_path = record_path
         self.file = None
-        self._peek_header()
+        self._read_header()
         
     def __len__(self):
         return self.num_messages
@@ -95,12 +100,17 @@ class FileReceiver(ReceiverBase):
         self.file.seek(self.offsets[index])
         return self.unpickler.load()
 
-    def _create(self):        
+    def _create(self):
+        '''Create communication channels.
+        Note, PyTorch dataloaders do not offer a principled way to
+        cleanly shut down datasets (and thus blendtorch receivers).
+        Therefore we register a finalizer through weakref to cleanup.
+        '''  
         self.file = io.open(self.record_path, 'rb')
         self.unpickler = pickle.Unpickler(self.file)
         weakref.finalize(self, self._destroy)
     
-    def _peek_header(self):
+    def _read_header(self):
         with io.open(self.record_path, 'rb') as f:
             unpickler = pickle.Unpickler(f)
             self.offsets = unpickler.load()

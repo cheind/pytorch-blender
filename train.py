@@ -89,7 +89,7 @@ def main():
             # Add receiver
             receiver = btt.BlenderReceiver(                    
                 recorder=rec,
-                addresses=bl.addresses
+                addresses=bl.launch_info.addresses
             )
         else:
             receiver = btt.FileReceiver('./tmp/record.mpkl')
