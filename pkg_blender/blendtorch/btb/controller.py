@@ -37,8 +37,8 @@ class Controller:
         if self.once and post_last:
             bpy.ops.screen.animation_cancel()
             self.is_playing = False
-            self.post_animation()
+            self.post_animation.invoke()
         else:
             if pre_first:
-                self.pre_animation()
-            self.pre_frame()
+                self.pre_animation.invoke()
+            self.pre_frame.invoke()

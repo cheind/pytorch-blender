@@ -3,25 +3,22 @@ import bpy, gpu, bgl
 from OpenGL.GL import glGetTexImage
 
 from .signal import Signal
-from .camera import image_shape, view_projection_matrix
+from . import camera
 
 class OffScreenRenderer:
     '''Provides off-screen scene rendering.'''
     
     def __init__(self, flip=True):
-        self.shape = image_shape()
+        self.shape = camera.image_shape()
         self.offscreen = gpu.types.GPUOffScreen(self.shape[1], self.shape[0])
-        self.camera = bpy.context.scene.camera
         self.buffer = np.zeros((self.shape[0], self.shape[1], 4), dtype=np.uint8)
         self.area, self.space = self.find_view3d()
         self.handle = None
         self.flip = flip        
-        self.update_perspective()
-
+        self.proj_matrix = camera.projection_matrix()
+        self.view_matrix = camera.view_matrix()
         self.post_image = Signal()
-
-    def update_perspective(self, camera=None):
-        self.view_matrix, self.proj_matrix = view_projection_matrix(camera)
+        self.set_render_options()
 
     def render(self):
         if not bpy.context.space_data == self.space:
@@ -48,7 +45,7 @@ class OffScreenRenderer:
         if self.flip:
             buffer = np.flipud(buffer)
 
-        self.post_image(buffer)
+        self.post_image.invoke(buffer)
 
     def find_view3d(self):
         areas = [a for a in bpy.context.screen.areas if a.type == 'VIEW_3D']

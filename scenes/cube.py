@@ -36,8 +36,8 @@ def main():
     pub = btb.BlenderOutputChannel(args.bind_address, args.btid)
 
     off = btb.OffScreenRenderer()
-    off.update_perspective(cam)
-    off.set_render_options()
+    off.view_matrix = btb.camera.view_matrix()
+    off.proj_matrix = btb.camera.projection_matrix()
     off.post_image.add(post_image, pub=pub)
 
     anim = btb.Controller()

@@ -12,7 +12,7 @@ class Signal:
     def remove(self, handle):
         self.slots.remove(handle)
 
-    def __call__(self, *args, **kwargs):
+    def invoke(self, *args, **kwargs):
         for s in self.slots:
             s(*args, **kwargs)
 

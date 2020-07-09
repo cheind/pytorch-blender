@@ -10,13 +10,16 @@ def image_shape():
     )
     return shape
 
-def view_projection_matrix(camera=None):    
-    '''Returns view and projection matrix from given camera.'''
+def view_matrix(camera=None):
+    '''Returns view matrix from the specified camera.'''
+    camera = camera or bpy.context.scene.camera
+    return camera.matrix_world.inverted()
+
+def projection_matrix(camera=None):
+    '''Returns the projection matrix from the specified camera.'''
     camera = camera or bpy.context.scene.camera
     shape = image_shape()
-    view_matrix = camera.matrix_world.inverted()
-    proj_matrix = camera.calc_matrix_camera(bpy.context.evaluated_depsgraph_get(), x=shape[1], y=shape[0])
-    return view_matrix, proj_matrix
+    return camera.calc_matrix_camera(bpy.context.evaluated_depsgraph_get(), x=shape[1], y=shape[0])
 
 def project_points(obj, camera=None):
     '''Returns 2D pixel coordinates object's vertex coordinates.
