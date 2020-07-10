@@ -16,7 +16,7 @@ def gamma_correct(x):
 class MyDataset:
     '''A dataset that reads from Blender publishers.'''
 
-    def __init__(self, inchannel, image_transform=None, stream_length=256):
+    def __init__(self, inchannel, image_transform=None, stream_length=32):
         self.inchannel = inchannel
         self.image_transform = image_transform
         self.stream_length = stream_length
@@ -85,10 +85,16 @@ def main():
             # Add receiver
             inchan = btt.BlenderInputChannel(                    
                 recorder=rec,
-                addresses=bl.launch_info.addresses
+                addresses=bl.launch_info.in_addresses
             )
         else:
             inchan = btt.FileInputChannel('./tmp/record.mpkl')
+
+        # We also instantiate a communication channel from PyTorch -> Blender
+        # Here we first send a message to all instances, and one for instance 0
+        out = btt.BlenderOutputChannel(bl.launch_info.out_addresses)
+        out.publish(msg='Hello from blendtorch')
+        out.publish(btids=0, msg='Elite message')
         
         ds = MyDataset(inchan, image_transform=gamma_correct)
         # Note, in the following num_workers must be 0

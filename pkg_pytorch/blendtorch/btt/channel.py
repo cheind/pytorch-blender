@@ -20,7 +20,7 @@ class BlenderInputChannel(InputChannelBase):
         self.is_stream = True
         self.ctx = None
 
-    def recv(self, index=0, timeoutms=-1):
+    def recv(self, index=0, timeoutms=None):
         '''Receive from Blender instances.
         
         Receives and unpickles the next message.
@@ -31,6 +31,7 @@ class BlenderInputChannel(InputChannelBase):
             Index to read, ignored.
         timeoutms: int
             Timeout in milliseconds for the next data bundle to arrive.
+            -1 to wait forever.
         '''
         if self.ctx is None:
             # Lazly creating file object here to ensure PyTorch 
@@ -66,9 +67,7 @@ class BlenderInputChannel(InputChannelBase):
         if self.s is not None:
             self.s.close()
             self.s = None
-            self.ctx = None
-        
-
+            self.ctx = None    
 
 class FileInputChannel(InputChannelBase):
     '''Base class to read from previously recorded messages.'''
@@ -125,3 +124,39 @@ class FileInputChannel(InputChannelBase):
         if self.file is not None:
             self.file.close()
             self.file = None
+
+class BlenderOutputChannel:
+    def __init__(self, addresses):
+        self.addresses = addresses
+        self.ctx = zmq.Context()
+
+        def make_socket(addr):
+            s = self.ctx.socket(zmq.PAIR)
+            s.setsockopt(zmq.LINGER, 0)
+            s.connect(addr)
+            return s
+
+        self.socks = [make_socket(addr) for addr in addresses]
+
+    def publish(self, btids=None, **kwargs):
+        '''Publish a message to one or more Blender instances.
+
+        Params
+        ------
+        btids : integer or iterable-like, optional
+            Selects one or more Blender instances to send message to.
+            If None sends message to all instances.
+        kwargs: dict
+            Message to send.
+        '''
+        if btids is None:
+            btids = list(range(len(self.addresses)))
+        elif isinstance(btids, int):
+            btids = [btids]
+        else:
+            btids = list(btids)
+        
+        data = pickle.dumps(kwargs)
+        for idx in btids:
+            self.socks[idx].send(data)
+        

@@ -11,8 +11,9 @@ from .finder import discover_blender
 logger = logging.getLogger('blendtorch')
 
 class LaunchInfo:
-    def __init__(self, addresses, processes, commands):
-        self.addresses = addresses
+    def __init__(self, in_addresses, out_addresses, processes, commands):
+        self.in_addresses = in_addresses
+        self.out_addresses = out_addresses
         self.processes = processes
         self.commands = commands
 
@@ -69,8 +70,9 @@ class BlenderLauncher():
 
     def __enter__(self):
         assert self.launch_info is None, 'Already launched.'
-        ports = list(range(self.start_port, self.start_port + self.num_instances))
-        addresses = [f'{self.prot}://{self.bind_addr}:{p}' for p in ports]
+        ports = list(range(self.start_port, self.start_port + self.num_instances*2))
+        in_addresses = [f'{self.prot}://{self.bind_addr}:{p}' for p in ports[::2]]
+        out_addresses = [f'{self.prot}://{self.bind_addr}:{p}' for p in ports[1::2]]        
         if self.seed is None:
             seeds = np.random.randint(0, 10000, dtype=int, size=self.num_instances)
         else:
@@ -81,7 +83,8 @@ class BlenderLauncher():
             iargs.extend([
                 '-btid', str(idx),
                 '-btseed', str(seeds[idx]),
-                '-bind-address', str(addresses[idx])
+                '-btoutaddress', str(in_addresses[idx]),
+                '-btinaddress', str(out_addresses[idx])
             ])
         args = [' '.join(a) for a in self.instance_args]
        
@@ -104,7 +107,7 @@ class BlenderLauncher():
             commands.append(cmd)
             logger.info(f'Started instance: {cmd}')
 
-        self.launch_info = LaunchInfo(addresses, processes, commands)
+        self.launch_info = LaunchInfo(in_addresses, out_addresses, processes, commands)
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):    

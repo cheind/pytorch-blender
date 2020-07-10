@@ -30,18 +30,27 @@ def main():
     def pre_frame():
         mat.diffuse_color = np.concatenate((np.random.random(size=3), [1.]))
         
-    def post_image(arr, pub):    
+    def post_image(arr, pub, sub):
+        # After an image is ready, we publish data to PyTorch
         pub.publish(
             image=arr, 
             xy=btb.camera.project_points(obj, camera=cam),
             frameid=bpy.context.scene.frame_current)
 
-    pub = btb.BlenderOutputChannel(args.bind_address, args.btid)
+        # In this demo we check for a message from PyTorch every time
+        # we publish. `recv` returns a list of message that
+        # have been read.
+        rcv = sub.recv(timeoutms=0)
+        if rcv is not None:
+            print(f'{args.btid} received {rcv}') # Print all messages
+
+    pub = btb.BlenderOutputChannel(args.btoutaddress, args.btid)
+    sub = btb.BlenderInputChannel(args.btinaddress)
 
     off = btb.OffScreenRenderer()
     off.view_matrix = btb.camera.view_matrix()
     off.proj_matrix = btb.camera.projection_matrix()
-    off.post_image.add(post_image, pub=pub)
+    off.post_image.add(post_image, pub=pub, sub=sub)
 
     anim = btb.Controller()
     anim.pre_animation.add(pre_anim, off)
