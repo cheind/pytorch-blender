@@ -76,10 +76,13 @@ class BlenderLauncher():
         else:
             seeds = [self.seed + i for i in range(self.num_instances)]
         
-        # Add blendtorch instance identifiers to instances        
-        [iargs.append(f'-btid {idx}') for idx,iargs in enumerate(self.instance_args)]      
-        [iargs.append(f'-btseed {seed}') for seed,iargs in zip(seeds,self.instance_args)]
-        [iargs.append(f'-bind-address {addr}') for addr,iargs in zip(addresses,self.instance_args)]
+        # Add blendtorch instance identifiers to instances
+        for idx, iargs in enumerate(self.instance_args):
+            iargs.extend([
+                '-btid', str(idx),
+                '-btseed', str(seeds[idx]),
+                '-bind-address', str(addresses[idx])
+            ])
         args = [' '.join(a) for a in self.instance_args]
        
         processes = []
