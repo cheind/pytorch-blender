@@ -42,7 +42,7 @@ def main():
         # have been read.
         rcv = sub.recv(timeoutms=0)
         if rcv is not None:
-            print(f'{args.btid} received {rcv}') # Print all messages
+            print(f'Blender {args.btid} received {rcv}') # Print all messages
 
     pub = btb.BlenderOutputChannel(args.btoutaddress, args.btid)
     sub = btb.BlenderInputChannel(args.btinaddress)
