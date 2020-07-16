@@ -24,37 +24,45 @@ class BlenderLauncher():
     processes.
     '''
 
-    def __init__(self, num_instances=3, start_port=11000, bind_addr='127.0.0.1', scene='scene.blend', script='blender.py', instance_args=None, prot='tcp', blend_path=None, seed=None):
+    def __init__(self, scene, script, num_instances=1, named_sockets=None, start_port=11000, bind_addr='127.0.0.1', instance_args=None, proto='tcp', blend_path=None, seed=None):
         '''Initialize instance.
         
         Kwargs
         ------
-        num_instances: int (default=3)
+        scene : string (default='scene.blend')
+            Scene file to be processed by Blender instances            
+        script: string
+            Script to be called from Blender
+        num_instances: int (default=1)
             How many Blender instances to create
+        named_sockets: list-like, optional
+            Names of TCP sockets. Socketnames and ports are
+            passed via command-line arguments '-btsockets name=tcp://address:port ...' 
+            to Blender. They are also available via LaunchInfo to PyTorch.
         start_port : int (default=11000)
             Start of port range for publisher sockets
         bind_addr : string (default='127.0.0.1')
-            Address to bind publisher sockets
-        scene : string (default='scene.blend')
-            Scene file to be processed by Blender instances
+            Address to bind publisher sockets  
+        proto: string (default='tcp')
+            Protocol to use.      
         instance_args : array (default=None)
             Additional arguments per instance to be passed as command
-            line arguments.
-        script: string
-            Script to be called from Blender
-        blend_path: string
+            line arguments.        
+        blend_path: string, optional
             Additional paths to look for Blender
         '''
         self.num_instances = num_instances
         self.start_port = start_port
         self.bind_addr = bind_addr
-        self.prot = prot
-        self.scene = scene
-        self.instance_args = instance_args
+        self.proto = proto
+        self.scene = scene        
         self.script = script
         self.blend_path = blend_path
-        self.launch_info = None
+        self.named_sockets = named_sockets
+        if named_sockets is None:
+            self.named_sockets = []
         self.seed = seed
+        self.instance_args = instance_args
         if instance_args is None:
             self.instance_args = [[] for _ in range(num_instances)]
         assert num_instances > 0
@@ -67,19 +75,29 @@ class BlenderLauncher():
         else:
             logger.info(f'Blender found {self.blender_info["path"]} version {self.blender_info["major"]}.{self.blender_info["minor"]}')
 
+        self.launch_info = None
+
     def __enter__(self):
         assert self.launch_info is None, 'Already launched.'
-        ports = list(range(self.start_port, self.start_port + self.num_instances))
-        addresses = [f'{self.prot}://{self.bind_addr}:{p}' for p in ports]
+        
+        addresses = {}
+        addrgen = self._address_generator(self.proto, self.bind_addr, self.start_port)
+        format_addr = lambda idx: ' '.join([f'{k}={v[idx]}' for k,v in addresses.items()])
+        for s in self.named_sockets:
+            addresses[s] = [next(addrgen) for _ in range(self.num_instances)]
+        print(addresses)
+        
         if self.seed is None:
             seeds = np.random.randint(0, 10000, dtype=int, size=self.num_instances)
         else:
             seeds = [self.seed + i for i in range(self.num_instances)]
-        
-        # Add blendtorch instance identifiers to instances        
-        [iargs.append(f'-btid {idx}') for idx,iargs in enumerate(self.instance_args)]      
-        [iargs.append(f'-btseed {seed}') for seed,iargs in zip(seeds,self.instance_args)]
-        [iargs.append(f'-bind-address {addr}') for addr,iargs in zip(addresses,self.instance_args)]
+
+        for idx, iargs in enumerate(self.instance_args):
+            iargs.extend([
+                '-btid', str(idx),
+                '-btseed', str(seeds[idx]),
+                '-btsockets', format_addr(idx),
+            ])
         args = [' '.join(a) for a in self.instance_args]
        
         processes = []
@@ -109,3 +127,10 @@ class BlenderLauncher():
         assert not any([p.poll() for p in self.launch_info.processes]), 'Blender instance still open'
         self.launch_info = None
         logger.info('Blender instances closed')
+
+    def _address_generator(self, proto, bind_addr, start_port):
+        nextport = start_port
+        while True:
+            addr = f'{proto}://{bind_addr}:{nextport}'
+            nextport += 1
+            yield addr
