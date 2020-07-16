@@ -43,7 +43,7 @@ def main():
     off.proj_matrix = btb.camera.projection_matrix()
     off.post_image.add(post_image, pub=pub)
 
-    anim = btb.Controller()
+    anim = btb.AnimationController()
     anim.pre_animation.add(pre_anim, off)
     anim.post_animation.add(post_anim, off)
     anim.play(once=False, startframe=0, endframe=200)

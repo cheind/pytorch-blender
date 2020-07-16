@@ -3,14 +3,14 @@ import bpy
 
 from .signal import Signal
 
-class Controller:
+class AnimationController:
     '''Animation controller with fine-grained callbacks.
     
     Exposes the following signals
-     - pre_animation() invoked before animation starts
+     - pre_animation() invoked before first frame of animation range is processed
      - pre_frame() invoked before a frame begins
      - post_frame() invoked after a frame is finished
-     - post_animation() invoked after an animation completed
+     - post_animation() invoked after the last animation frame has completed
     '''
     
     def __init__(self):
@@ -29,6 +29,10 @@ class Controller:
         self._on_pre_frame(bpy.context.scene)
         bpy.ops.screen.animation_play()
 
+    def cancel(self):
+        self.is_playing = False
+        bpy.ops.screen.animation_cancel()
+
     def _set_frame_range(self, startframe, endframe):
         startframe = startframe or bpy.context.scene.frame_start
         endframe = endframe or bpy.context.scene.endframe
@@ -36,10 +40,10 @@ class Controller:
         bpy.context.scene.frame_end = endframe
         bpy.context.scene.frame_set(bpy.context.scene.frame_start)
                         
-    def _on_pre_frame(self, scene, *args):
+    def _on_pre_frame(self, scene, *args):  
         if not self.is_playing:
             return
-
+        
         cur = bpy.context.scene.frame_current
         pre_first = (cur == bpy.context.scene.frame_start)
         
@@ -54,9 +58,10 @@ class Controller:
         cur = bpy.context.scene.frame_current
         post_last = (cur == bpy.context.scene.frame_end)
 
+        self.post_frame.invoke()
+
         if post_last:
             if self.once:
-                bpy.ops.screen.animation_cancel()
                 self.is_playing = False
-            self.post_animation.invoke()
-        self.post_frame.invoke()
+                bpy.ops.screen.animation_cancel(restore_frame=False)                
+            self.post_animation.invoke()        
