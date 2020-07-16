@@ -5,11 +5,10 @@ from contextlib import ExitStack
 
 from blendtorch import btt
 
-from demo import MyDataset, gamma_correct
-
 BATCH = 8
 INSTANCES = 4
 WORKER_INSTANCES = 2
+NUM_ITEMS = 512
         
 def main():
     parser = argparse.ArgumentParser()
@@ -25,21 +24,25 @@ def main():
                 named_sockets=['DATA']                
             )
         )
-        channel = btt.BlenderInputChannel(addresses=bl.launch_info.addresses['DATA'])        
-        ds = MyDataset(channel, stream_length=256)
+        ds = btt.RemoteIterableDataset(bl.launch_info.addresses['DATA'])
+        ds.stream_length(NUM_ITEMS)
         dl = data.DataLoader(ds, batch_size=BATCH, num_workers=WORKER_INSTANCES, shuffle=False)
         
         t0 = None
         imgshape = None
-
+        
+        n = 0
         for item in dl:
             if t0 is None: # 1st is warmup
                 t0 = time.time()
-                imgshape = item[0].shape
+                imgshape = item['image'].shape
+            n += len(item['image'])
+
+        assert n == NUM_ITEMS
 
         t1 = time.time()    
-        N = len(ds) - BATCH
-        B = len(ds)//BATCH - 1
+        N = NUM_ITEMS - BATCH
+        B = NUM_ITEMS//BATCH - 1
         print(f'Time {(t1-t0)/N:.3f}sec/image, {(t1-t0)/B:.3f}sec/batch, shape {imgshape}')
 
 if __name__ == '__main__':
