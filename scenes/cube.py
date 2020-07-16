@@ -36,7 +36,7 @@ def main():
             xy=btb.camera.project_points(obj, camera=cam),
             frameid=bpy.context.scene.frame_current)
 
-    pub = btb.BlenderOutputChannel(args.bind_address, args.btid)
+    pub = btb.BlenderOutputChannel(args.btsockets['DATA'], args.btid)
 
     off = btb.OffScreenRenderer()
     off.view_matrix = btb.camera.view_matrix()

@@ -70,9 +70,10 @@ def main():
             # Initiate Blender instance     
             bl = es.enter_context(
                 btt.BlenderLauncher(
-                    num_instances=BLENDER_INSTANCES, 
+                    scene=f'scenes/{args.scene}.blend',
                     script=f'scenes/{args.scene}.py', 
-                    scene=f'scenes/{args.scene}.blend'
+                    num_instances=BLENDER_INSTANCES, 
+                    named_sockets=['DATA'],
                 )
             )
             # Add recording if needed (requires num_workers=0)
@@ -85,7 +86,7 @@ def main():
             # Add receiver
             inchan = btt.BlenderInputChannel(                    
                 recorder=rec,
-                addresses=bl.launch_info.addresses
+                addresses=bl.launch_info.addresses['DATA']
             )
         else:
             inchan = btt.FileInputChannel('./tmp/record.mpkl')

@@ -19,12 +19,13 @@ def main():
     with ExitStack() as es:
         bl = es.enter_context(
             btt.BlenderLauncher(
-                num_instances=INSTANCES, 
+                scene=f'scenes/{args.scene}.blend',
                 script=f'scenes/{args.scene}.py', 
-                scene=f'scenes/{args.scene}.blend'
+                num_instances=INSTANCES, 
+                named_sockets=['DATA']                
             )
         )
-        channel = btt.BlenderInputChannel(addresses=bl.launch_info.addresses)        
+        channel = btt.BlenderInputChannel(addresses=bl.launch_info.addresses['DATA'])        
         ds = MyDataset(channel, stream_length=256)
         dl = data.DataLoader(ds, batch_size=BATCH, num_workers=WORKER_INSTANCES, shuffle=False)
         
