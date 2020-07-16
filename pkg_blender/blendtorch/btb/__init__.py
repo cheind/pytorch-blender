@@ -1,4 +1,4 @@
-from .animation import AnimationController
+from .animation import AnimationController, SteppingAnimationController
 from .offscreen import OffScreenRenderer
 from .arguments import parse_blendtorch_args
 from .channel import BlenderOutputChannel
