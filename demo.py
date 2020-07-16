@@ -1,9 +1,7 @@
-import torch.utils.data as data
-import numpy as np
-import matplotlib.pyplot as plt
-import logging
-import argparse
 from contextlib import ExitStack
+from torch.utils.data import DataLoader
+import matplotlib.pyplot as plt
+import numpy as np
 
 from blendtorch import btt
 
@@ -13,32 +11,14 @@ def gamma_correct(x):
     rgb = np.uint8(255.0 * rgb**(1/2.2))
     return np.concatenate((rgb, x[...,3:4]), axis=-1)
 
-class MyDataset:
-    '''A dataset that reads from Blender publishers.'''
-
-    def __init__(self, inchannel, image_transform=None, stream_length=256):
-        self.inchannel = inchannel
-        self.image_transform = image_transform
-        self.stream_length = stream_length
-
-    def __len__(self):
-        if self.inchannel.is_stream:
-            return self.stream_length
-        else:
-            return len(self.inchannel)
-
-    def __getitem__(self, index):        
-        # Data is a dictionary of {image, coordinates, process id, frame id} see publisher script
-        d = self.inchannel.recv(index, timeoutms=10000)
-        if self.image_transform:
-            d['image'] = self.image_transform(d['image'])
+def item_transform(item):
+    item['image'] = gamma_correct(item['image'])
+    return item
         
-        return d['image'], d['xy'], d['btid'], d['frameid']
-
-
 def iterate(dl):
     DPI=96
-    for step, (img, xy, btid, fid) in enumerate(dl):
+    for step, item in enumerate(dl):
+        img, xy, btid, fid = item['image'], item['xy'], item['btid'], item['frameid']
         print(f'Received batch from Blender processes {btid.numpy()}, frames {fid.numpy()}')
         H,W = img.shape[1], img.shape[2]
         fig = plt.figure(frameon=False, figsize=(W*2/DPI,H*2/DPI), dpi=DPI)
@@ -51,23 +31,25 @@ def iterate(dl):
             axs[i].set_ylim(H-1,0)
         fig.savefig(f'./tmp/output_{step}.png')
         plt.close(fig)
-        
+
+BATCH = 4
+BLENDER_INSTANCES = 4
+WORKER_INSTANCES = 4        
+
 def main():
+    import logging
     logging.basicConfig(level=logging.INFO)
 
+    import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('scene', help='Blender scene name to run')
     parser.add_argument('--replay', action='store_true', help='Replay from disc instead of launching from Blender')
     parser.add_argument('--record', action='store_true', help='Record raw blender data')
     args = parser.parse_args()
 
-    BATCH = 4
-    BLENDER_INSTANCES = 4
-    WORKER_INSTANCES = 1
-
     with ExitStack() as es:
         if not args.replay:
-            # Initiate Blender instance     
+            # Launch Blender instance. Upon exit of this script all Blender instances will be closed.     
             bl = es.enter_context(
                 btt.BlenderLauncher(
                     scene=f'scenes/{args.scene}.blend',
@@ -76,25 +58,28 @@ def main():
                     named_sockets=['DATA'],
                 )
             )
-            # Add recording if needed (requires num_workers=0)
-            rec = None
-            if args.record:
-                rec = es.enter_context(
-                    btt.Recorder('./tmp/record.mpkl')
-                )
-                WORKER_INSTANCES = 0            
-            # Add receiver
-            inchan = btt.BlenderInputChannel(                    
-                recorder=rec,
-                addresses=bl.launch_info.addresses['DATA']
+            
+            # Setup a streaming dataset
+            ds = btt.RemoteIterableDataset(
+                bl.launch_info.addresses['DATA'], 
+                item_transform=item_transform
             )
+            # Iterable datasets do not support shuffle
+            shuffle = False
+            
+            # Limit the total number of streamed elements
+            ds.stream_length(16)
+
+            # Setup raw recording if desired
+            if args.record:
+                ds.enable_recording(f'./tmp/record_{args.scene}')
         else:
-            inchan = btt.FileInputChannel('./tmp/record.mpkl')
-        
-        ds = MyDataset(inchan, image_transform=gamma_correct)
-        # Note, in the following num_workers must be 0
-        dl = data.DataLoader(ds, batch_size=BATCH, num_workers=WORKER_INSTANCES, shuffle=False)
-        # Process data
+            # Otherwise we replay from file.
+            ds = btt.FileDataset(f'./tmp/record_{args.scene}', item_transform=item_transform)
+            shuffle = True
+                
+        # Setup DataLoader and iterate
+        dl = DataLoader(ds, batch_size=BATCH, num_workers=WORKER_INSTANCES, shuffle=shuffle)
         iterate(dl)
 
 
