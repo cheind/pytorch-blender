@@ -5,6 +5,8 @@ from OpenGL.GL import glGetTexImage
 from .signal import Signal
 from . import camera
 
+import time
+
 class OffScreenRenderer:
     '''Provides off-screen scene rendering.
     
@@ -16,7 +18,7 @@ class OffScreenRenderer:
         self.shape = camera.image_shape()
         self.offscreen = gpu.types.GPUOffScreen(self.shape[1], self.shape[0])
         self.buffer = np.zeros((self.shape[0], self.shape[1], 4), dtype=np.uint8)
-        self.area, self.space = self.find_view3d()
+        self.area, self.space, self.region = self.find_view3d()
         self.handle = None
         self.flip = flip        
         self.proj_matrix = camera.projection_matrix()
@@ -28,8 +30,10 @@ class OffScreenRenderer:
         self.offscreen.draw_view3d(
             bpy.context.scene,
             bpy.context.view_layer,
-            bpy.context.space_data,
-            bpy.context.region,
+            self.space,            
+            self.region,
+            #bpy.context.space_data,
+            #bpy.context.region,
             self.view_matrix,
             self.proj_matrix)
                             
@@ -52,14 +56,16 @@ class OffScreenRenderer:
     def on_render(self):
         if not bpy.context.space_data == self.space:
             return
-        self.render()
+        return self.render()
 
     def find_view3d(self):
         areas = [a for a in bpy.context.screen.areas if a.type == 'VIEW_3D']
         assert len(areas) > 0
+        area = areas[0]
+        window_region = sorted([r for r in area.regions if r.type == 'WINDOW'], key=lambda x:x.width, reverse=True)[0]        
         spaces = [s for s in areas[0].spaces if s.type == 'VIEW_3D']
         assert len(spaces) > 0
-        return areas[0], spaces[0]
+        return area, spaces[0], window_region
 
     def set_render_options(self, shading='RENDERED', overlays=False):
         self.space.shading.type = shading
