@@ -45,7 +45,8 @@ class SteppingAnimationController(AnimationControllerBase):
                 break
 
 class AnimationController(AnimationControllerBase):   
-    def __init__(self):        
+    def __init__(self):    
+        super().__init__()    
         self.is_playing = False
         self.h_pre_frame = bpy.app.handlers.frame_change_pre.append(self._on_pre_frame)
         self.h_post_frame = bpy.app.handlers.frame_change_post.append(self._on_post_frame)
