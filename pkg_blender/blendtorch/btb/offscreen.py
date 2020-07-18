@@ -25,9 +25,6 @@ class OffScreenRenderer:
         self.set_render_options()
 
     def render(self):
-        if not bpy.context.space_data == self.space:
-            return
-
         self.offscreen.draw_view3d(
             bpy.context.scene,
             bpy.context.view_layer,
@@ -50,6 +47,12 @@ class OffScreenRenderer:
             buffer = np.flipud(buffer)
 
         self.post_image.invoke(buffer)
+        return buffer
+
+    def on_render(self):
+        if not bpy.context.space_data == self.space:
+            return
+        self.render()
 
     def find_view3d(self):
         areas = [a for a in bpy.context.screen.areas if a.type == 'VIEW_3D']
@@ -69,7 +72,7 @@ class OffScreenRenderer:
     @enabled.setter 
     def enabled(self, toggle):
         if toggle and self.handle is None:
-            self.handle = bpy.types.SpaceView3D.draw_handler_add(self.render, (), 'WINDOW', 'POST_PIXEL')
+            self.handle = bpy.types.SpaceView3D.draw_handler_add(self.on_render, (), 'WINDOW', 'POST_PIXEL')
         elif not toggle and self.handle is not None:
             bpy.types.SpaceView3D.draw_handler_remove(self.handle, 'WINDOW')
             self.handle = None
