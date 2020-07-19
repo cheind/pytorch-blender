@@ -46,6 +46,6 @@ def main():
     anim = btb.AnimationController()
     anim.pre_animation.add(pre_anim, off)
     anim.post_animation.add(post_anim, off)
-    anim.play(once=False, startframe=0, endframe=200)
+    anim.play(frame_range=(0,100), repeat=-1)
 
 main()

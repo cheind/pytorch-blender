@@ -47,6 +47,6 @@ def main():
     anim.pre_animation.add(pre_anim, off)
     anim.post_animation.add(post_anim, off)
     anim.pre_frame.add(pre_frame)
-    anim.play(once=False, startframe=0, endframe=100)
+    anim.play(frame_range=(0,100))
 
 main()
