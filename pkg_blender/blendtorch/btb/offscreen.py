@@ -27,24 +27,25 @@ class OffScreenRenderer:
         self.set_render_options()
 
     def render(self):
-        self.offscreen.draw_view3d(
-            bpy.context.scene,
-            bpy.context.view_layer,
-            self.space,            
-            self.region,
-            #bpy.context.space_data,
-            #bpy.context.region,
-            self.view_matrix,
-            self.proj_matrix)
-                            
-        bgl.glActiveTexture(bgl.GL_TEXTURE0)
-        bgl.glBindTexture(bgl.GL_TEXTURE_2D, self.offscreen.color_texture)   
+        with self.offscreen.bind():
+            self.offscreen.draw_view3d(
+                bpy.context.scene,
+                bpy.context.view_layer,
+                self.space,            
+                self.region,
+                #bpy.context.space_data,
+                #bpy.context.region,
+                self.view_matrix,
+                self.proj_matrix)
+                                
+            bgl.glActiveTexture(bgl.GL_TEXTURE0)
+            bgl.glBindTexture(bgl.GL_TEXTURE_2D, self.offscreen.color_texture)   
 
-        # np.asarray seems slow, because bgl.buffer does not support the python buffer protocol
-        # bgl.glGetTexImage(bgl.GL_TEXTURE_2D, 0, bgl.GL_RGB, bgl.GL_UNSIGNED_BYTE, self.buffer)
-        # https://docs.blender.org/api/blender2.8/gpu.html       
-        # That's why we use PyOpenGL at this point instead.     
-        glGetTexImage(bgl.GL_TEXTURE_2D, 0, bgl.GL_RGBA, bgl.GL_UNSIGNED_BYTE, self.buffer)
+            # np.asarray seems slow, because bgl.buffer does not support the python buffer protocol
+            # bgl.glGetTexImage(bgl.GL_TEXTURE_2D, 0, bgl.GL_RGB, bgl.GL_UNSIGNED_BYTE, self.buffer)
+            # https://docs.blender.org/api/blender2.8/gpu.html       
+            # That's why we use PyOpenGL at this point instead.     
+            glGetTexImage(bgl.GL_TEXTURE_2D, 0, bgl.GL_RGBA, bgl.GL_UNSIGNED_BYTE, self.buffer)
 
         buffer = self.buffer
         if self.flip:
