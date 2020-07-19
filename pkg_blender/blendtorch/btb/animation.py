@@ -22,6 +22,7 @@ class AnimationControllerBase:
         self.post_animation = Signal()
         self.pre_play = Signal()
         self.post_play = Signal()
+        self.post_pixel = Signal()
 
     def play(self, frame_range=None, repeat=-1):
         raise NotImplementedError()
@@ -66,6 +67,8 @@ class AnimationController(AnimationControllerBase):
         self.pre_play.invoke()
         bpy.app.handlers.frame_change_pre.append(self._on_pre_frame)
         bpy.app.handlers.frame_change_post.append(self._on_post_frame)
+        self.area,self.space,region = self.find_view3d()
+        bpy.types.SpaceView3D.draw_handler_add(self._on_post_pixel, (), 'WINDOW', 'POST_PIXEL')        
         bpy.context.scene.frame_set(frame_range[0])
         bpy.ops.screen.animation_play()
         self.playing = True        
@@ -78,15 +81,21 @@ class AnimationController(AnimationControllerBase):
         self.pre_frame.invoke()
 
     def _on_post_frame(self, scene, *args):
-        post_last = (self.frameid == self.frame_range[1])
-
         self.post_frame.invoke()
 
+    def _on_post_pixel(self):
+        if not bpy.context.space_data == self.space or not self.playing:
+            return
+        
+        self.post_pixel.invoke()        
+
+        post_last = (self.frameid == self.frame_range[1])
         if post_last:
             self.repeat_count += 1
             self.post_animation.invoke()
             if self.repeat_count == self.repeat_max:
                 self.cancel()
+        
 
     def cancel(self):
         if not self.playing:
@@ -96,3 +105,12 @@ class AnimationController(AnimationControllerBase):
         bpy.ops.screen.animation_cancel(restore_frame=False)
         self.playing = False
         self.post_play.invoke()
+
+    def find_view3d(self):
+        areas = [a for a in bpy.context.screen.areas if a.type == 'VIEW_3D']
+        assert len(areas) > 0
+        area = areas[0]
+        window_region = sorted([r for r in area.regions if r.type == 'WINDOW'], key=lambda x:x.width, reverse=True)[0]        
+        spaces = [s for s in areas[0].spaces if s.type == 'VIEW_3D']
+        assert len(spaces) > 0
+        return area, spaces[0], window_region
