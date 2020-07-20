@@ -1,4 +1,5 @@
 
+import sys
 import bpy
 
 from .signal import Signal
@@ -24,7 +25,7 @@ class AnimationControllerBase:
         self.post_play = Signal()
         self.post_pixel = Signal()
 
-    def play(self, frame_range=None, repeat=-1):
+    def play(self, frame_range=None, num_episodes=-1):
         raise NotImplementedError()
 
     def _set_frame_range(self, frame_range):
@@ -37,17 +38,23 @@ class AnimationControllerBase:
 
 class SteppingAnimationController(AnimationControllerBase): 
     
-    def play(self, once=False, startframe=None, stopframe=None):
-        self._set_frame_range(startframe, stopframe)
-        while True:
+    def play(self, frame_range=None, num_episodes=-1):       
+        if frame_range is None:
+            frame_range = (bpy.context.scene.frame_start, bpy.context.scene.frame_end) 
+        if num_episodes <= 0:
+            num_episodes = sys.maxsize
+        self._set_frame_range(frame_range)
+
+        self.pre_play.invoke()
+        for e in range(num_episodes):
             self.pre_animation.invoke()
-            for i in range(startframe, stopframe+1):
+            for i in range(frame_range[0], frame_range[1]+1):
                 self.pre_frame.invoke()
                 bpy.context.scene.frame_set(i)
                 self.post_frame.invoke()
-            self.post_animation.invoke()
-            if once:
-                break
+                self.post_pixel.invoke()
+            self.post_animation.invoke()            
+        self.post_play.invoke()
 
 class AnimationController(AnimationControllerBase):    
 
@@ -55,15 +62,15 @@ class AnimationController(AnimationControllerBase):
         super().__init__()
         self.playing = False
         
-    def play(self, frame_range=None, repeat=-1):
+    def play(self, frame_range=None, num_episodes=-1):
         if self.playing:
             self.cancel()
         if frame_range is None:
-            frame_range = (bpy.context.scene.frame_start, bpy.context.scene.endframe)
+            frame_range = (bpy.context.scene.frame_start, bpy.context.scene.frame_end)
         self._set_frame_range(frame_range)
         self.frame_range = frame_range
-        self.repeat_count = 0
-        self.repeat_max = repeat
+        self.episode = 0
+        self.num_episodes = num_episodes
         self.pre_play.invoke()
         bpy.app.handlers.frame_change_pre.append(self._on_pre_frame)
         bpy.app.handlers.frame_change_post.append(self._on_post_frame)
@@ -91,11 +98,10 @@ class AnimationController(AnimationControllerBase):
 
         post_last = (self.frameid == self.frame_range[1])
         if post_last:
-            self.repeat_count += 1
+            self.episode += 1
             self.post_animation.invoke()
-            if self.repeat_count == self.repeat_max:
+            if self.episode == self.num_episodes:
                 self.cancel()
-        
 
     def cancel(self):
         if not self.playing:
