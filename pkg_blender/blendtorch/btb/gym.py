@@ -1,36 +1,43 @@
 from .animation import AnimationController
-from collections import namedtuple
+import zmq
 
-ControllerInfo = namedtuple('ControllerInfo', ['action', 'observation', 'reward', 'done', 'time'])
 
 class BaseEnv:
     '''Environment base class, based on the model of OpenAI Gym.'''
 
-    def __init__(self, controlfn):
+    def __init__(self, address):
         self.animation = AnimationController()
         self.animation.pre_frame.add(self.pre_frame)
         self.animation.post_frame.add(self.post_frame)
-        self.animation.pre_animation.add(self.pre_animation)
-        self.animation.post_animation.add(self.post_animation)
-        self.controlfn = controlfn
         self.prev_action = None
-        self._controlinfo = None
+        self.obs = None
+        self.reward = None
+        
+        # self.context = zmq.Context()
+        # self.socket = context.socket(zmq.REP)
+        # self.socket.connect(address)
+        # self.poller = zmq.Poller()
+        # self.poller.register(self.socket, zmq.POLLIN)
+        # self.state = 'IDLE'
 
     def pre_frame(self):
-        # get action using current state
-        next_action = self.controlfn(self._controlinfo)
-        self.apply_action(next_action)
-        self.prev_action = next_action
+        if self.animation.frameid > self.frame_range[0]:
+            self.prev_action = self.controlfn(self.prev_action, self.)
 
-    def post_frame(self):
-        self._controlinfo = self.update_controlinfo()
-
-    def pre_animation(self):
-        self._controlinfo = None
-
-    def post_animation(self):
+        self.
         pass
 
-    def run(self, startframe=None, endframe=None):
-        self.animation.play(once=False, startframe=0, endframe=100)
+    def post_frame(self):
+        if self.animation.frameid == self.frame_range[0]:
+
+        pass
+
+    def reset(self, controlfn, frame_range):        
+        self.animation.cancel()
+        self.controlfn = controlfn
+        self.frame_range = frame_range
+        self.prev_action = None
+        self.done = False
+        self.animation.play(frame_range, num_episodes=1)
+        
 
