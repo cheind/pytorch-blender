@@ -137,20 +137,16 @@ off.proj_matrix = btb.camera.projection_matrix()
 # # # pre-frame 1
 # # # post-frame 1
 
+def agent(ctx):
+    print(ctx)
+    return 'dummy'
 
-env = btb.gym.BaseEnv()
-env.reset()
+class MyEnv(btb.gym.BaseEnv):
 
+    def _env_prepare_step(self, action, ctx):
+        print('preparing action', action)
 
-# import zmq
+    def _env_post_step(self, ctx):
+        print('gathering results')
 
-# #  Prepare our context and sockets
-# context = zmq.Context()
-# socket = context.socket(zmq.REQ)
-# socket.connect("tcp://localhost:5559")
-
-# #  Do 10 requests, waiting each time for a response
-# for request in range(1,11):
-#     socket.send(b"Hello")
-#     message = socket.recv()
-#     print("Received reply %s [%s]" % (request, message))
+env = MyEnv(agent, frame_range=(1,10))
