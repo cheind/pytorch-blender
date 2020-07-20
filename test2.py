@@ -11,29 +11,23 @@ import time
 
 from blendtorch import btb
 
-# off = btb.OffScreenRenderer()
-# off.view_matrix = btb.camera.view_matrix()
-# off.proj_matrix = btb.camera.projection_matrix()
-# #off.enabled = True
+off = btb.OffScreenRenderer()
+off.view_matrix = btb.camera.view_matrix()
+off.proj_matrix = btb.camera.projection_matrix()
+#off.enabled = True
 
-# img = []
+# from PIL import Image
 
 # def post_frame():
 #     print('post', bpy.data.objects['Cube1'].matrix_world.translation, bpy.context.scene.frame_current)
 #     #off.area.tag_redraw()
-#     img.append(off.render())
-
-
-# def post_image(buf):
-#     print('post-image')
-
-# off.post_image.add(post_image)
-
+#     data = off.render()
+#     Image.fromarray(data).save(f'image_{anim.frameid}.png')
 
 # t = time.time()
 # anim = btb.SteppingAnimationController()
 # anim.post_frame.add(post_frame)
-# anim.play(once=True, startframe=1, stopframe=11)
+# anim.play(once=True, startframe=1, stopframe=200)
 # print(time.time() - t)
 
 
@@ -53,89 +47,96 @@ from blendtorch import btb
 
 #https://blender.stackexchange.com/questions/156503/rendering-on-command-line-with-gpu
 
-from PIL import Image
-
-def pre_frame(anim):
-    print('pre-frame', anim.frameid)
-
-def post_frame(anim, off):
-    print('post-frame', anim.frameid)
-
-def post_pixel(anim, off):
-    print('post-pixel', anim.frameid)
-    data = off.render()[...,:3]
-    # print(data.shape, data.min(), data.max())
-    # Image.fromarray(data).save(f'image_{anim.frameid}.png')
-
-def pre_anim(anim):
-    print('pre-anim', anim.frameid)
-
-def post_anim(anim):
-    print('post-anim', anim.frameid)
-    print('----------')
-
-t = None
-
-def pre_play():
-    global t
-    t = time.time()
-    print('pre-play')
-    print('#########')
 
 
-def post_play():
-
-    print('#########')
-    print('post-play')        
-    print(time.time() - t)
-
-off = btb.OffScreenRenderer()
-off.view_matrix = btb.camera.view_matrix()
-off.proj_matrix = btb.camera.projection_matrix()
-
-anim = btb.AnimationController()
-anim.pre_play.add(pre_play)
-anim.post_play.add(post_play)
-anim.pre_animation.add(pre_anim, anim=anim)
-anim.post_animation.add(post_anim, anim=anim)
-anim.pre_frame.add(pre_frame, anim=anim)
-anim.post_frame.add(post_frame, anim=anim, off=off)
-anim.post_pixel.add(post_pixel, anim=anim, off=off)
-anim.play(frame_range=(1,60), repeat=1)
-
-
-
-# def post_image(img):
-#     print('post-image')
-
-# def pre_frame(*args):
-#     print('pre-frame')
 
 # from PIL import Image
 
-# def post_frame(*args):
-#     print('post-frame')
-#     data = off.render()
-#     img = Image.fromarray(data, 'RGBA').convert('RGB')
-#     img.save('img.png')
+# def pre_frame(anim):
+#     print('pre-frame', anim.frameid)
+
+# def post_frame(anim, off):
+#     print('post-frame', anim.frameid)
+
+# def post_pixel(anim, off):
+#     print('post-pixel', anim.frameid)
+#     data = off.render()[...,:3]
+#     # print(data.shape, data.min(), data.max())
+#     # Image.fromarray(data).save(f'image_{anim.frameid}.png')
+
+# def pre_anim(anim):
+#     print('pre-anim', anim.frameid)
+
+# def post_anim(anim):
+#     print('post-anim', anim.frameid)
+#     print('----------')
+
+# t = None
+
+# def pre_play():
+#     global t
+#     t = time.time()
+#     print('pre-play')
+#     print('#########')
 
 
-# off.post_image.add(post_image)
-# #off.enabled = True
-# #
-# bpy.app.handlers.frame_change_pre.append(pre_frame)
-# bpy.app.handlers.frame_change_post.append(post_frame)
+# def post_play():
+
+#     print('#########')
+#     print('post-play')        
+#     print(time.time() - t)
+
+# off = btb.OffScreenRenderer()
+# off.view_matrix = btb.camera.view_matrix()
+# off.proj_matrix = btb.camera.projection_matrix()
+
+# anim = btb.AnimationController()
+# anim.pre_play.add(pre_play)
+# anim.post_play.add(post_play)
+# anim.pre_animation.add(pre_anim, anim=anim)
+# anim.post_animation.add(post_anim, anim=anim)
+# anim.pre_frame.add(pre_frame, anim=anim)
+# anim.post_frame.add(post_frame, anim=anim, off=off)
+# anim.post_pixel.add(post_pixel, anim=anim, off=off)
+# anim.play(frame_range=(1,60), repeat=1)
 
 
-# import time
-# t = time.time()
-# print('before_set')
-# for i in range(20):
-#     bpy.context.scene.frame_set(i)
-# print('set')
-# print(time.time() - t)
+
+# # def post_image(img):
+# #     print('post-image')
+
+# # def pre_frame(*args):
+# #     print('pre-frame')
+
+# # from PIL import Image
+
+# # def post_frame(*args):
+# #     print('post-frame')
+# #     data = off.render()
+# #     img = Image.fromarray(data, 'RGBA').convert('RGB')
+# #     img.save('img.png')
 
 
-# # pre-anim 1
-# # pre-frame 1
-# # post-frame 1
+# # off.post_image.add(post_image)
+# # #off.enabled = True
+# # #
+# # bpy.app.handlers.frame_change_pre.append(pre_frame)
+# # bpy.app.handlers.frame_change_post.append(post_frame)
+
+
+# # import time
+# # t = time.time()
+# # print('before_set')
+# # for i in range(20):
+# #     bpy.context.scene.frame_set(i)
+# # print('set')
+# # print(time.time() - t)
+
+
+# # # pre-anim 1
+# # # pre-frame 1
+# # # post-frame 1
+
+
+env = btb.gym.BaseEnv()
+env.reset()
