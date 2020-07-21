@@ -5,6 +5,7 @@ from glob import glob
 import torch.utils as utils
 
 from .file import FileRecorder, FileReader
+from .constants import DEFAULT_TIMEOUTMS
 
 
 def _identity_item_transform(x):
@@ -13,7 +14,7 @@ def _identity_item_transform(x):
 class RemoteIterableDataset(utils.data.IterableDataset):
     '''Base class for iteratable datasets that stream from remote Blender instances.'''
 
-    def __init__(self, addresses, queue_size=10, timeoutms=5000, max_items=100000, item_transform=None, record_path_prefix=None):
+    def __init__(self, addresses, queue_size=10, timeoutms=DEFAULT_TIMEOUTMS, max_items=100000, item_transform=None, record_path_prefix=None):
         self.addresses = addresses
         self.queue_size = queue_size
         self.timeoutms = timeoutms

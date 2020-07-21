@@ -2,6 +2,7 @@ import bpy
 import zmq
 
 from .animation import AnimationController
+from .constants import DEFAULT_TIMEOUTMS
 
 
 class AgentContext:
@@ -75,20 +76,30 @@ class BaseEnv:
         raise NotImplementedError()
         
 class RemoteControlledAgent:
-    def __init__(self, address):
+    STATE_REQ = 0
+    STATE_REP = 1
+
+    def __init__(self, address, timeoutms=DEFAULT_TIMEOUTMS):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
+        self.socket.setsockopt(zmq.LINGER, 0)
         self.socket.bind(address)
-        self.state = 'AWAIT_REQUEST'
+        self.state = RemoteControlledAgent.STATE_REQ
+        self.poller = zmq.Poller()
+        self.poller.register(self.socket, zmq.POLLIN)
+        self.timeoutms = timeoutms
 
     def __call__(self, ctx):
-        if self.state == 'SEND_RESPONSE':
+        if self.state == RemoteControlledAgent.STATE_REP:
             self.socket.send_pyobj((ctx.obs, ctx.reward, ctx.done))
-            self.state = 'AWAIT_REQUEST'
+            self.state = RemoteControlledAgent.STATE_REQ
+
+        socks = dict(self.poller.poll(self.timeoutms))
+        assert self.socket in socks, 'No response within timeout interval.'
         
         cmd, action = self.socket.recv_pyobj()
         assert cmd in ['reset', 'step']
-        self.state = 'SEND_RESPONSE'
+        self.state = RemoteControlledAgent.STATE_REP
 
         if cmd == 'reset':
             action = None
@@ -96,9 +107,5 @@ class RemoteControlledAgent:
                 # Already reset
                 action = self.__call__(ctx)        
         return action
-
-        # self.poller = zmq.Poller()
-        # self.poller.register(self.socket, zmq.POLLIN)
-        # self.state = 'IDLE'
         
 

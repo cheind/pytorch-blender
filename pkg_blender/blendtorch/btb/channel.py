@@ -8,6 +8,7 @@ class BlenderOutputChannel:
         self.ctx = zmq.Context()
         self.sock = self.ctx.socket(zmq.PUSH)
         self.sock.setsockopt(zmq.SNDHWM, 10)
+        self.sock.setsockopt(zmq.LINGER, 0)
         self.sock.bind(bind_address)
         self.btid = btid
         
