@@ -1,6 +1,8 @@
 import bpy
+import zmq
 
 from .animation import AnimationController
+
 
 class AgentContext:
     def __init__(self, env):
@@ -59,9 +61,7 @@ class BaseEnv:
         self._env_post_step(self.agent_context)
 
     def _restart(self):
-        #self.events.cancel()
-        #self.events.play(self.frame_range, num_episodes=-1)
-        bpy.context.scene.frame_set(self.frame_range[0])
+        self.events.reset()
 
     def _env_reset(self, ctx):
         eps = ctx.episode
@@ -74,5 +74,31 @@ class BaseEnv:
     def _env_post_step(self, ctx):
         raise NotImplementedError()
         
+class RemoteControlledAgent:
+    def __init__(self, address):
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.REP)
+        self.socket.bind(address)
+        self.state = 'AWAIT_REQUEST'
+
+    def __call__(self, ctx):
+        if self.state == 'SEND_RESPONSE':
+            self.socket.send_pyobj((ctx.obs, ctx.reward, ctx.done))
+            self.state = 'AWAIT_REQUEST'
+        
+        cmd, action = self.socket.recv_pyobj()
+        assert cmd in ['reset', 'step']
+        self.state = 'SEND_RESPONSE'
+
+        if cmd == 'reset':
+            action = None
+            if ctx.action is None:
+                # Already reset
+                action = self.__call__(ctx)        
+        return action
+
+        # self.poller = zmq.Poller()
+        # self.poller.register(self.socket, zmq.POLLIN)
+        # self.state = 'IDLE'
         
 
