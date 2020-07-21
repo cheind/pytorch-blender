@@ -4,6 +4,7 @@ import bpy
 import threading
 
 from .signal import Signal
+from .utils import find_first_view3d
 
 class AnimationControllerBase:
     '''Animation controller base class with fine-grained callbacks.
@@ -38,30 +39,55 @@ class AnimationControllerBase:
 
 class AnimationController(AnimationControllerBase):    
 
-    def __init__(self, frame_range=None):    
-        super().__init__()
+    def __init__(self):    
+        super().__init__()   
+
+    def _setup_frame_range(self, frame_range):
         if frame_range is None:
             frame_range = (bpy.context.scene.frame_start, bpy.context.scene.frame_end)
-        self.frame_range = frame_range
+        bpy.context.scene.frame_start = frame_range[0]
+        bpy.context.scene.frame_end = frame_range[1]
+        return frame_range
+
+        
+    def play(self, frame_range=None, num_episodes=-1, use_animation=True, offline_render=True):
+        self.frame_range = self._setup_frame_range(frame_range)
+        self.use_animation = use_animation
+        self.require_offline_render = offline_render
+        self.episode = 0
+        self.num_episodes = num_episodes if num_episodes >= 0 else sys.maxsize
         self._pending_post_pixel = False
+        self._draw_handler = None
+
+        if use_animation:
+            self._play_animation()
+        else:
+            self._play_manual()
+
+    def _play_animation(self):
+        self.pre_play.invoke()     
+        bpy.app.handlers.frame_change_pre.append(self._on_pre_frame)
+        if self.require_offline_render:    
+            self.area, self.space, self.region = find_first_view3d()
+            self._draw_handler = bpy.types.SpaceView3D.draw_handler_add(self._on_post_frame, (), 'WINDOW', 'POST_PIXEL')
+        else:
+            bpy.app.handlers.frame_change_post.append(self._on_post_frame)
+        bpy.context.scene.frame_set(self.frame_range[0])
+        bpy.ops.screen.animation_play()
+
+    def _play_manual(self):
+        self.pre_play.invoke()
+        bpy.app.handlers.frame_change_pre.append(self._on_pre_frame)
+        bpy.app.handlers.frame_change_post.append(self._on_post_frame)
+
+        while self.episode  < self.num_episodes:
+            bpy.context.scene.frame_set(self.frame_range[0])
+            while self.frameid < self.frame_range[1]:
+                bpy.context.scene.frame_set(self.frameid+1)
+            self.episode += 1
 
     def reset(self):
         self.set_frame(self.frame_range[0])
-        
-    def play(self, frame_range=None, num_episodes=-1):
-        
-        self._set_frame_range(frame_range)
-        self.frame_range = frame_range
-        self.episode = 0
-        self.num_episodes = num_episodes
-        self.pre_play.invoke()
-        
-        bpy.app.handlers.frame_change_pre.append(self._on_pre_frame)
-        bpy.app.handlers.frame_change_post.append(self._on_post_frame)
-        self.area,self.space,region = self.find_view3d()
-        bpy.types.SpaceView3D.draw_handler_add(self._on_post_pixel, (), 'WINDOW', 'POST_PIXEL')        
-        bpy.context.scene.frame_set(frame_range[0])
-        bpy.ops.screen.animation_play()
 
     def set_frame(self, frame_index):
         bpy.context.scene.frame_set(frame_index)
@@ -75,12 +101,13 @@ class AnimationController(AnimationControllerBase):
         if pre_first:
             self.pre_animation.invoke()
         self.pre_frame.invoke()
-
-    def _on_post_frame(self, scene, *args):
         self._pending_post_pixel = True
 
-    def _on_post_pixel(self):
-        if not bpy.context.space_data == self.space or not self._pending_post_pixel:
+    def _on_post_frame(self, *args):
+        if (self.require_offline_render and 
+                self.use_animation and
+                (bpy.context.space_data != self.space or 
+                    not self._pending_post_pixel)):
             return
         self._pending_post_pixel = False
         
@@ -90,22 +117,17 @@ class AnimationController(AnimationControllerBase):
             self.episode += 1
             self.post_animation.invoke()
             if self.episode == self.num_episodes:
-                self.cancel()
+                self._cancel()
 
-    def cancel(self):
-        if not self.playing:
-            return
+    def _cancel(self):
         bpy.app.handlers.frame_change_pre.remove(self._on_pre_frame)
         bpy.app.handlers.frame_change_post.remove(self._on_post_frame)
+        if self._draw_handler is not None:
+            bpy.types.SpaceView3D.draw_handler_remove(self._draw_handler)
+            self._draw_handler = None
         bpy.ops.screen.animation_cancel(restore_frame=False)
-        self.playing = False
         self.post_play.invoke()
 
-    def find_view3d(self):
-        areas = [a for a in bpy.context.screen.areas if a.type == 'VIEW_3D']
-        assert len(areas) > 0
-        area = areas[0]
-        window_region = sorted([r for r in area.regions if r.type == 'WINDOW'], key=lambda x:x.width, reverse=True)[0]        
-        spaces = [s for s in areas[0].spaces if s.type == 'VIEW_3D']
-        assert len(spaces) > 0
-        return area, spaces[0], window_region
+# ctrl = AnimationController(rendercap=False)
+# ctrl.auto_play(framerange, num_episodes)
+# ctrl.

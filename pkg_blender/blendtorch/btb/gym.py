@@ -28,7 +28,7 @@ class AgentContext:
 class BaseEnv:
     '''Environment base class, based on the model of OpenAI Gym.'''
 
-    def __init__(self, agent, frame_range=None):
+    def __init__(self, agent, frame_range=None, use_animation=True, offline_render=True):
         self.events = AnimationController()
         self.events.pre_frame.add(self._pre_frame)
         self.events.pre_animation.add(self._pre_animation)
@@ -36,14 +36,11 @@ class BaseEnv:
         self.agent = agent
         self.agent_context = AgentContext(self)
         self.frame_range = frame_range
-        self.events.play(self.frame_range, num_episodes=-1)
-        
-        # self.context = zmq.Context()
-        # self.socket = context.socket(zmq.REP)
-        # self.socket.connect(address)
-        # self.poller = zmq.Poller()
-        # self.poller.register(self.socket, zmq.POLLIN)
-        # self.state = 'IDLE'
+        self.events.play(
+            self.frame_range, 
+            num_episodes=-1, 
+            use_animation=use_animation, 
+            offline_render=offline_render)
 
     def _pre_frame(self):
         if self.events.frameid > self.frame_range[0]:

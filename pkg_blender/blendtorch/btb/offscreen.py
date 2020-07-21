@@ -4,26 +4,20 @@ from OpenGL.GL import glGetTexImage
 
 from .signal import Signal
 from . import camera
-
-import time
+from .utils import find_first_view3d
 
 class OffScreenRenderer:
-    '''Provides off-screen scene rendering.
-    
-    Exposes the following signals
-     - post_image(np.array) invoked after image is rendered.    
-    '''
+    '''Provides off-screen scene rendering.'''
     
     def __init__(self, flip=True):
         self.shape = camera.image_shape()
         self.offscreen = gpu.types.GPUOffScreen(self.shape[1], self.shape[0])
         self.buffer = np.zeros((self.shape[0], self.shape[1], 4), dtype=np.uint8)
-        self.area, self.space, self.region = self.find_view3d()
+        self.area, self.space, self.region = find_first_view3d()
         self.handle = None
         self.flip = flip        
         self.proj_matrix = camera.projection_matrix()
         self.view_matrix = camera.view_matrix()
-        self.post_image = Signal()
         self.set_render_options()
 
     def render(self):
@@ -51,35 +45,20 @@ class OffScreenRenderer:
         if self.flip:
             buffer = np.flipud(buffer)
 
-        self.post_image.invoke(buffer)
         return buffer
-
-    def on_render(self):
-        if not bpy.context.space_data == self.space:
-            return
-        return self.render()
-
-    def find_view3d(self):
-        areas = [a for a in bpy.context.screen.areas if a.type == 'VIEW_3D']
-        assert len(areas) > 0
-        area = areas[0]
-        window_region = sorted([r for r in area.regions if r.type == 'WINDOW'], key=lambda x:x.width, reverse=True)[0]        
-        spaces = [s for s in areas[0].spaces if s.type == 'VIEW_3D']
-        assert len(spaces) > 0
-        return area, spaces[0], window_region
 
     def set_render_options(self, shading='RENDERED', overlays=False):
         self.space.shading.type = shading
         self.space.overlay.show_overlays = overlays
         
-    @property
-    def enabled(self):
-        return self.handle != None
+    # @property
+    # def enabled(self):
+    #     return self.handle != None
     
-    @enabled.setter 
-    def enabled(self, toggle):
-        if toggle and self.handle is None:
-            self.handle = bpy.types.SpaceView3D.draw_handler_add(self.on_render, (), 'WINDOW', 'POST_PIXEL')
-        elif not toggle and self.handle is not None:
-            bpy.types.SpaceView3D.draw_handler_remove(self.handle, 'WINDOW')
-            self.handle = None
+    # @enabled.setter 
+    # def enabled(self, toggle):
+    #     if toggle and self.handle is None:
+    #         self.handle = bpy.types.SpaceView3D.draw_handler_add(self.on_render, (), 'WINDOW', 'POST_PIXEL')
+    #     elif not toggle and self.handle is not None:
+    #         bpy.types.SpaceView3D.draw_handler_remove(self.handle, 'WINDOW')
+    #         self.handle = None

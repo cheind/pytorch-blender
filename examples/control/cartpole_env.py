@@ -5,27 +5,27 @@ import numpy as np
 from blendtorch import btb
 
 class CartpoleEnv(btb.gym.BaseEnv):
-    def __init__(self, agent, frame_range=None):
+    def __init__(self, agent, frame_range=None, use_animation=True, offline_render=True):
         self.cart = bpy.data.objects['Cart']
         self.pole = bpy.data.objects['Pole']
         self.polerot = bpy.data.objects['PoleRotHelp']        
         self.motor = bpy.data.objects['Motor'].rigid_body_constraint
         self.fps = bpy.context.scene.render.fps
-        super().__init__(agent, frame_range)
+        self.off = btb.OffScreenRenderer()
+        self.off.view_matrix = btb.camera.view_matrix()
+        self.off.proj_matrix = btb.camera.projection_matrix()
+        super().__init__(
+            agent, 
+            frame_range=frame_range,
+            use_animation=use_animation,
+            offline_render=offline_render
+        )
 
     def _env_reset(self, ctx):
         super()._env_reset(ctx)
         self.motor.motor_lin_target_velocity = 0.
         self.cart.location = (0.0,0,1.2)
         self.polerot.rotation_euler[1] = np.random.uniform(-0.6,0.6)
-        
-        # self.cart.matrix_world.translation = (0.0, 0, 1.2)
-        # e = self.polerot.matrix_world.to_euler('XYZ')
-        # e.y = np.random.uniform(-0.6,0.6)
-        # m = e.to_matrix()
-        # m.resize_4x4()
-        # self.polerot.matrix_world = Matrix.Translation(self.polerot.matrix_world.translation) @ m
-        
 
     def _env_prepare_step(self, action, ctx):
         self._apply_motor_force(action)
@@ -34,7 +34,7 @@ class CartpoleEnv(btb.gym.BaseEnv):
         c = self.cart.matrix_world.translation[0]
         p = self.pole.matrix_world.translation[0]
         a = self.polerot.matrix_world.to_euler('XYZ')[1]
-        ctx.obs = (c,p,a)
+        ctx.obs = (c,p,a,self.off.render())
         ctx.reward = 0.
         ctx.done = abs(a) > 0.6 or abs(c) > 3.0
 
@@ -48,7 +48,7 @@ class CartpoleEnv(btb.gym.BaseEnv):
 def main():
     args, remainder = btb.parse_blendtorch_args()
     agent = btb.gym.RemoteControlledAgent(args.btsockets['GYM'])
-    env = CartpoleEnv(agent, frame_range=(1,10000))
+    env = CartpoleEnv(agent, frame_range=(1,10000), offline_render=True, use_animation=True)
 
 main()
 

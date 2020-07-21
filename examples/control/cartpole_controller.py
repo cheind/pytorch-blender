@@ -2,8 +2,10 @@ from contextlib import ExitStack
 import time
 from blendtorch import btt
 
+from PIL import Image
+
 def controller(obs):
-    c,p,_ = obs
+    c,p,_,_ = obs
     return (p-c)*15
 
 def main():
@@ -16,10 +18,17 @@ def main():
 
         env = btt.gym.RemoteEnv(bl.launch_info.addresses['GYM'][0])
         obs, reward, done = env.reset()
+        N = 0
+        t = time.time()
         while True:
             obs, reward, done = env.step(controller(obs))
             if done:
                 obs, reward, done = env.reset()
+            N += 1
+            if N % 100 == 0:
+                print('FPS', N/(time.time()-t))
+                Image.fromarray(obs[-1]).save('../../tmp/scene.png')
+
 
 if __name__ == '__main__':
     main()
