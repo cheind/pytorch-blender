@@ -4,29 +4,27 @@ from blendtorch import btt
 
 def controller(obs):
     c,p,_ = obs
-    return (p-c)*25
+    return (p-c)*30
 
 def main():
-    with btt.BlenderLauncher(
-        scene=f'cartpole.blend', 
-        script=f'cartpole_env.py', 
-        num_instances=1, 
-        named_sockets=['GYM']
-        ) as bl:
-
-        env = btt.gym.RemoteEnv(bl.launch_info.addresses['GYM'][0])
-        obs = env.reset()
-        N = 0
-        t = time.time()
+    with btt.gym.launch_blender_env(
+            scene='cartpole.blend', 
+            script='cartpole_env.py',
+            # Any additional args will be passed per command line to Blender.
+            render_every=10) as env:
+        
+        N, t = 0, time.time()
+        obs, info = env.reset()        
         while True:
             obs, reward, done, info = env.step(controller(obs))
+            env.render()
             if done:
-                print(done)
-                obs = env.reset()                
+                obs, info = env.reset()
             N += 1
-            # if N % 100 == 0:
-            #     print('FPS', N/(time.time()-t))
-
+            if N % 100 == 0:                
+                print('FPS', N/(time.time()-t))
+                N, t = 0, time.time()
+        
 
 if __name__ == '__main__':
     main()
