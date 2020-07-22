@@ -8,6 +8,8 @@ from .constants import DEFAULT_TIMEOUTMS
 class BaseEnv:
     '''Environment base class, based on the model of OpenAI Gym.'''
 
+    ACTION_RESTART = object()
+
     def __init__(self, agent, frame_range=None, use_animation=True, use_offline_render=True, use_physics=True):
         self.events = AnimationController()
         self.events.pre_frame.add(self._pre_frame)
@@ -28,8 +30,8 @@ class BaseEnv:
         self.ctx['done'] |= (self.events.frameid >= self.frame_range[1])
         if self.events.frameid > self.frame_range[0]:            
             action = self.agent(**self.ctx)
-            if action == None:
-                self._restart()
+            if action == BaseEnv.ACTION_RESTART:
+                self._restart()                
             else:
                 self._env_prepare_step(action)
                 self.ctx['prev_action'] = action        
@@ -68,7 +70,7 @@ class RemoteControlledAgent:
         self.poller.register(self.socket, zmq.POLLIN)
         self.timeoutms = timeoutms
 
-    def __call__(self, prev_action=None, **ctx):
+    def __call__(self, **ctx):
         if self.state == RemoteControlledAgent.STATE_REP:
             self.socket.send_pyobj(ctx)
             self.state = RemoteControlledAgent.STATE_REQ
@@ -81,8 +83,8 @@ class RemoteControlledAgent:
         self.state = RemoteControlledAgent.STATE_REP
 
         if cmd == 'reset':
-            action = None
-            if prev_action is None:
+            action = BaseEnv.ACTION_RESTART
+            if ctx['prev_action'] is None:
                 # Already reset
                 action = self.__call__(**ctx)
         return action
