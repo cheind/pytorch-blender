@@ -85,7 +85,6 @@ class BlenderLauncher():
         format_addr = lambda idx: ' '.join([f'{k}={v[idx]}' for k,v in addresses.items()])
         for s in self.named_sockets:
             addresses[s] = [next(addrgen) for _ in range(self.num_instances)]
-        print(addresses)
         
         if self.seed is None:
             seeds = np.random.randint(0, 10000, dtype=int, size=self.num_instances)
