@@ -59,7 +59,7 @@ class BaseEnv:
         self._env_post_step(self.agent_context)
 
     def _restart(self):
-        self.events.reset()
+        self.events.rewind()
 
     def _env_reset(self, ctx):
         eps = ctx.episode
