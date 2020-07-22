@@ -28,10 +28,10 @@ class AnimationController:
         self._plyctx = None
 
     class _PlayContext:
-        def __init__(self, frame_range, num_episodes, use_animation, offline_render):
+        def __init__(self, frame_range, num_episodes, use_animation, use_offline_render):
             self.frame_range = frame_range
             self.use_animation = use_animation
-            self.offline_render = offline_render
+            self.use_offline_render = use_offline_render
             self.episode = 0
             self.num_episodes = num_episodes
             self.pending_post_pixel = False
@@ -40,7 +40,7 @@ class AnimationController:
 
         def skip_post_frame(self):
             return (
-                self.offline_render and 
+                self.use_offline_render and 
                 self.use_animation and
                 (
                     bpy.context.space_data != self.draw_space or
@@ -53,14 +53,14 @@ class AnimationController:
     def frameid(self):
         return bpy.context.scene.frame_current
         
-    def play(self, frame_range=None, num_episodes=-1, use_animation=True, offline_render=True):
+    def play(self, frame_range=None, num_episodes=-1, use_animation=True, use_offline_render=True, use_physics=True):
         assert self._plyctx is None, 'Animation already running'
 
         self._plyctx = AnimationController._PlayContext(
-            frame_range=self._setup_frame_range(frame_range),
+            frame_range=AnimationController.setup_frame_range(frame_range, physics=use_physics),
             num_episodes=(num_episodes if num_episodes >= 0 else sys.maxsize),
             use_animation=use_animation,
-            offline_render=offline_render
+            use_offline_render=use_offline_render
         )
 
         if use_animation:
@@ -68,17 +68,21 @@ class AnimationController:
         else:
             self._play_manual()
 
-    def _setup_frame_range(self, frame_range):
+    @staticmethod
+    def setup_frame_range(frame_range, physics=True):
         if frame_range is None:
             frame_range = (bpy.context.scene.frame_start, bpy.context.scene.frame_end)
         bpy.context.scene.frame_start = frame_range[0]
         bpy.context.scene.frame_end = frame_range[1]
+        if physics and bpy.context.scene.rigidbody_world.enabled:
+            bpy.context.scene.rigidbody_world.point_cache.frame_start = frame_range[0]
+            bpy.context.scene.rigidbody_world.point_cache.frame_end = frame_range[1]
         return frame_range
 
     def _play_animation(self):
         self.pre_play.invoke()     
         bpy.app.handlers.frame_change_pre.append(self._on_pre_frame)
-        if self._plyctx.offline_render:    
+        if self._plyctx.use_offline_render:    
             _, self._plyctx.draw_space, _ = find_first_view3d()
             self._plyctx.draw_handler = bpy.types.SpaceView3D.draw_handler_add(self._on_post_frame, (), 'WINDOW', 'POST_PIXEL')
         else:

@@ -13,10 +13,12 @@ class RemoteEnv:
         self.timeoutms = timeoutms
 
     def reset(self):
-        return self._reqrep('reset', action=None)
+        data = self._reqrep('reset', action=None)
+        return data['obs']
 
     def step(self, action):
-        return self._reqrep('step', action=action)
+        data = self._reqrep('step', action=action)
+        return data['obs'], data['reward'], data['done'], data['info']
 
     def _reqrep(self, cmd, action=None):
         self.socket.send_pyobj((cmd, action))

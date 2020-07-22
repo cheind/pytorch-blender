@@ -3,8 +3,8 @@ import time
 from blendtorch import btt
 
 def controller(obs):
-    c,p,_,_ = obs
-    return (p-c)*15
+    c,p,_ = obs
+    return (p-c)*25
 
 def main():
     with btt.BlenderLauncher(
@@ -15,17 +15,22 @@ def main():
         ) as bl:
 
         env = btt.gym.RemoteEnv(bl.launch_info.addresses['GYM'][0])
-        obs, reward, done = env.reset()
+        obs = env.reset()
         N = 0
         t = time.time()
         while True:
-            obs, reward, done = env.step(controller(obs))
+            obs, reward, done, info = env.step(controller(obs))
             if done:
-                obs, reward, done = env.reset()
+                print(done)
+                obs = env.reset()                
             N += 1
-            if N % 100 == 0:
-                print('FPS', N/(time.time()-t))
+            # if N % 100 == 0:
+            #     print('FPS', N/(time.time()-t))
 
 
 if __name__ == '__main__':
     main()
+
+
+# https://github.com/MartinThoma/banana-gym/tree/master/gym_banana
+# https://stackoverflow.com/questions/52727233/how-can-i-register-a-custom-environment-in-openais-gym
