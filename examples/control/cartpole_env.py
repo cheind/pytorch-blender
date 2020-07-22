@@ -10,7 +10,6 @@ class CartpoleEnv(btb.gym.BaseEnv):
         self.pole = bpy.data.objects['Pole']
         self.polerot = bpy.data.objects['PoleRotHelp']
         self.motor = bpy.data.objects['Motor'].rigid_body_constraint
-        self.hinge = bpy.data.objects['Hinge'].rigid_body_constraint
         self.fps = bpy.context.scene.render.fps
         super().__init__(
             agent, 
