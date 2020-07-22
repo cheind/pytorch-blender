@@ -8,8 +8,9 @@ class CartpoleEnv(btb.gym.BaseEnv):
     def __init__(self, agent, frame_range=None, use_animation=True):
         self.cart = bpy.data.objects['Cart']
         self.pole = bpy.data.objects['Pole']
-        self.polerot = bpy.data.objects['PoleRotHelp']        
+        self.polerot = bpy.data.objects['PoleRotHelp']
         self.motor = bpy.data.objects['Motor'].rigid_body_constraint
+        self.hinge = bpy.data.objects['Hinge'].rigid_body_constraint
         self.fps = bpy.context.scene.render.fps
         super().__init__(
             agent, 
@@ -30,10 +31,13 @@ class CartpoleEnv(btb.gym.BaseEnv):
     def _env_post_step(self, ctx):
         c = self.cart.matrix_world.translation[0]
         p = self.pole.matrix_world.translation[0]
-        a = self.polerot.matrix_world.to_euler('XYZ')[1]
+        a = self.pole.matrix_world.to_euler('XYZ')[1]
         ctx.obs = (c,p,a,None)
         ctx.reward = 0.
-        ctx.done = abs(a) > 0.6 or abs(c) > 3.0
+        ctx.done = bool(
+            abs(a) > 0.6 
+            or abs(c) > 3.0
+        )
 
     def _apply_motor_force(self, f):
         # a = f/m
