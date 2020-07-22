@@ -5,20 +5,17 @@ import numpy as np
 from blendtorch import btb
 
 class CartpoleEnv(btb.gym.BaseEnv):
-    def __init__(self, agent, frame_range=None, use_animation=True, offline_render=True):
+    def __init__(self, agent, frame_range=None, use_animation=True):
         self.cart = bpy.data.objects['Cart']
         self.pole = bpy.data.objects['Pole']
         self.polerot = bpy.data.objects['PoleRotHelp']        
         self.motor = bpy.data.objects['Motor'].rigid_body_constraint
         self.fps = bpy.context.scene.render.fps
-        self.off = btb.OffScreenRenderer()
-        self.off.view_matrix = btb.camera.view_matrix()
-        self.off.proj_matrix = btb.camera.projection_matrix()
         super().__init__(
             agent, 
             frame_range=frame_range,
             use_animation=use_animation,
-            offline_render=offline_render
+            offline_render=False
         )
 
     def _env_reset(self, ctx):
@@ -34,7 +31,7 @@ class CartpoleEnv(btb.gym.BaseEnv):
         c = self.cart.matrix_world.translation[0]
         p = self.pole.matrix_world.translation[0]
         a = self.polerot.matrix_world.to_euler('XYZ')[1]
-        ctx.obs = (c,p,a,self.off.render())
+        ctx.obs = (c,p,a,None)
         ctx.reward = 0.
         ctx.done = abs(a) > 0.6 or abs(c) > 3.0
 
@@ -48,7 +45,7 @@ class CartpoleEnv(btb.gym.BaseEnv):
 def main():
     args, remainder = btb.parse_blendtorch_args()
     agent = btb.gym.RemoteControlledAgent(args.btsockets['GYM'])
-    env = CartpoleEnv(agent, frame_range=(1,10000), offline_render=True, use_animation=True)
+    env = CartpoleEnv(agent, frame_range=(1,10000), use_animation=True)
 
 main()
 
