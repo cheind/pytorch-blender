@@ -28,6 +28,8 @@ def main():
         
         # Loop
         for item in dl:
+            # item is a dict containing data from Blender 
+            # processes batched. See cube.blend.py for details.
             img, xy = item['image'], item['xy']
             print(img.shape, xy.shape)
 
