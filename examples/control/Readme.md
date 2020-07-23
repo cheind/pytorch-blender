@@ -36,7 +36,7 @@ Code: [cartpole_gym](./cartpole_gym), [cartpole.py](cartpole.py)
 We consider Blender itself as the main tool to view and (interactively) manipulate the state of the environment. In case you want a separate viewer call `env.render()` during your training loop.
 
 ### Running
-Make sure you have Blender, **blendtorch** (see main Readme), and OpenAI gym (`pip install gym`) installed. Navigate to `examples/control` and run 
+Make sure you have Blender, **blendtorch** (see main [Readme](/Readme.md)), and OpenAI gym (`pip install gym`) installed. Navigate to `examples/control` and run 
 ```
 python cartpole.py
 ```
