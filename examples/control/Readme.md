@@ -4,9 +4,9 @@ This directory contains a recreation of OpenAI's `CartPole-v0` environment runni
 
 The communication is done via **blendtorch**, so it appears as any other native OpenAI environment for the agent.
 
-<div style="text-align: center">
+<p align="center">
     <img src="capture.gif">
-</div>
+</p>
 
 ### Code
 
