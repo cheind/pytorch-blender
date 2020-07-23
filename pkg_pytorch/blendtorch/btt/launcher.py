@@ -20,8 +20,7 @@ class LaunchInfo:
 class BlenderLauncher():
     '''Opens and closes Blender instances.
     
-    This class is meant to be used withing a `with` block to ensure clean shutdown of background
-    processes.
+    This class is meant to be used withing a `with` block to ensure clean shutdown of background processes.
     '''
 
     def __init__(self, scene, script, num_instances=1, named_sockets=None, start_port=11000, bind_addr='127.0.0.1', instance_args=None, proto='tcp', blend_path=None, seed=None):
@@ -121,9 +120,17 @@ class BlenderLauncher():
         self.launch_info = LaunchInfo(addresses, processes, commands)
         return self
 
+    def assert_alive(self):
+        '''Tests if all launched process are alive.'''
+        if self.launch_info is None:
+            return
+        codes = self._poll()
+        assert all([c==None for c in codes]), f'Alive test failed. Exit codes {codes}'
+
     def __exit__(self, exc_type, exc_value, exc_traceback):    
         [p.terminate() for p in self.launch_info.processes]
-        assert not any([p.poll() for p in self.launch_info.processes]), 'Blender instance still open'
+        [p.wait() for p in self.launch_info.processes]
+        assert all([c!=None for c in self._poll()]), 'Not all Blender instances closed.'
         self.launch_info = None
         logger.info('Blender instances closed')
 
@@ -133,3 +140,6 @@ class BlenderLauncher():
             addr = f'{proto}://{bind_addr}:{nextport}'
             nextport += 1
             yield addr
+
+    def _poll(self):
+        return [p.poll() for p in self.launch_info.processes]
