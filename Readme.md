@@ -4,9 +4,10 @@
 
 Feature summary
  - *Data Streaming*: Stream distributed Blender renderings directly into PyTorch data pipelines in real-time for supervised learning and domain randomization applications. Supports arbitrary pickle-able objects to be send alongside images/videos.</br>More info [\[examples/datagen\]](examples/datagen)
+ - *Data Replay*: Built-in recording capability to replay data without Blender.</br>More info [\[examples/datagen\]](examples/datagen)
  - *OpenAI Gym Support*: Create and run remotely controlled Blender gyms to train reinforcement agents. Blender serves as simulation, visualization, and interactive live manipulation environment.
  </br>More info [\[examples/control\]](examples/control)
- - *Data Replay*: Built-in recording capability to replay data without Blender.</br>More info [\[examples/datagen\]](examples/datagen)
+
 
 Shown below is a visualization of 4 Blender instances running physics enabled falling cubes scene as received by a PyTorch dataset.
 <p align="center">
