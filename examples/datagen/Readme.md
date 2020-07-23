@@ -2,9 +2,11 @@
 
 This directory showcases synthetic data generation using **blendtorch** for supervised machine learning. In particular, several blender processes render randomized scene configurations and stream images as well as annotations into a PyTorch dataset used in training neural networks. Shown below is a result visualization from 4 Blender instances running physics-enabled falling cubes scene.
 
-![](/etc/result_physics.png)
+<p align="center">
+<img src="/etc/result_physics.png" width="500">
+</p>
 
-To recreate these results run [generate.py](./generate.py) using the [falling_cubes](./) as follows
+To recreate these results run [generate.py](./generate.py) using the [falling_cubes](./) scene as follows
 ```
 python generate.py falling_cubes
 ```
