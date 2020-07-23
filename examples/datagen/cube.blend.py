@@ -1,9 +1,15 @@
 import bpy
 import numpy as np
+import argparse
 from blendtorch import btb
 
 def main():
-    args, remainder = btb.parse_blendtorch_args()
+    btargs, remainder = btb.parse_blendtorch_args()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--no-ui-refresh', action='store_true', dest='noui')
+    parser.add_argument('--mode', default='rgb')
+    script_args = parser.parse_args(remainder)
 
     cam = bpy.context.scene.camera
     obj = bpy.data.objects["Cube"]
@@ -25,10 +31,10 @@ def main():
         )
 
     # Our output channel
-    pub = btb.DataPublisher(args.btsockets['DATA'], args.btid)
+    pub = btb.DataPublisher(btargs.btsockets['DATA'], btargs.btid)
 
     # Setup image rendering
-    off = btb.OffScreenRenderer(mode='rgb')
+    off = btb.OffScreenRenderer(mode=script_args.mode)
     off.view_matrix = btb.camera.view_matrix()
     off.proj_matrix = btb.camera.projection_matrix()
     off.set_render_style(shading='RENDERED', overlays=False)
@@ -37,6 +43,6 @@ def main():
     anim = btb.AnimationController()
     anim.pre_frame.add(pre_frame)
     anim.post_frame.add(post_frame, off, pub, anim)    
-    anim.play(frame_range=(0,100), num_episodes=-1)
+    anim.play(frame_range=(0,100), num_episodes=-1, use_animation=not script_args.noui)
 
 main()
