@@ -43,6 +43,28 @@ or (Mac or GNU/Linux)
 export PYTHONPATH="${PYTHONPATH}:<SRC>/pkg_pytorch:<SRC>/pkg_blender"
 ```
 
+## Architecture
+**blendtorch** is composed of two distinct sub-packages: `bendtorch.btt` (in [pkg_pytorch](./pkg_pytorch)) and `blendtorch.btb` (in [pkg_blender](./pkg_blender)), providing the PyTorch and Blender views on **blendtorch**.
+
+### Data Streaming
+In data streaming, we are interested in sending supervised image data from multiple Blender processes to a Python process running model training. This process is depicted below.
+
+<p align="center">
+<img src="etc/blendtorch_datagen.svg" width="500">
+</p>
+
+At a top level provides `blendtorch.btt.BlenderLauncher` to launch and close Blender instances. For receiving data from Blender instances, `blendtorch.btt` provides. 
+
+Typically a Python script, e.g `train.py`, launches and maintains one or more Blender instances using `blendtorch.btt.BlenderLauncher`. Each Blender instance will be instructed to run particular scene and script, e.g `blend.py`. Next, `train.py` creates a `RemoteIterableDataset` to listen for incoming network messages from Blender instances. We use a `PUSH/PULL` pipeline pattern that supports fair queuing and will stall Blender instances when `train.py` is too slow to process all messages. 
+
+Each Blender instance, running `blend.py`, meanwhile creates a `blendtorch.btb.BlenderOutputChannel` to send outward messages. The addresses are taken from command-line arguments and are automatically provided by `blendtorch.btt.BlenderLauncher`. Next, `blend.py` registers the necessary animation hooks and usually creates one or more `blendtorch.btb.OffScreenRenderer` to capture offscreen images. Usually at `pre_frame` callbacks the scene is randomized and during `post_frame` the resulting frame is rendered and sent via output channel alongside with any (pickle-able) meta information desired.
+
+### OpenAI Gym Support
+TODO
+
+### Parallism
+**blendtorch** supports two kinds of parallism: Blender instances and PyTorch workers. We use a [PUSH/PULL pattern](https://learning-0mq-with-pyzmq.readthedocs.io/en/latest/pyzmq/patterns/pushpull.html) that allows us to fan out from multiple Blender instances and distribute the workload to many PyTorch workers. It is guaranteed that only one PyTorch worker receives a particular message, no message is lost, but the order in which it is received is not guaranteed. If PyTorch is too slow to process all messages in time, the Blender instances will eventually block until new slosts are available. When the number of PyTorch workers is one (i.e `num_workers=0` in DataLoader) then all messages will be received in generation order. At any PyTorch worker, messages are interleaved from all Blender instances in a fair manner. You may use the `btid` message field to determine which Blender instance sent which message.
+
 ## Cite
 The code accompanies our [academic work](https://arxiv.org/abs/1907.01879) in the field of machine learning from artificial images. When using please cite the following work
 ```
@@ -69,28 +91,6 @@ The following tables show the mean runtimes per batch (8) and per image for a si
 
 Note: If no image transfer is needed, i.e in reinforcement learning of physical simulations, 2000Hz are easily achieved.
 
-## Architecture
-**blendtorch** is composed of two distinct sub-packages: `bendtorch.btt` (in [pkg_pytorch](./pkg_pytorch)) and `blendtorch.btb` (in [pkg_blender](./pkg_blender)), providing the PyTorch and Blender views on **blendtorch**.
-
-### Data Streaming
-In data streaming, we are interested in sending supervised image data from multiple Blender processes to a Python process running model training. This process is depicted below.
-
-<p align="center">
-<img src="etc/blendtorch_datagen.svg" width="500">
-</p>
-
-At a top level provides `blendtorch.btt.BlenderLauncher` to launch and close Blender instances. For receiving data from Blender instances, `blendtorch.btt` provides. 
-
-Typically a Python script, e.g `train.py`, launches and maintains one or more Blender instances using `blendtorch.btt.BlenderLauncher`. Each Blender instance will be instructed to run particular scene and script, e.g `blend.py`. Next, `train.py` creates a `RemoteIterableDataset` to listen for incoming network messages from Blender instances. We use a `PUSH/PULL` pipeline pattern that supports fair queuing and will stall Blender instances when `train.py` is too slow to process all messages. 
-
-Each Blender instance, running `blend.py`, meanwhile creates a `blendtorch.btb.BlenderOutputChannel` to send outward messages. The addresses are taken from command-line arguments and are automatically provided by `blendtorch.btt.BlenderLauncher`. Next, `blend.py` registers the necessary animation hooks and usually creates one or more `blendtorch.btb.OffScreenRenderer` to capture offscreen images. Usually at `pre_frame` callbacks the scene is randomized and during `post_frame` the resulting frame is rendered and sent via output channel alongside with any (pickle-able) meta information desired.
-
-### OpenAI Gym Support
-TODO
-
-### Parallism
-**blendtorch** supports two kinds of parallism: Blender instances and PyTorch workers. We use a [PUSH/PULL pattern](https://learning-0mq-with-pyzmq.readthedocs.io/en/latest/pyzmq/patterns/pushpull.html) that allows us to fan out from multiple Blender instances and distribute the workload to many PyTorch workers. It is guaranteed that only one PyTorch worker receives a particular message, no message is lost, but the order in which it is received is not guaranteed. If PyTorch is too slow to process all messages in time, the Blender instances will eventually block until new slosts are available. When the number of PyTorch workers is one (i.e `num_workers=0` in DataLoader) then all messages will be received in generation order. At any PyTorch worker, messages are interleaved from all Blender instances in a fair manner. You may use the `btid` message field to determine which Blender instance sent which message.
-
 ## Caveats
 - Despite offscreen rendering is supported in Blender 2.8x it requires a UI frontend and thus cannot run in `--background` mode.
-- The renderings produced by Blender are in linear color space and thus will appear darker than expected when displayed. See `gamma_correct` transform [demo.py](./demo.py) to fix this.
+- The renderings produced by Blender are by default in linear color space and thus will appear darker than expected when displayed.
