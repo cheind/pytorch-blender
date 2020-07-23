@@ -5,11 +5,7 @@ from blendtorch import btb
 
 def main():
     btargs, remainder = btb.parse_blendtorch_args()
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--no-ui-refresh', action='store_true', dest='noui')
-    parser.add_argument('--mode', default='rgb')
-    script_args = parser.parse_args(remainder)
+    script_args = parse_additional_args(remainder)
 
     cam = bpy.context.scene.camera
     obj = bpy.data.objects["Cube"]
@@ -44,5 +40,14 @@ def main():
     anim.pre_frame.add(pre_frame)
     anim.post_frame.add(post_frame, off, pub, anim)    
     anim.play(frame_range=(0,100), num_episodes=-1, use_animation=not script_args.noui)
+
+def parse_additional_args(args):
+    '''Parse additional args parsed to this script.
+    Used by benchmark.py to configure various parameters of the environment.
+    '''
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--no-ui-refresh', action='store_true', dest='noui')
+    parser.add_argument('--mode', default='rgb')
+    return parser.parse_args(args)
 
 main()
