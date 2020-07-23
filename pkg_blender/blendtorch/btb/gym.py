@@ -3,27 +3,39 @@ import zmq
 import sys
 
 from .animation import AnimationController
+from .offscreen import OffScreenRenderer
 from .constants import DEFAULT_TIMEOUTMS
+from . import camera
 
 class BaseEnv:
     '''Environment base class, based on the model of OpenAI Gym.'''
 
     ACTION_RESTART = object()
 
-    def __init__(self, agent, frame_range=None, use_animation=True, use_offline_render=True, use_physics=True):
+    def __init__(self, agent):
         self.events = AnimationController()
         self.events.pre_frame.add(self._pre_frame)
         self.events.pre_animation.add(self._pre_animation)
         self.events.post_frame.add(self._post_frame)
         self.agent = agent
-        self.ctx = None
+        self.ctx = None        
+        self.renderer = None
+        self.render_every = None
+        self.frame_range = None
+
+    def run(self, frame_range=None, use_animation=True):
         self.frame_range = AnimationController.setup_frame_range(frame_range)
         self.events.play(
             (self.frame_range[0], 2147483647), # we allow playing the simulation past end.
             num_episodes=-1, 
             use_animation=use_animation, 
-            use_offline_render=use_offline_render,
-            use_physics=use_physics)
+            use_offline_render=True)
+
+    def attach_default_renderer(self, every_nth=1):
+        self.renderer = OffScreenRenderer(mode='rgb', gamma_coeff=2.2)
+        self.renderer.view_matrix = camera.view_matrix()
+        self.renderer.proj_matrix = camera.projection_matrix()
+        self.render_every = every_nth
 
     def _pre_frame(self):
         self.ctx['time'] = self.events.frameid
@@ -40,9 +52,19 @@ class BaseEnv:
         self.ctx = {'prev_action':None, 'done':False}
         self._env_reset()
 
-    def _post_frame(self):        
-        next_ctx = self._env_post_step()            
+    def _post_frame(self):
+        self._render(self.ctx)
+        next_ctx = self._env_post_step()
         self.ctx = {**self.ctx, **next_ctx}
+
+    def _render(self, ctx):
+        cur, start = self.events.frameid, self.frame_range[0]
+        render = bool(
+            self.renderer and
+            ((cur - start) % self.render_every) == 0
+        )
+        if render:
+            ctx['rgb_array'] = self.renderer.render()
 
     def _restart(self):
         self.events.rewind()
