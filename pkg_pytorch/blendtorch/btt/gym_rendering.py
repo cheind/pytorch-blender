@@ -27,7 +27,7 @@ try:
                 plt.show(block=False)
                 self.fig.canvas.draw()
             else:
-                self.img.set_data(self.rgb)
+                self.img.set_data(rgb)
                 self.fig.canvas.draw_idle()
                 self.fig.canvas.flush_events()
 
