@@ -70,7 +70,7 @@ The following tables show the mean runtimes per batch (8) and per image for a si
 Note: If no image transfer is needed, i.e in reinforcement learning of physical simulations, 2000Hz are easily achieved.
 
 ## Architecture
-**blendtorch** is composed of two distinct sub-packages: `bendtorch.btt`, in folder [pkg_pytorch](./pkg_pytorch]) and `blendtorch.btb`,in folder [pkg_blender](./pkg_blender]), providing the PyTorch and Blender views on **blendtorch**.
+**blendtorch** is composed of two distinct sub-packages: `bendtorch.btt` (in [pkg_pytorch](./pkg_pytorch)) and `blendtorch.btb` (in [pkg_blender](./pkg_blender)), providing the PyTorch and Blender views on **blendtorch**.
 
 ### PyTorch
 At a top level `blendtorch.btt` provides `BlenderLauncher` to launch and close Blender instances, and communication a channel `BlenderInputChannel` to receive from those instances. Communication is based on [ZMQ](https://zeromq.org/) utilizing a `PUSH/PULL` pattern to support various kinds of parallelism. Besides, `blendtorch.btb` provides a raw `Recorder` that saves pickled Blender messages which can later be replayed using `FileInputChannel`.
