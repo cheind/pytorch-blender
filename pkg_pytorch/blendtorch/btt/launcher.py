@@ -47,13 +47,16 @@ class BlenderLauncher():
         Additional paths to look for Blender
     seed: integer, optional
         Optional launch seed. Each instance will be given
+
+    Attributes
+    ----------
+    launch_info: LaunchInfo
+        Process launch information, available after entering the
+        context.
     '''
 
     def __init__(self, scene, script, num_instances=1, named_sockets=None, start_port=11000, bind_addr='127.0.0.1', instance_args=None, proto='tcp', blend_path=None, seed=None):
-        '''Initialize instance.
-        
-
-        '''
+        '''Create BlenderLauncher'''
         self.num_instances = num_instances
         self.start_port = start_port
         self.bind_addr = bind_addr
