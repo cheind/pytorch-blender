@@ -63,16 +63,3 @@ class OffScreenRenderer:
             return np.concatenate((rgb, buffer[...,3:4]), axis=-1)
         else:
             return rgb
-    
-        
-    # @property
-    # def enabled(self):
-    #     return self.handle != None
-    
-    # @enabled.setter 
-    # def enabled(self, toggle):
-    #     if toggle and self.handle is None:
-    #         self.handle = bpy.types.SpaceView3D.draw_handler_add(self.on_render, (), 'WINDOW', 'POST_PIXEL')
-    #     elif not toggle and self.handle is not None:
-    #         bpy.types.SpaceView3D.draw_handler_remove(self.handle, 'WINDOW')
-    #         self.handle = None
