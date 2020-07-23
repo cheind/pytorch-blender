@@ -50,7 +50,7 @@ def main():
     args = parser.parse_args()
 
     with ExitStack() as es:
-        if not args.replay:
+        if not args.replay:            
             # Launch Blender instance. Upon exit of this script all Blender instances will be closed.     
             bl = es.enter_context(
                 btt.BlenderLauncher(
