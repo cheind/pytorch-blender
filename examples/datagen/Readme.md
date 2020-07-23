@@ -1,6 +1,6 @@
 ## Supervised Training Data Generation
 
-This directory showcases synthetic data generation using **blendtorch** for supervised machine learning. In particular, several blender processes render randomized scene configurations and stream images as well as annotations into a PyTorch dataset used in training neural networks. Shown below is a result visualization from 4 Blender instances running physics-enabled falling cubes scene.
+This directory showcases synthetic data generation using **blendtorch** for supervised machine learning. In particular, several blender processes render randomized scene configurations and stream images as well as annotations into a PyTorch dataset used in training neural networks. The figure below shows a visualization of a PyTorch data set receiving images and annotations from four Blender instances. Each instance performs physical motion simulations of randomized cubes.
 
 <p align="center">
 <img src="/etc/result_physics.png" width="500">
