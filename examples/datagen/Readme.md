@@ -4,9 +4,7 @@ This directory showcases synthetic data generation using **blendtorch** for supe
 
 Shown below is a result visualization from 4 Blender instances running physics-enabled falling cubes scene.
 
-<div style="text-align: center">
-    <img src="/etc/result_physics.png" width="500">
-</div>
+![](/etc/result_physics.png)
 
 To recreate these results run [generate.py](./generate.py) using the [falling_cubes](./) as follows
 ```
