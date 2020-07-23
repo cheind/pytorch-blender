@@ -14,7 +14,7 @@ which will generate output images in `./tmp/output_##.png`.
  - [generate.py](./generate.py) also contains code for advanced features such as recording and replay.
  - Saving images is only done for demonstration purposes. **blendtorch** does not require intermediate disk storage to run.
 
-## Minimal Example
+## Code
 The following snippets show the minimal necessary code to use **blendtorch** for connecting PyTorch datasets to Blender renderings/ annotations. To run the example, invoke
 ```
 python minimal.py
