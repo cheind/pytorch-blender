@@ -20,35 +20,39 @@ class LaunchInfo:
 class BlenderLauncher():
     '''Opens and closes Blender instances.
     
-    This class is meant to be used withing a `with` block to ensure clean shutdown of background processes.
+    This class is meant to be used withing a `with` block to ensure clean launch/shutdown of background processes.
+
+    Params
+    ------
+    scene : str
+        Scene file to be processed by Blender instances            
+    script: str
+        Script file to be called by Blender
+    num_instances: int (default=1)
+        How many Blender instances to create
+    named_sockets: list-like, optional
+        Descriptive names of sockets to be passed to launched instanced
+        via command-line arguments '-btsockets name=tcp://address:port ...' 
+        to Blender. They are also available via LaunchInfo to PyTorch.
+    start_port : int (default=11000)
+        Start of port range for publisher sockets
+    bind_addr : str (default='127.0.0.1')
+        Address to bind publisher sockets  
+    proto: string (default='tcp')
+        Protocol to use.      
+    instance_args : array (default=None)
+        Additional arguments per instance to be passed as command
+        line arguments.        
+    blend_path: str, optional
+        Additional paths to look for Blender
+    seed: integer, optional
+        Optional launch seed. Each instance will be given
     '''
 
     def __init__(self, scene, script, num_instances=1, named_sockets=None, start_port=11000, bind_addr='127.0.0.1', instance_args=None, proto='tcp', blend_path=None, seed=None):
         '''Initialize instance.
         
-        Kwargs
-        ------
-        scene : string (default='scene.blend')
-            Scene file to be processed by Blender instances            
-        script: string
-            Script to be called from Blender
-        num_instances: int (default=1)
-            How many Blender instances to create
-        named_sockets: list-like, optional
-            Names of TCP sockets. Socketnames and ports are
-            passed via command-line arguments '-btsockets name=tcp://address:port ...' 
-            to Blender. They are also available via LaunchInfo to PyTorch.
-        start_port : int (default=11000)
-            Start of port range for publisher sockets
-        bind_addr : string (default='127.0.0.1')
-            Address to bind publisher sockets  
-        proto: string (default='tcp')
-            Protocol to use.      
-        instance_args : array (default=None)
-            Additional arguments per instance to be passed as command
-            line arguments.        
-        blend_path: string, optional
-            Additional paths to look for Blender
+
         '''
         self.num_instances = num_instances
         self.start_port = start_port
@@ -85,10 +89,10 @@ class BlenderLauncher():
         for s in self.named_sockets:
             addresses[s] = [next(addrgen) for _ in range(self.num_instances)]
         
-        if self.seed is None:
-            seeds = np.random.randint(0, 10000, dtype=int, size=self.num_instances)
-        else:
-            seeds = [self.seed + i for i in range(self.num_instances)]
+        seed = self.seed
+        if seed is None:
+            seed = np.random.randint(np.iinfo(np.int32).max - self.num_instances)
+        seeds = [seed + i for i in range(self.num_instances)]
 
         for idx, iargs in enumerate(self.instance_args):
             iargs.extend([
