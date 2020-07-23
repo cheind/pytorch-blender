@@ -15,23 +15,8 @@ Shown below is a visualization of 4 Blender instances running physics enabled fa
 
 ## Getting started
  1. Read the installation instructions below
- 1. To get started using **blendtorch** for supervised training read [\[examples/datagen\]](examples/datagen). 
+ 1. To get started with **blendtorch** for supervised training read [\[examples/datagen\]](examples/datagen). 
  1. To learn about using **blendtorch** for creating reinforcement training environments read [\[examples/control\]](examples/control).
-
-## Cite
-The code accompanies our [academic work](https://arxiv.org/abs/1907.01879) in the field of machine learning from artificial images. When using please cite the following work
-```
-@inproceedings{robotpose_etfa2019_cheind,
-    author={Christoph {Heindl} and Sebastian Zambal and Josef {Scharinger}},
-    title={Learning to Predict Robot Keypoints Using Artificially Generated Images},
-    booktitle={24th IEEE International Conference on Emerging Technologies and Factory Automation (ETFA)},    
-    year={2019},
-    publisher={IEEE},   
-    pages={1536-1539},
-    doi={10.1109/ETFA.2019.8868243},
-    isbn={978-1-7281-0303-7},
-}
-```
 
 ## Prerequisites
 This package has been tested using the following packages
@@ -56,6 +41,21 @@ set PYTHONPATH=%PYTHONPATH%;<SRC>/pkg_pytorch;<SRC>/pkg_blender
 or (Mac or GNU/Linux) 
 ```
 export PYTHONPATH="${PYTHONPATH}:<SRC>/pkg_pytorch:<SRC>/pkg_blender"
+```
+
+## Cite
+The code accompanies our [academic work](https://arxiv.org/abs/1907.01879) in the field of machine learning from artificial images. When using please cite the following work
+```
+@inproceedings{robotpose_etfa2019_cheind,
+    author={Christoph {Heindl} and Sebastian Zambal and Josef {Scharinger}},
+    title={Learning to Predict Robot Keypoints Using Artificially Generated Images},
+    booktitle={24th IEEE International Conference on Emerging Technologies and Factory Automation (ETFA)},    
+    year={2019},
+    publisher={IEEE},   
+    pages={1536-1539},
+    doi={10.1109/ETFA.2019.8868243},
+    isbn={978-1-7281-0303-7},
+}
 ```
 
 ## Runtimes
@@ -84,4 +84,3 @@ The package `blendtorch.btb` provides offscreen rendering capabilities `OffScree
 ## Caveats
 - Despite offscreen rendering is supported in Blender 2.8x it requires a UI frontend and thus cannot run in `--background` mode.
 - The renderings produced by Blender are in linear color space and thus will appear darker than expected when displayed. See `gamma_correct` transform [demo.py](./demo.py) to fix this.
-- Currently we do not have support for a feedback channel from PyTorch to Blender.
