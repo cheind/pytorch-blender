@@ -74,7 +74,7 @@ class AnimationController:
             frame_range = (bpy.context.scene.frame_start, bpy.context.scene.frame_end)
         bpy.context.scene.frame_start = frame_range[0]
         bpy.context.scene.frame_end = frame_range[1]
-        if physics and bpy.context.scene.rigidbody_world.enabled:
+        if physics and bpy.context.scene.rigidbody_world:
             bpy.context.scene.rigidbody_world.point_cache.frame_start = frame_range[0]
             bpy.context.scene.rigidbody_world.point_cache.frame_end = frame_range[1]
         return frame_range
