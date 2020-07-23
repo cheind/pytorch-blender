@@ -9,7 +9,7 @@ def controller(obs):
 def main():
     with btt.gym.launch_blender_env(
             scene='cartpole.blend', 
-            script='cartpole_env.py',
+            script='cartpole.blend.py',
             # Any additional args will be passed per command line to Blender.
             render_every=10) as env:
         
