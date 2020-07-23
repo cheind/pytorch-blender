@@ -1,6 +1,8 @@
 ## Classic Control
 
-This directory contains a recreation of OpenAI's `CartPole-v0` environment running in a remote Blender process. It utilizes Blender's physics capabilities to simulate the cartpole. The agent running a PID-controller exerts motor forces (continuous control). The communication is done via **blendtorch**, so it appears as any other native OpenAI environment for the agent.
+This directory contains a recreation of OpenAI's `CartPole-v0` environment running in a remote Blender process. It utilizes Blender's physics capabilities to simulate the cartpole. The agent, which operates a PID controller, steers the cart via direct motor forces (continuous control) in a separate process. 
+
+The communication is done via **blendtorch**, so it appears as any other native OpenAI environment for the agent.
 
 ![](capture.gif)
 
