@@ -98,13 +98,15 @@ class BlenderLauncher():
             seed = np.random.randint(np.iinfo(np.int32).max - self.num_instances)
         seeds = [seed + i for i in range(self.num_instances)]
 
-        for idx, iargs in enumerate(self.instance_args):
+        final_args = [[] for _ in range(self.num_instances)]
+        for idx, iargs in enumerate(final_args):
             iargs.extend([
                 '-btid', str(idx),
                 '-btseed', str(seeds[idx]),
                 '-btsockets', format_addr(idx),
             ])
-        args = [' '.join(a) for a in self.instance_args]
+            iargs.extend(self.instance_args[idx])
+        args = [' '.join(a) for a in final_args]
        
         processes = []
         commands = []
