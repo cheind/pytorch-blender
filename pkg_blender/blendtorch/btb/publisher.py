@@ -1,8 +1,8 @@
-import zmq
 import bpy
+import zmq
 
-class BlenderOutputChannel:
-    '''Data publisher to be used within Blender scripts.'''
+class DataPublisher:
+    '''Data publisher'''
 
     def __init__(self, bind_address, btid):
         self.ctx = zmq.Context()
@@ -24,6 +24,5 @@ class BlenderOutputChannel:
             Dictionary of pickable objects composing the message.
         '''
 
-        data = dict(btid=self.btid)
-        data.update(kwargs)
+        data = {'btid':self.btid, **kwargs}
         self.sock.send_pyobj(data)

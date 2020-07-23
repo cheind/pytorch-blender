@@ -108,7 +108,7 @@ def main():
         )
 
     # Our output channel
-    pub = btb.BlenderOutputChannel(args.btsockets['DATA'], args.btid)
+    pub = btb.DataPublisher(args.btsockets['DATA'], args.btid)
 
     # Setup image rendering
     off = btb.OffScreenRenderer(mode='rgb')
@@ -137,7 +137,7 @@ In data streaming, we are interested in sending supervised image data from multi
 
 Typically a Python script, e.g `train.py`, launches and maintains one or more Blender instances using `blendtorch.btt.BlenderLauncher`. Each Blender instance will be instructed to run particular scene and script, e.g `blend.py`. Next, `train.py` creates a `RemoteIterableDataset` to listen for incoming network messages from Blender instances. We use a `PUSH/PULL` pipeline pattern that supports fair queuing and will stall Blender instances when `train.py` is too slow to process all messages. 
 
-Each Blender instance, running `blend.py`, meanwhile creates a `blendtorch.btb.BlenderOutputChannel` to send outward messages. The addresses are taken from command-line arguments and are automatically provided by `blendtorch.btt.BlenderLauncher`. Next, `blend.py` registers the necessary animation hooks and usually creates one or more `blendtorch.btb.OffScreenRenderer` to capture offscreen images. Usually at `pre_frame` callbacks the scene is randomized and during `post_frame` the resulting frame is rendered and sent via output channel alongside with any (pickle-able) meta information desired.
+Each Blender instance, running `blend.py`, meanwhile creates a `blendtorch.btb.DataPublisher` to send outward messages. The addresses are taken from command-line arguments and are automatically provided by `blendtorch.btt.BlenderLauncher`. Next, `blend.py` registers the necessary animation hooks and usually creates one or more `blendtorch.btb.OffScreenRenderer` to capture offscreen images. Usually at `pre_frame` callbacks the scene is randomized and during `post_frame` the resulting frame is rendered and sent via output channel alongside with any (pickle-able) meta information desired.
 
 ### Parallism
 **blendtorch** supports two kinds of parallism: Blender instances and PyTorch workers. We use a [PUSH/PULL pattern](https://learning-0mq-with-pyzmq.readthedocs.io/en/latest/pyzmq/patterns/pushpull.html) that allows us to fan out from multiple Blender instances and distribute the workload to any number of PyTorch workers. 

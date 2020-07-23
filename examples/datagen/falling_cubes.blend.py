@@ -31,7 +31,7 @@ def main():
             xy=np.concatenate(xy, axis=0),
             frameid=bpy.context.scene.frame_current)
 
-    pub = btb.BlenderOutputChannel(args.btsockets['DATA'], args.btid)
+    pub = btb.DataPublisher(args.btsockets['DATA'], args.btid)
 
     off = btb.OffScreenRenderer(mode='rgb')
     off.view_matrix = btb.camera.view_matrix()

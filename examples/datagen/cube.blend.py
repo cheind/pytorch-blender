@@ -25,7 +25,7 @@ def main():
         )
 
     # Our output channel
-    pub = btb.BlenderOutputChannel(args.btsockets['DATA'], args.btid)
+    pub = btb.DataPublisher(args.btsockets['DATA'], args.btid)
 
     # Setup image rendering
     off = btb.OffScreenRenderer(mode='rgb')
