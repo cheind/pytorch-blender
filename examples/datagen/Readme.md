@@ -1,8 +1,6 @@
 ## Supervised Training Data Generation
 
-This directory showcases synthetic data generation using **blendtorch** for supervised machine learning. In particular, several blender processes render randomized scene configurations and stream images as well as annotations into a PyTorch dataset used in training neural networks.
-
-Shown below is a result visualization from 4 Blender instances running physics-enabled falling cubes scene.
+This directory showcases synthetic data generation using **blendtorch** for supervised machine learning. In particular, several blender processes render randomized scene configurations and stream images as well as annotations into a PyTorch dataset used in training neural networks. Shown below is a result visualization from 4 Blender instances running physics-enabled falling cubes scene.
 
 ![](/etc/result_physics.png)
 
@@ -10,15 +8,30 @@ To recreate these results run [generate.py](./generate.py) using the [falling_cu
 ```
 python generate.py falling_cubes
 ```
-which will generate output images in `./tmp/output_##.png`. Note that saving images these images is only done for demonstration purposes. **blendtorch** does not require intermediate disk storage to run.
+which will generate output images in `./tmp/output_##.png`. 
 
-## Minimal sample
+### Notes
+ - [generate.py](./generate.py) also contains code for advanced features such as recording and replay.
+ - Saving images is only done for demonstration purposes. **blendtorch** does not require intermediate disk storage to run.
+
+## Minimal Example
+The following snippets show the minimal necessary code to use **blendtorch** for connecting PyTorch datasets to Blender renderings/ annotations. To run the example, invoke
+```
+python minimal.py
+```
+
 ### PyTorch
-The following [minimal.py](./minimal.py) sample shows the steps necessary to launch and receive from multiple Blender processes in PyTorch.
+On the PyTorch side, [minimal.py](./minimal.py) performs the following important steps
+ 1. Launches multiple Blender processes to stream images/annotations using a particular scene/script combination.
+ 1. Configures a remote dataset to receive from Blender instances via network messages.
+
+The rest follows the standard PyTorch practice.
 
 ```python
 from pathlib import Path
 from torch.utils import data
+
+# Include blendtorchs PyTorch package
 from blendtorch import btt
 
 BATCH = 4
@@ -47,6 +60,8 @@ def main():
         
         # Loop
         for item in dl:
+            # item is a dict containing data from Blender 
+            # processes batched. See cube.blend.py for details.
             img, xy = item['image'], item['xy']
             print(img.shape, xy.shape)
 
@@ -54,11 +69,18 @@ if __name__ == '__main__':
     main()
 ```
 ### Blender
-The above script launches Blender instances running scene [cube.blend](./cube.blend) and script [cube.blend.py](./cube.blend.py) which contains the following code necessary for streaming
+When [minimal.py](./minimal.py) launches Blender, each instance will be running 
+scene [cube.blend](./cube.blend) and script [cube.blend.py](./cube.blend.py). The latter script performs the following important steps
+ 1. Allocate an offscreen renderer
+ 1. Initializes the animation system
+ 1. Register callbacks for pre-frame (scene randomization) and post-frame (render and streaming)
+ 1. Runs the animation forever
 
 ```python
 import bpy
 import numpy as np
+
+# Include blendtorchs Blender package
 from blendtorch import btb
 
 def main():
@@ -100,4 +122,6 @@ def main():
 
 main()
 ```
+
+
 
