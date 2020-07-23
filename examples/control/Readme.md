@@ -2,7 +2,7 @@
 
 This directory contains a recreation of OpenAI's `CartPole-v0` environment running in a remote Blender process. It utilizes Blender's physics capabilities to simulate the cartpole. The agent, which operates a PID controller, steers the cart via direct motor forces (continuous control) in a separate process. 
 
-The communication is done via **blendtorch**, so it appears as any other native OpenAI environment for the agent.
+The communication is handled by **blendtorch** in the background, so it appears as any other native OpenAI environment for the agent.
 
 <p align="center">
     <img src="capture.gif">
