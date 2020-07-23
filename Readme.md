@@ -3,9 +3,8 @@
 **blendtorch** is a Python framework to seamlessly integrate [Blender](http://blender.orf) renderings into [PyTorch](http://pytorch.org) datasets for deep learning from artificial visual data. We utilize Eevee, a new physically based real-time renderer, to synthesize images and annotations in real-time and thus avoid stalling model training in many cases.
 
 Feature summary
- - *Data Streaming*: Stream distributed Blender renderings directly into PyTorch data pipelines in real-time for supervised learning and domain randomization applications. Supports arbitrary pickle-able objects to be send alongside images/videos.</br>More info [\[examples/datagen\]](examples/datagen)
- - *Data Replay*: Built-in recording capability to replay data without Blender.</br>More info [\[examples/datagen\]](examples/datagen)
- - *OpenAI Gym Support*: Create and run remotely controlled Blender gyms to train reinforcement agents. Blender serves as simulation, visualization, and interactive live manipulation environment.
+ - ***Data Streaming***: Stream distributed Blender renderings directly into PyTorch data pipelines in real-time for supervised learning and domain randomization applications. Supports arbitrary pickle-able objects to be send alongside images/videos. Built-in recording capability to replay data without Blender.</br>More info [\[examples/datagen\]](examples/datagen)
+ - ***OpenAI Gym Support***: Create and run remotely controlled Blender gyms to train reinforcement agents. Blender serves as simulation, visualization, and interactive live manipulation environment.
  </br>More info [\[examples/control\]](examples/control)
 
 
@@ -19,19 +18,19 @@ Shown below is a visualization of 4 Blender instances running physics enabled fa
  1. To get started with **blendtorch** for supervised training read [\[examples/datagen\]](examples/datagen). 
  1. To learn about using **blendtorch** for creating reinforcement training environments read [\[examples/control\]](examples/control).
 
-## Prerequisites
+## Installation
+
 This package has been tested using the following packages
  - [Blender](https://www.blender.org/) >= 2.83 (Python 3.7)
  - [PyTorch](http://pytorch.org) >= 1.50 (Python 3.7)
 
-Other versions might work as well, but have not been tested.
+Other versions might work as well, but have not been tested. 
 
-## Installation
-First install the prerequisites and clone **blendtorch** to `<SRC>`
+Clone **blendtorch** to `<SRC>`
 ```
 git clone https://github.com/cheind/pytorch-blender.git <SRC>
 ```
-Next, ensure Blender executable can be found via `PATH` environment variable and install Python dependencies into Blender's packaged Python distribution
+Next, ensure Blender executable can be found via the `PATH` environment variable and install Python dependencies into Blender's packaged Python distribution
 ```
 blender --background --python <SRC>/pkg_blender/install_dependencies.py
 ```
