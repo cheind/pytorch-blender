@@ -76,7 +76,8 @@ class RemoteControlledAgent:
             self.state = RemoteControlledAgent.STATE_REQ
 
         socks = dict(self.poller.poll(self.timeoutms))
-        assert self.socket in socks, 'No response within timeout interval.'
+        if not self.socket in socks:
+            return BaseEnv.ACTION_RESTART
         
         cmd, action = self.socket.recv_pyobj()
         assert cmd in ['reset', 'step']

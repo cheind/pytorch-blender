@@ -49,7 +49,7 @@ class CartpoleEnv(btb.gym.BaseEnv):
         )
 
     def _render(self):
-        if self.off and (self.events.frameid % self.render_every) == 0:
+        if self.off and ((self.events.frameid - self.frame_range[0]) % self.render_every) == 0:
             return self.off.render()
         else:
             return None
@@ -70,7 +70,7 @@ def main():
     envargs = parser.parse_args(remainder)
 
     agent = btb.gym.RemoteControlledAgent(args.btsockets['GYM'])
-    env = CartpoleEnv(agent, frame_range=(1,100), use_animation=True, render_every=envargs.render_every)
+    env = CartpoleEnv(agent, frame_range=(1,10000), use_animation=True, render_every=envargs.render_every)
 
 main()
 
