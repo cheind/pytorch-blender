@@ -130,7 +130,7 @@ main()
 In data streaming, we are interested in sending supervised image data from multiple Blender processes to a Python process running model training. This process is depicted below.
 
 <p align="center">
-<img src="/etc/blendtorch_datagen.svg" width="500">
+<img src="./etc/blendtorch_datagen.svg" width="500">
 </p>
 
 At a top level provides `blendtorch.btt.BlenderLauncher` to launch and close Blender instances. For receiving data from Blender instances, `blendtorch.btt` provides. 
