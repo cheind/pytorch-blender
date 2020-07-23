@@ -25,7 +25,7 @@ def main():
     
     obs = env.reset()        
     while True:
-        obs, reward, done, info = env.step(control(obs))        
+        obs, reward, done, info = env.step(control(obs))
         if done:
             obs = env.reset()
     env.done()
