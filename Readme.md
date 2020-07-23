@@ -7,7 +7,8 @@ Feature summary
  - ***OpenAI Gym Support***: Create and run remotely controlled Blender gyms to train reinforcement agents. Blender serves as simulation, visualization, and interactive live manipulation environment.
  </br>More info [\[examples/control\]](examples/control)
 
-The figure below shows a visualization of a PyTorch data set receiving images and annotations from four Blender instances. Each instance performs physical motion simulations of randomized cubes.
+The figure below visualizes a single image/label batch received by PyTorch from four parallel Blender instances. Each Blender process repeatedly performs motion simulations of randomized cubes.
+
 <p align="center">
 <img src="etc/result_physics.png" width="500">
 </p>
