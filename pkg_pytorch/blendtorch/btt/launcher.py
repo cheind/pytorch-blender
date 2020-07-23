@@ -84,6 +84,7 @@ class BlenderLauncher():
         self.launch_info = None
 
     def __enter__(self):
+        '''Launch processes'''
         assert self.launch_info is None, 'Already launched.'
         
         addresses = {}
@@ -134,7 +135,8 @@ class BlenderLauncher():
         codes = self._poll()
         assert all([c==None for c in codes]), f'Alive test failed. Exit codes {codes}'
 
-    def __exit__(self, exc_type, exc_value, exc_traceback):    
+    def __exit__(self, exc_type, exc_value, exc_traceback): 
+        '''Terminate all processes.'''   
         [p.terminate() for p in self.launch_info.processes]
         [p.wait() for p in self.launch_info.processes]
         assert all([c!=None for c in self._poll()]), 'Not all Blender instances closed.'
@@ -142,6 +144,7 @@ class BlenderLauncher():
         logger.info('Blender instances closed')
 
     def _address_generator(self, proto, bind_addr, start_port):
+        '''Convenience to generate addresses.'''
         nextport = start_port
         while True:
             addr = f'{proto}://{bind_addr}:{nextport}'
@@ -149,4 +152,5 @@ class BlenderLauncher():
             yield addr
 
     def _poll(self):
+        '''Convenience to poll all processes exit codes.'''
         return [p.poll() for p in self.launch_info.processes]
