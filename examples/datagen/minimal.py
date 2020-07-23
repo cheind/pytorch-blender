@@ -1,6 +1,5 @@
 from pathlib import Path
 from torch.utils import data
-
 from blendtorch import btt
 
 BATCH = 4
