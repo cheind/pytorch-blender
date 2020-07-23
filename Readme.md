@@ -64,13 +64,14 @@ The code accompanies our [academic work](https://arxiv.org/abs/1907.01879) in th
 ```
 
 ## Runtimes
-The following tables show the mean runtimes per batch (8) and per image for a simple Cube scene (640x480xRGBA). See [benchmark.py](./benchmark.py) for details. The timings include rendering, transfer, decoding and batch collating.
+The following tables show the mean runtimes per batch (8) and per image for a simple Cube scene (640x480xRGBA). See [benchmark/benchmark.py](./benchmark/benchmark.py) for details. The timings include rendering, transfer, decoding and batch collating.
 
-| Blender Instances  | Runtime sec/batch | Runtime sec/image
-|:-:|:-:|:-:|
-| 1  | 0.236 | 0.030|
-| 2  | 0.14 | 0.018|
-| 4  | 0.099 | 0.012|
+| Blender Instances  | Runtime sec/batch | Runtime sec/image | Arguments|
+|:-:|:-:|:-:|:-:|
+| 1  | 0.236 | 0.030| UI refresh|
+| 2  | 0.14 | 0.018| UI refresh|
+| 4  | 0.099 | 0.012| UI refresh|
+| 5  | 0.085 | 0.011| no UI refresh|
 
 Note: If no image transfer is needed, i.e in reinforcement learning of physical simulations, 2000Hz are easily achieved.
 
