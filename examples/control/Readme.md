@@ -30,7 +30,11 @@ def main():
             obs = env.reset()
     env.done()
 ```
-Code: [cartpole_gym](./cartpole_gym), [cartpole.py](cartpole.py)
+Related code: environment [cartpole_env](./cartpole_env), agent [cartpole.py](cartpole.py)
+
+### Real-time vs. non real-time
+Environments running via **blendtorch** support a real-time execution mode `real_time=True`. When enabled, the simulation continues independent of the time it takes the agent to respond. Enabling this mode will require your agent to take into account any latency that occurs from network transmission and action computation.
+
 
 ### Environment rendering
 We consider Blender itself as the main tool to view and (interactively) manipulate the state of the environment. In case you want a separate viewer call `env.render()` during your training loop.
