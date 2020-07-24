@@ -1,37 +1,27 @@
 from pathlib import Path
 from torch.utils import data
-from blendtorch import btt
 
-BATCH = 4
-BLENDER = 2
-WORKER = 4  
+from blendtorch import btt
 
 def main():
     launch_args = dict(
         scene=Path(__file__).parent/'cube.blend',
         script=Path(__file__).parent/'cube.blend.py',
-        num_instances=BLENDER, 
+        num_instances=2, 
         named_sockets=['DATA'],
     )
 
+    # Launch Blender
     with btt.BlenderLauncher(**launch_args) as bl:
+        # Create remote dataset and limit max length to 16 elements.
         addr = bl.launch_info.addresses['DATA']
+        ds = btt.RemoteIterableDataset(addr, max_items=16)
+        dl = data.DataLoader(ds, batch_size=4, num_workers=4)
         
-        # Create remote dataset
-        ds = btt.RemoteIterableDataset(addr)
-
-        # Limit the total number of streamed elements
-        ds.stream_length(16)
-
-        # Setup batching
-        dl = data.DataLoader(ds, batch_size=BATCH, num_workers=WORKER)
-        
-        # Loop
         for item in dl:
-            # item is a dict containing data from Blender 
-            # processes batched. See cube.blend.py for details.
+            # item is a dict with custom content (see cube.blend.py)
             img, xy = item['image'], item['xy']
-            print(img.shape, xy.shape)
+            print('Received', img.shape, xy.shape)
 
 if __name__ == '__main__':
     main()

@@ -19,14 +19,16 @@ def main():
         scene=EXAMPLES_DIR/f'{args.scene}.blend',
         script=EXAMPLES_DIR/f'{args.scene}.blend.py', 
         num_instances=INSTANCES,
-        named_sockets=['DATA'],
-        instance_args=[['--no-ui-refresh', '--mode', 'rgba']]*INSTANCES
+        named_sockets=['DATA']
     )
 
     with btt.BlenderLauncher(**launch_args) as bl:                        
         ds = btt.RemoteIterableDataset(bl.launch_info.addresses['DATA'])
         ds.stream_length(NUM_ITEMS)
         dl = data.DataLoader(ds, batch_size=BATCH, num_workers=WORKER_INSTANCES, shuffle=False)
+
+        # Wait to avoid timing startup times of Blender
+        time.sleep(5)
         
         t0 = None
         imgshape = None
