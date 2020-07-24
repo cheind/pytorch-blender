@@ -5,7 +5,7 @@ This directory contains a recreation of OpenAI's `CartPole-v0` environment runni
 The communication is handled by **blendtorch** in the background, so it appears as any other native OpenAI environment for the agent.
 
 <p align="center">
-    <img src="capture.gif">
+    <img src="etc/capture.gif">
 </p>
 
 ### Code
@@ -21,7 +21,7 @@ def control(obs):
     return (xpole-xcart)*KAPPA
 
 def main():
-    env = gym.make('blendtorch-cartpole-v0')
+    env = gym.make('blendtorch-cartpole-v0', real_time=False)
     
     obs = env.reset()        
     while True:
