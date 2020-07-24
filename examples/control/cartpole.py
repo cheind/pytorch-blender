@@ -8,7 +8,7 @@ def control(obs):
     return (xpole-xcart)*KAPPA
 
 def main():
-    env = gym.make('blendtorch-cartpole-v0')
+    env = gym.make('blendtorch-cartpole-v0', real_time=False)
     
     obs = env.reset()        
     while True:
