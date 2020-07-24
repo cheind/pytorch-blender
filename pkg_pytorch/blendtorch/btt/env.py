@@ -88,7 +88,6 @@ try:
             self.__version__ = version
             self._es = ExitStack()
             self._env = None
-            
 
         def launch(self, scene, script, **kwargs):
             assert not self._env, 'Environment already running.'
