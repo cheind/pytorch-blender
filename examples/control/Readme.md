@@ -1,8 +1,8 @@
 ## Classic Control
 
-This directory contains a recreation of OpenAI's `CartPole-v0` environment running in a remote Blender process. It utilizes Blender's physics capabilities to simulate the cartpole. The agent, which operates a PID controller, steers the cart via direct motor forces (continuous control) in a separate process. 
+This directory contains a recreation of OpenAI's `CartPole-v0` environment running in a remote Blender process. In contrast top OpenAI's version, this environment leverages Blender's built-in physics engine to simulate the cartpole. The agent operates the cart by applying forces to the cart from a separate process.
 
-The communication is handled by **blendtorch** in the background, so it appears as any other native OpenAI environment for the agent.
+All communication is handled by **blendtorch** in the background, so it appears like any other native OpenAI environment for the agent.
 
 <p align="center">
     <img src="etc/capture.gif">
@@ -32,17 +32,19 @@ def main():
 ```
 Related code: environment [cartpole_env](./cartpole_env), agent [cartpole.py](cartpole.py)
 
+### Run it
+Make sure you have Blender, **blendtorch** (see main [Readme](/Readme.md)), and OpenAI gym (`pip install gym`) installed. Navigate to `examples/control` and run 
+```
+python cartpole.py
+```
+
 ### Real-time vs. non real-time
 Environments running via **blendtorch** support a real-time execution mode `real_time=True`. When enabled, the simulation continues independent of the time it takes the agent to respond. Enabling this mode will require your agent to take into account any latency that occurs from network transmission and action computation.
 
 ### Environment rendering
 We consider Blender itself as the main tool to view and (interactively) manipulate the state of the environment. In case you want a separate viewer call `env.render()` during your training loop.
 
-### Running
-Make sure you have Blender, **blendtorch** (see main [Readme](/Readme.md)), and OpenAI gym (`pip install gym`) installed. Navigate to `examples/control` and run 
-```
-python cartpole.py
-```
+
 
 
 
