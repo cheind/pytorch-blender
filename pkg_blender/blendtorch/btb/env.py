@@ -45,7 +45,7 @@ class BaseEnv:
             action = self.agent(**self.ctx)
             if action == BaseEnv.ACTION_RESTART:
                 self._restart()
-            elif action == BaseEnv.ACTION_MISSED:
+            elif action == BaseEnv.ACTION_NOOP:
                 pass           
             else:
                 self._env_prepare_step(action)
@@ -86,6 +86,7 @@ class RemoteControlledAgent:
     STATE_REP = 1
 
     def __init__(self, address, timeoutms=DEFAULT_TIMEOUTMS):
+        # also check ZMQ_REQ_RELAXED, ZMQ_REQ_CORRELATE, ZMQ_SNDTIMEO
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
         self.socket.setsockopt(zmq.LINGER, 0)
