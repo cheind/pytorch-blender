@@ -77,25 +77,53 @@ def launch_env(scene, script, **kwargs):
         if env:
             env.close()
 
-# try:
-#     import gym
+try:
+    import gym
+    from contextlib import ExitStack
     
-#     class OpenAIRemoteGym(object):
+    class OpenAIRemoteEnv(gym.Env):
+        metadata = {'render.modes': ['rgb_array', 'human']}
 
-#         def __init__(self, **kwargs):
-#             self._viewer = rendering.SimpleImageViewer(**kwargs)
+        def __init__(self,  version='0.0.1'):
+            self.__version__ = version
+            self._es = ExitStack()
+            self._env = None
+            
 
-#         def imshow(self, rgb):
-#             self._viewer.imshow(rgb)
+        def launch(self, scene, script, **kwargs):
+            assert not self._env, 'Environment already running.'
+            self._env = self._es.enter_context(
+                launch_env(
+                    scene=scene,
+                    script=script,
+                    **kwargs
+                )
+            )
 
-#         def close(self):
-#             if self._viewer:
-#                 self._viewer.close()
-#                 self._viewer = None
+        def step(self, action):
+            assert self._env, 'Environment not running.'
+            obs, reward, done, info = self._env.step(action)
+            return obs, reward, done, info
 
-#         def __del__(self):
-#             self.close()
+        def reset(self):
+            assert self._env, 'Environment not running.'
+            obs, info = self._env.reset()
+            return obs
+            
+        def seed(self, seed):
+            raise NotImplementedError()
 
-#     RENDER_BACKENDS['openai'] = OpenAIGymRenderer
-# except ImportError as e:
-#     pass
+        def render(self, mode='human'):
+            assert self._env, 'Environment not running.'
+            return self._env.render(mode=mode)
+
+        def close(self):   
+            if self._es:     
+                self._es.close()
+                self._es = None
+                self._env = None
+
+        def __del__(self):
+            self.close()
+except ImportError as e:
+    pass
