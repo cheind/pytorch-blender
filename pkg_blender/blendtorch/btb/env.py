@@ -11,6 +11,7 @@ class BaseEnv:
     '''Environment base class, based on the model of OpenAI Gym.'''
 
     ACTION_RESTART = object()
+    ACTION_NOOP = object()
 
     def __init__(self, agent):
         self.events = AnimationController()
@@ -43,7 +44,9 @@ class BaseEnv:
         if self.events.frameid > self.frame_range[0]:            
             action = self.agent(**self.ctx)
             if action == BaseEnv.ACTION_RESTART:
-                self._restart()                
+                self._restart()
+            elif action == BaseEnv.ACTION_MISSED:
+                pass           
             else:
                 self._env_prepare_step(action)
                 self.ctx['prev_action'] = action        
