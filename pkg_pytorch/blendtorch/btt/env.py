@@ -9,20 +9,22 @@ class RemoteEnv:
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REQ)
         self.socket.setsockopt(zmq.LINGER, 0)
+        self.socket.setsockopt(zmq.SNDTIMEO, timeoutms*10)
+        self.socket.setsockopt(zmq.RCVTIMEO, timeoutms)
+        self.socket.setsockopt(zmq.REQ_RELAXED, 1)
+        self.socket.setsockopt(zmq.REQ_CORRELATE, 1)
         self.socket.connect(address)
-        self.poller = zmq.Poller()
-        self.poller.register(self.socket, zmq.POLLIN)
-        self.timeoutms = timeoutms
+        self.env_time = None
         self.rgb_array = None
         self.viewer = None
 
     def reset(self):
-        ddict = self._reqrep('reset', action=None)
+        ddict = self._reqrep(cmd='reset')
         self.rgb_array = ddict.pop('rgb_array', None)
         return ddict.pop('obs'), ddict
 
     def step(self, action):
-        ddict = self._reqrep('step', action=action)        
+        ddict = self._reqrep(cmd='step', action=action)
         obs = ddict.pop('obs')
         r = ddict.pop('reward')
         done = ddict.pop('done')        
@@ -37,17 +39,19 @@ class RemoteEnv:
             self.viewer = create_renderer(backend)
         self.viewer.imshow(self.rgb_array)
        
-    def _reqrep(self, cmd, action=None):
-        self.socket.send_pyobj((cmd, action))
+    def _reqrep(self, **send_kwargs):
+        try:
+            ext = {**send_kwargs, 'time':self.env_time}
+            self.socket.send_pyobj(ext)
+        except zmq.error.Again:
+            raise ValueError('Failed to send to remote environment') from None
         
-        socks = dict(self.poller.poll(self.timeoutms))
-        assert self.socket in socks, 'No response within timeout interval.'
-        return self.socket.recv_pyobj()
-        
-        obs = data.pop('obs', None)
-        r = data.pop('reward', 0.)
-        done = data.pop('done', False)        
-        return obs, r, done, data
+        try:
+            ddict =  self.socket.recv_pyobj()
+            self.env_time = ddict['time']
+            return ddict
+        except zmq.error.Again:
+            raise ValueError('Failed to receive from remote environment') from None
 
     def close(self):
         if self.viewer:
@@ -61,7 +65,15 @@ def launch_env(scene, script, **kwargs):
     try:
         additional_args = []
         for k,v in kwargs.items():
-            additional_args.extend([f'--{k}',str(v)])
+            k = k.replace('_', '-')
+            if isinstance(v, bool):
+                if v:
+                    additional_args.append(f'--{k}')
+                else:
+                    additional_args.append(f'--no-{k}')
+            else:
+                additional_args.extend([f'--{k}',str(v)])
+            
         
         launcher_args = dict(
             scene=scene, 
@@ -116,6 +128,10 @@ try:
             assert self._env, 'Environment not running.'
             return self._env.render(mode=mode)
 
+        @property
+        def env_time(self):
+            return self._env.env_time
+
         def close(self):   
             if self._es:     
                 self._es.close()
@@ -124,5 +140,6 @@ try:
 
         def __del__(self):
             self.close()
+
 except ImportError as e:
     pass

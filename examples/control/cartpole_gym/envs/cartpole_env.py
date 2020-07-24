@@ -4,12 +4,13 @@ from gym import spaces
 from blendtorch import btt
 
 class CartpoleEnv(btt.env.OpenAIRemoteEnv):
-    def __init__(self, render_every=10):
+    def __init__(self, render_every=10, real_time=False):
 
         super().__init__(version='0.0.1')
         self.launch(
             scene=Path(__file__).parent/'cartpole.blend',
             script=Path(__file__).parent/'cartpole.blend.py',
+            real_time=real_time,
             render_every=10,            
         )
         

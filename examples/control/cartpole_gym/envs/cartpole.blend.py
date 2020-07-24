@@ -47,10 +47,15 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--render_every', default=None, type=int)
+    parser.add_argument('--render-every', default=None, type=int)
+    parser.add_argument('--real-time', dest='realtime', action='store_true')
+    parser.add_argument('--no-real-time', dest='realtime', action='store_false')
     envargs = parser.parse_args(remainder)
 
-    agent = btb.env.RemoteControlledAgent(args.btsockets['GYM'])
+    agent = btb.env.RemoteControlledAgent(
+        args.btsockets['GYM'], 
+        real_time=envargs.realtime
+    )
     env = CartpoleEnv(agent)
     env.attach_default_renderer(every_nth=envargs.render_every)
     env.run(frame_range=(1,10000), use_animation=True)
