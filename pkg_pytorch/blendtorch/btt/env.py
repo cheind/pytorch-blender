@@ -2,7 +2,7 @@ import zmq
 
 from .constants import DEFAULT_TIMEOUTMS
 from .launcher import BlenderLauncher
-from .gym_rendering import make_renderer
+from .env_rendering import create_renderer
 
 class RemoteEnv:
     def __init__(self, address, timeoutms=DEFAULT_TIMEOUTMS):
@@ -34,7 +34,7 @@ class RemoteEnv:
             return self.rgb_array
 
         if self.viewer is None:
-            self.viewer = make_renderer(backend)
+            self.viewer = create_renderer(backend)
         self.viewer.imshow(self.rgb_array)
        
     def _reqrep(self, cmd, action=None):
@@ -76,3 +76,26 @@ def launch_env(scene, script, **kwargs):
     finally:
         if env:
             env.close()
+
+# try:
+#     import gym
+    
+#     class OpenAIRemoteGym(object):
+
+#         def __init__(self, **kwargs):
+#             self._viewer = rendering.SimpleImageViewer(**kwargs)
+
+#         def imshow(self, rgb):
+#             self._viewer.imshow(rgb)
+
+#         def close(self):
+#             if self._viewer:
+#                 self._viewer.close()
+#                 self._viewer = None
+
+#         def __del__(self):
+#             self.close()
+
+#     RENDER_BACKENDS['openai'] = OpenAIGymRenderer
+# except ImportError as e:
+#     pass

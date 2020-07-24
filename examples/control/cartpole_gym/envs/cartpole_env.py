@@ -19,7 +19,7 @@ class CartpoleEnv(gym.Env):
 
         self._es = ExitStack()
         self._env = self._es.enter_context(
-            btt.gym.launch_env(
+            btt.env.launch_env(
                 scene=Path(__file__).parent/'cartpole.blend',
                 script=Path(__file__).parent/'cartpole.blend.py',
                 render_every=render_every

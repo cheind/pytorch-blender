@@ -4,7 +4,7 @@ import numpy as np
 
 from blendtorch import btb
 
-class CartpoleEnv(btb.gym.BaseEnv):
+class CartpoleEnv(btb.env.BaseEnv):
     def __init__(self, agent):
         super().__init__(agent)
         self.cart = bpy.data.objects['Cart']
@@ -50,7 +50,7 @@ def main():
     parser.add_argument('--render_every', default=None, type=int)
     envargs = parser.parse_args(remainder)
 
-    agent = btb.gym.RemoteControlledAgent(args.btsockets['GYM'])
+    agent = btb.env.RemoteControlledAgent(args.btsockets['GYM'])
     env = CartpoleEnv(agent)
     env.attach_default_renderer(every_nth=envargs.render_every)
     env.run(frame_range=(1,10000), use_animation=True)

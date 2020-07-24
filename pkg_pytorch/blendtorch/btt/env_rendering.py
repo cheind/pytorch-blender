@@ -2,7 +2,7 @@
 RENDER_BACKENDS={}
 LOOKUP_ORDER = ['openai', 'matplotlib']
 
-def make_renderer(backend=None, **kwargs):
+def create_renderer(backend=None, **kwargs):
     if backend is None:
         avail = [RENDER_BACKENDS[l] for l in LOOKUP_ORDER if l in RENDER_BACKENDS]
         assert len(avail) > 0, 'No render backends available.'
