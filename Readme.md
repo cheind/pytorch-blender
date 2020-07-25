@@ -64,7 +64,7 @@ The code accompanies our [academic work](https://arxiv.org/abs/1907.01879) in th
 ```
 
 ## Runtimes
-The following tables show the mean runtimes per batch (8) and per image for a simple Cube scene (640x480xRGBA). See [benchmark/benchmark.py](./benchmark/benchmark.py) for details. The timings include rendering, transfer, decoding and batch collating.
+The following tables show the mean runtimes per batch (8) and per image for a simple Cube scene (640x480xRGBA). See [benchmarks/benchmark.py](./benchmarks/benchmark.py) for details. The timings include rendering, transfer, decoding and batch collating.
 
 | Blender Instances  | Runtime sec/batch | Runtime sec/image | Arguments|
 |:-:|:-:|:-:|:-:|
