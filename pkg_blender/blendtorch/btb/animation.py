@@ -7,9 +7,21 @@ from .signal import Signal
 from .utils import find_first_view3d
 
 class AnimationController:  
-    '''Animation controller base class with fine-grained callbacks.
+    '''Provides an interface to Blender's animation system with fine-grained callbacks.
+
+    To play nice with Blender, blendtorch provides a callback based class for interacting
+    with the Blender's animation and rendering system. The usual way to interact with
+    this class is through an object of AnimationController. Depending on the required
+    callbacks, one or more signals are connected to Python functions. 
+    `AnimationController.play` starts the animation loop.
+
+    By default `AnimationController.play` is non-blocking and therefore requires a
+    non background instance of Blender. In case `--background` is required, 
+    `AnimationController.play` also supports blocking animation loop variant. In blocking
+    execution, offscreen rendering works but may crash Blender once the loop is exited (2.83.2),
+    and is therefore not recommended when image data is required.
     
-    Exposes the following signals
+    `AnimationController` exposes the following signals
      - pre_play() invoked before playing starts
      - pre_animation() invoked before first frame of animation range is processed
      - pre_frame() invoked before a frame begins
@@ -18,7 +30,8 @@ class AnimationController:
      - post_play() invoked after playing ends
     '''
 
-    def __init__(self):    
+    def __init__(self):   
+        '''Create a new instance.'''  
         self.pre_animation = Signal()
         self.pre_frame = Signal()
         self.post_frame = Signal()
@@ -28,6 +41,7 @@ class AnimationController:
         self._plyctx = None
 
     class _PlayContext:
+        '''Internal bookkeeping of animation veriables.'''
         def __init__(self, frame_range, num_episodes, use_animation, use_offline_render):
             self.frame_range = frame_range
             self.use_animation = use_animation
@@ -51,9 +65,30 @@ class AnimationController:
 
     @property
     def frameid(self):
+        '''Returns the current frame id.'''
         return bpy.context.scene.frame_current
         
     def play(self, frame_range=None, num_episodes=-1, use_animation=True, use_offline_render=True, use_physics=True):
+        '''Start the animation loop.
+
+        Params
+        ------
+        frame_range: tuple
+            Start and end of frame range to play. Note that start and end are inclusive.
+        num_episodes: int
+            The number of loops to play. -1 loops forever.
+        use_animation: bool
+            Whether to use Blender's non-blocking animation system or use a blocking variant.
+            By default True. When True, allows BlenderUI to refresh and be responsive. The animation
+            will be run in target FPS. When false, does not allow Blender UI to refresh. The animation
+            runs as fast as it can.
+        use_offline_render: bool
+            Whether offline rendering should be supported. By default True. When True, calls to 
+            `OffscreenRenderer` are safe inside the `post_frame` callback.
+        use_physics: bool
+            Whether physics should be enabled. Default is True. When True, sets the simulation range
+            to match the animation frame range.
+        '''
         assert self._plyctx is None, 'Animation already running'
 
         self._plyctx = AnimationController._PlayContext(
@@ -70,6 +105,23 @@ class AnimationController:
 
     @staticmethod
     def setup_frame_range(frame_range, physics=True):
+        '''Setup the animation and physics frame range.
+
+        Params
+        ------
+        frame_range: tuple
+            Start and end (inclusive) frame range to be animated.
+            Can be None, in which case the scenes frame range is used.
+        physics: bool
+            Whether or not to apply the frame range settings to the rigid body
+            simulation.
+
+        Returns
+        -------
+        frame_range: tuple
+            the updated frame range.
+        '''
+
         if frame_range is None:
             frame_range = (bpy.context.scene.frame_start, bpy.context.scene.frame_end)
         bpy.context.scene.frame_start = frame_range[0]
@@ -80,17 +132,24 @@ class AnimationController:
         return frame_range
 
     def _play_animation(self):
+        '''Setup and start Blender animation loop.'''
         self.pre_play.invoke()     
         bpy.app.handlers.frame_change_pre.append(self._on_pre_frame)
-        if self._plyctx.use_offline_render:    
+        if self._plyctx.use_offline_render:
+            # To be save, we need to draw from `POST_PIXEL` not `frame_change_post`.
+            # However `POST_PIXEL` might be called more than once per frame. We therefore
+            # set and release `pending_post_pixel` to match things up.
             _, self._plyctx.draw_space, _ = find_first_view3d()
             self._plyctx.draw_handler = bpy.types.SpaceView3D.draw_handler_add(self._on_post_frame, (), 'WINDOW', 'POST_PIXEL')
         else:
             bpy.app.handlers.frame_change_post.append(self._on_post_frame)
+        # Set to first frame.
         bpy.context.scene.frame_set(self._plyctx.frame_range[0])
+        # The following does not block. Note, in --offscreen this does nothing.
         bpy.ops.screen.animation_play()
 
     def _play_manual(self):
+        '''Setup and start blocking animation loop.'''
         self.pre_play.invoke()
         bpy.app.handlers.frame_change_pre.append(self._on_pre_frame)
         bpy.app.handlers.frame_change_post.append(self._on_post_frame)
@@ -99,23 +158,30 @@ class AnimationController:
             bpy.context.scene.frame_set(self._plyctx.frame_range[0])
             while self.frameid < self._plyctx.frame_range[1]:
                 bpy.context.scene.frame_set(self.frameid+1)
+        # Post-play is called from `_cancel`.
 
     def rewind(self):
+        '''Reset animation to first frame.'''
         if self._plyctx is not None:
             self._set_frame(self._plyctx.frame_range[0])
 
     def _set_frame(self, frame_index):
+        '''Step to a specific frame.'''
         bpy.context.scene.frame_set(frame_index)
 
     def _on_pre_frame(self, scene, *args):              
+        '''Handle pre-frame events internally.'''
         pre_first = (self.frameid == self._plyctx.frame_range[0])
         
         if pre_first:
             self.pre_animation.invoke()
         self.pre_frame.invoke()
+        # The following guards us from multiple calls to `_on_post_frame`
+        # when we hooked into `POST_PIXEL`
         self._plyctx.pending_post_pixel = True
 
     def _on_post_frame(self, *args):
+        '''Handle post-frame events internally.'''
         if self._plyctx.skip_post_frame():
             return
         self._plyctx.pending_post_pixel = False
@@ -129,6 +195,7 @@ class AnimationController:
                 self._cancel()
 
     def _cancel(self):
+        '''Stop the animation.'''
         bpy.app.handlers.frame_change_pre.remove(self._on_pre_frame)
         bpy.app.handlers.frame_change_post.remove(self._on_post_frame)
         if self._plyctx.draw_handler is not None:
