@@ -1,3 +1,4 @@
+'''Provides helper functions to deal with Blender cameras.'''
 import bpy, bpy_extras
 import numpy as np
 
@@ -22,8 +23,19 @@ def projection_matrix(camera=None):
     return camera.calc_matrix_camera(bpy.context.evaluated_depsgraph_get(), x=shape[1], y=shape[0])
 
 def project_points(obj, camera=None):
-    '''Returns 2D pixel coordinates object's vertex coordinates.
-    Quite inefficient, consider only for demonstration purposes.
+    '''Returns 2D pixel projections of all vertices belonging to `obj`.
+    
+    Params
+    ------
+    obj: bpy.types.Object
+        The object whose vertices to project
+    camera: bpy.types.Camera
+        The camera to project into. If None, uses the scenes default camera.
+    
+    Returns
+    -------
+    xy: Nx2 array
+        XY coordinates of each vertex as projected into the camera image.
     '''
     camera = camera or bpy.context.scene.camera
     scene = bpy.context.scene
