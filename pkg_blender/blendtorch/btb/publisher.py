@@ -2,21 +2,35 @@ import bpy
 import zmq
 
 class DataPublisher:
-    '''Data publisher'''
+    '''Publish rendered images and auxilary data.
+    
+    This class acts as data source for `btt.RemoteIterableDataset`. 
+    Keyword arguments to `publish` must be pickle-able.
 
-    def __init__(self, bind_address, btid):
+    Params
+    ------
+    bind_address: str
+        ZMQ remote address to bind to.
+    btid: integer
+        blendtorch process identifier when available. Will be auto-added
+        to the send dictionary. Defaults to None.
+    send_hwm: integer
+        Max send queue size before blocking caller of `publish`.
+    '''
+
+    def __init__(self, bind_address, btid=None, send_hwm=10):
         self.ctx = zmq.Context()
         self.sock = self.ctx.socket(zmq.PUSH)
-        self.sock.setsockopt(zmq.SNDHWM, 10)
+        self.sock.setsockopt(zmq.SNDHWM, send_hwm)
         self.sock.setsockopt(zmq.LINGER, 0)
         self.sock.bind(bind_address)
         self.btid = btid
         
     def publish(self, **kwargs):
-        '''Publish message.
+        '''Publish a message.
 
-        This method will implicitly add bendtorch instance id 
-        `btid` to the send dictionary.
+        This method will implicitly add bendtorch instance id  `btid` 
+        to the send dictionary.
 
         Params
         ------

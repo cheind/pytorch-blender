@@ -1,6 +1,6 @@
 '''Install Blender dependencies.
 
-Meant to be run once through blender as follows
+Meant to be run ONCE via blender as follows
 `blender --background --python pkg_blender/install_dependencies.py`
 '''
 

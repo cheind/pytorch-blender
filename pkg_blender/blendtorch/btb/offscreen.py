@@ -7,31 +7,61 @@ from . import camera
 from .utils import find_first_view3d
 
 class OffScreenRenderer:
-    '''Provides off-screen scene rendering.'''
+    '''Provides offscreen scene rendering using Eevee.
+
+    Rendering reusing the first found 3D Space View in Blender. The way this view
+    is configured also defines how the resulting image looks like. Use the helper method
+    `set_render_style` to adjust the appearance from within Python.
+
+    This class' `render` method is expected to be called from a `POST_PIXEL` callback,
+    which `AnimationController` takes care of. That is, invoking `render()` from 
+    withing `post_frame` is considered save.
     
-    def __init__(self, flip=True, mode='rgba', gamma_coeff=None):
+    Params
+    ------
+    flip: bool
+        Whether or not to flip the rendered data to match OpenCV image coordinate
+        system. Defaults to True.
+    mode: str
+        Defines the number of color channels. Either 'RGBA' or 'RGB'
+    gamma_coeff: scalar, None
+        When not None, applies gamma color correction to the rendered image.
+        Blender performs offline rendering in linear color space that when 
+        viewed directly appears to be darker than expected. Usually a value
+        of 2.2 get's the job done. Defaults to None.
+    camera: bpy.types.Camera, None
+        Which camera view to render.
+    '''
+    
+    def __init__(self, flip=True, mode='rgba', gamma_coeff=None, camera=None):
         assert mode in ['rgba', 'rgb']
-        self.shape = camera.image_shape()
+        self.camera = camera or bpy.context.scene.camera
+        self.shape = camera.image_shape(camera=self.camera)
         self.offscreen = gpu.types.GPUOffScreen(self.shape[1], self.shape[0])
         self.area, self.space, self.region = find_first_view3d()
         self.handle = None
         self.flip = flip
         self.gamma_coeff = gamma_coeff
-        self.proj_matrix = camera.projection_matrix()
-        self.view_matrix = camera.view_matrix()        
+        self.proj_matrix = camera.projection_matrix(camera=self.camera)
+        self.view_matrix = camera.view_matrix(camera=self.camera)
         channels = 4 if mode=='rgba' else 3        
         self.buffer = np.zeros((self.shape[0], self.shape[1], channels), dtype=np.uint8)        
         self.mode = bgl.GL_RGBA if mode=='rgba' else bgl.GL_RGB
 
     def render(self):
+        '''Render the scene and return image as buffer.
+        
+        Returns
+        -------
+        image: HxWxD array
+            where D is 4 when `mode=='RGBA'` else 3.
+        '''
         with self.offscreen.bind():
             self.offscreen.draw_view3d(
                 bpy.context.scene,
                 bpy.context.view_layer,
-                self.space,            
-                self.region,
-                #bpy.context.space_data,
-                #bpy.context.region,
+                self.space,  #bpy.context.space_data
+                self.region, #bpy.context.region
                 self.view_matrix,
                 self.proj_matrix)
                                 

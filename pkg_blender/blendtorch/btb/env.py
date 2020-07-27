@@ -13,14 +13,14 @@ class BaseEnv:
     This class is what `gym.Env` is to OpenAI gym: it defines the basic interface
     required to be implemented by all Blender environments.
     
-    In contrast to OpenAI, Blender defines a callback based animation system. This also
-    affects `BaseEnv` in that it requires the agent to be a callable method with following
-    signature:
+    Blender defines a callback based animation system. This also affects `BaseEnv` in that it 
+    requires the agent to be given by a callable method having following signature:
         cmd, action = agent(env, **kwargs)
-    The arguments passed in **kwargs are at least `obs`, `reward`, `done`. Other variables
-    are what `info` is in OpenAI gym. The agent is expected to return a command 
-    (BaseEnv.CMD_RESTART or BaseEnv.CMD_STEP) with an optional `action` to perform. Note,
-    `action`, `obs`, `reward` and `info` depend on the actual environment implementation.
+    The arguments passed via **kwargs are at least `obs`, `reward`, `done`. Other variables
+    correspond to additional information (`info` dict in OpenAI). The agent is expected to 
+    return a command (BaseEnv.CMD_RESTART or BaseEnv.CMD_STEP) with an optional `action` 
+    to perform. Note, `action`, `obs`, `reward` and `info` depend on the actual environment 
+    implementation.
 
     Since a callback based agent is unusual to OpenAI users, blendtorch offers a 
     `RemoteControlledAgent`, that communicates with a remotly implemented agent. The remote
