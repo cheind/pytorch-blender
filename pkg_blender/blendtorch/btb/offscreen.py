@@ -3,7 +3,7 @@ import bpy, gpu, bgl
 from OpenGL.GL import glGetTexImage
 
 from .signal import Signal
-from . import camera
+from . import camera as cam
 from .utils import find_first_view3d
 
 class OffScreenRenderer:
@@ -31,19 +31,29 @@ class OffScreenRenderer:
         of 2.2 get's the job done. Defaults to None.
     camera: bpy.types.Camera, None
         Which camera view to render.
+
+
+    Attributes
+    -----------
+    proj_matrix: Matrix
+        Projection matrix to use. See `btb.camera` for helpers. Update this when
+        the camera intrinsics change.
+    view_matrix: Matrix
+        View matrix to use. See `btb.camera` for helpers. Update this when
+        the camera moves.
     '''
     
     def __init__(self, flip=True, mode='rgba', gamma_coeff=None, camera=None):
         assert mode in ['rgba', 'rgb']
         self.camera = camera or bpy.context.scene.camera
-        self.shape = camera.image_shape(camera=self.camera)
+        self.shape = cam.image_shape()
         self.offscreen = gpu.types.GPUOffScreen(self.shape[1], self.shape[0])
         self.area, self.space, self.region = find_first_view3d()
         self.handle = None
         self.flip = flip
         self.gamma_coeff = gamma_coeff
-        self.proj_matrix = camera.projection_matrix(camera=self.camera)
-        self.view_matrix = camera.view_matrix(camera=self.camera)
+        self.proj_matrix = cam.projection_matrix(camera=self.camera)
+        self.view_matrix = cam.view_matrix(camera=self.camera)
         channels = 4 if mode=='rgba' else 3        
         self.buffer = np.zeros((self.shape[0], self.shape[1], channels), dtype=np.uint8)        
         self.mode = bgl.GL_RGBA if mode=='rgba' else bgl.GL_RGB
