@@ -24,12 +24,12 @@ def main():
             c.location = xyz[idx]
             c.rotation_euler = rot[idx]
 
-    def post_frame(off, pub): 
+    def post_frame(anim, off, pub): 
         xy = [btb.camera.project_points(c, camera=cam) for c in cubes]   
         pub.publish(
             image=off.render(), 
             xy=np.concatenate(xy, axis=0),
-            frameid=bpy.context.scene.frame_current)
+            frameid=anim.frameid)
 
     pub = btb.DataPublisher(args.btsockets['DATA'], args.btid)
 
@@ -40,7 +40,7 @@ def main():
 
     anim = btb.AnimationController()
     anim.pre_animation.add(pre_anim)
-    anim.post_frame.add(post_frame, off, pub)
+    anim.post_frame.add(post_frame, anim, off, pub)
     anim.play(frame_range=(0,100), num_episodes=-1)
 
 main()
