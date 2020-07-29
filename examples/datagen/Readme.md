@@ -82,14 +82,11 @@ def main():
         
     def post_frame(off, pub, anim, cam):
         # Called every after Blender finished processing a frame.
-        image = off.render()
-        # Compute pixel annotations
-        xy,z = cam.ndc_to_linear(
-            cam.world_to_ndc(
-                btb.utils.world_coordinates(cube)
-            )
+        pub.publish(
+            image=off.render(), 
+            xy=cam.object_to_pixel(cube), 
+            frameid=anim.frameid
         )
-        pub.publish(image=image, xy=xy, frameid=anim.frameid)
 
     # Data source
     pub = btb.DataPublisher(btargs.btsockets['DATA'], btargs.btid)
