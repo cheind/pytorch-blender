@@ -3,7 +3,7 @@ import bpy, gpu, bgl
 from OpenGL.GL import glGetTexImage
 
 from .signal import Signal
-from . import camera as cam
+from .camera import Camera
 from .utils import find_first_view3d
 
 class OffScreenRenderer:
@@ -19,9 +19,11 @@ class OffScreenRenderer:
     
     Params
     ------
-    flip: bool
-        Whether or not to flip the rendered data to match OpenCV image coordinate
-        system. Defaults to True.
+    camera: btb.Camera, None
+        Camera view to be rendered. When None, default camera is used.
+    origin: str
+        When 'upper-left' flip the rendered data to match OpenCV image coordinate
+        system. When 'lower-left' image is created using OpenGL coordinate system. Defaults to 'upper-left'.
     mode: str
         Defines the number of color channels. Either 'RGBA' or 'RGB'
     gamma_coeff: scalar, None
@@ -29,9 +31,6 @@ class OffScreenRenderer:
         Blender performs offline rendering in linear color space that when 
         viewed directly appears to be darker than expected. Usually a value
         of 2.2 get's the job done. Defaults to None.
-    camera: bpy.types.Camera, None
-        Which camera view to render.
-
 
     Attributes
     -----------
@@ -43,20 +42,28 @@ class OffScreenRenderer:
         the camera moves.
     '''
     
-    def __init__(self, flip=True, mode='rgba', gamma_coeff=None, camera=None):
+    def __init__(self, camera=None, mode='rgba', origin='upper-left', gamma_coeff=None):
         assert mode in ['rgba', 'rgb']
-        self.camera = camera or bpy.context.scene.camera
-        self.shape = cam.image_shape()
-        self.offscreen = gpu.types.GPUOffScreen(self.shape[1], self.shape[0])
+        assert origin in ['upper-left', 'lower-left']
+        self.camera = camera or Camera()
+        self.offscreen = gpu.types.GPUOffScreen(
+            self.shape[1], 
+            self.shape[0]
+        )
         self.area, self.space, self.region = find_first_view3d()
         self.handle = None
-        self.flip = flip
+        self.origin = origin
         self.gamma_coeff = gamma_coeff
-        self.proj_matrix = cam.projection_matrix(camera=self.camera)
-        self.view_matrix = cam.view_matrix(camera=self.camera)
         channels = 4 if mode=='rgba' else 3        
-        self.buffer = np.zeros((self.shape[0], self.shape[1], channels), dtype=np.uint8)        
+        self.buffer = np.zeros(
+            (self.shape[0], self.shape[1], channels), 
+            dtype=np.uint8
+        )        
         self.mode = bgl.GL_RGBA if mode=='rgba' else bgl.GL_RGB
+
+    @property
+    def shape(self):
+        return self.camera.shape
 
     def render(self):
         '''Render the scene and return image as buffer.
@@ -72,8 +79,8 @@ class OffScreenRenderer:
                 bpy.context.view_layer,
                 self.space,  #bpy.context.space_data
                 self.region, #bpy.context.region
-                self.view_matrix,
-                self.proj_matrix)
+                self.camera.view_matrix,
+                self.camera.proj_matrix)
                                 
             bgl.glActiveTexture(bgl.GL_TEXTURE0)
             bgl.glBindTexture(bgl.GL_TEXTURE_2D, self.offscreen.color_texture)   
@@ -85,7 +92,7 @@ class OffScreenRenderer:
             glGetTexImage(bgl.GL_TEXTURE_2D, 0, self.mode, bgl.GL_UNSIGNED_BYTE, self.buffer)
 
         buffer = self.buffer
-        if self.flip:
+        if self.origin == 'upper-left':
             buffer = np.flipud(buffer)
         if self.gamma_coeff:
             buffer = self._color_correct(buffer, self.gamma_coeff)

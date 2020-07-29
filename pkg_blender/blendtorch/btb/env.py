@@ -5,7 +5,7 @@ import sys
 from .animation import AnimationController
 from .offscreen import OffScreenRenderer
 from .constants import DEFAULT_TIMEOUTMS
-from . import camera
+from .camera import Camera
 
 class BaseEnv:
     '''Abstract base class for environments to be interacted with by agents.
@@ -91,9 +91,7 @@ class BaseEnv:
             Render every nth frame of the simulation.
         '''
 
-        self.renderer = OffScreenRenderer(mode='rgb', gamma_coeff=2.2)
-        self.renderer.view_matrix = camera.view_matrix()
-        self.renderer.proj_matrix = camera.projection_matrix()
+        self.renderer = OffScreenRenderer(camera=Camera(), mode='rgb', gamma_coeff=2.2)
         self.render_every = every_nth
 
     def _pre_frame(self):
