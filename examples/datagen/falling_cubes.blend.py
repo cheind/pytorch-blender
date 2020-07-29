@@ -25,13 +25,11 @@ def main():
             c.rotation_euler = rot[idx]
 
     def post_frame(anim, off, pub, cam): 
-        image = off.render()
-        xy,z = cam.ndc_to_linear(
-            cam.world_to_ndc(
-                btb.utils.world_coordinates(*cubes)
-            )
+        pub.publish(
+            image=off.render(), 
+            xy=cam.object_to_pixel(*cubes), 
+            frameid=anim.frameid
         )
-        pub.publish(image=image, xy=xy, frameid=anim.frameid)
 
     pub = btb.DataPublisher(args.btsockets['DATA'], args.btid)
 

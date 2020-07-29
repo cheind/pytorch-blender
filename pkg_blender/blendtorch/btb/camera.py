@@ -80,8 +80,8 @@ class Camera:
         return ndc
 
 
-    def ndc_to_linear(self, ndc, origin='upper-left'):
-        '''Converts NDC coordinates to pixel and linear depth values
+    def ndc_to_pixel(self, ndc, origin='upper-left'):
+        '''Converts NDC coordinates to pixel values
         
         Params
         ------
@@ -93,21 +93,48 @@ class Camera:
         Returns
         -------
         xy: Nx2 array
-            Camera pixel coordinates in 
-        z: Nx1 array
-            Linear depth values.
+            Camera pixel coordinates
         '''
         assert origin in ['upper-left', 'lower-left']
-
-        ndc = np.atleast_2d(ndc)
-        xyz = (ndc + 1)*0.5 
-        if origin == 'upper-left':
-            xyz[:, 1] = 1. - xyz[:, 1]
-
         h,w = self.shape
-        xy = xyz[:, :2] * np.array([[w,h]]) 
+        xy = np.atleast_2d(ndc)[:, :2]
+        xy = (xy + 1)*0.5 
+        if origin == 'upper-left':
+            xy[:, 1] = 1. - xy[:, 1]
+        return xy * np.array([[w,h]]) 
 
+    def ndc_to_linear_depth(self, ndc):
+        '''Converts NDC depth coordinates to linear depth values.
+        
+        Params
+        ------
+        ndc: Nx3 array
+            Normalized device coordinates.
+
+        Returns
+        -------
+        z: N array
+            Linear depth values.
+        '''
         cs, ce = self.clip_range
-        z = (ce - cs)*xyz[:, -1] + cs
+        z = np.atleast_2d(ndc)[:, -1]
+        z = (z + 1)*0.5         
+        z = (ce - cs)*z + cs
+        return z
 
-        return xy,z
+    def object_to_pixel(self, *objs):
+        '''Convenience composition of `ndc_to_pixel(world_to_ndc(utils.world_coordinates(*objs)))`
+        
+        Params
+        ------
+        objs: array of bpy.types.Object
+            Collection of objects whose vertices to convert to camera pixel coordinates.
+            
+        Returns
+        -------
+        xy : Mx2 array
+            Concatenated list object vertex coordinates expressed in camera pixels.
+        '''
+        return self.ndc_to_pixel(
+            self.world_to_ndc(utils.world_coordinates(*objs))
+        )
