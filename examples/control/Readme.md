@@ -57,11 +57,11 @@ Our design separates the agent from the Blender environment. The figure below sh
 
 Adding a new environment usually requires the following steps (see [cartpole_env](./cartpole_env) for details):
  - Create a new Python package `cartpole_gym`.
- - Create a new Blender scene `cartpole.blend` and model the entities required.
- - Create a new `cartpole.blend.py` to contain    
+ - Add a Blender scene `cartpole.blend` and model the entities required.
+ - Add a script `cartpole.blend.py` to contain    
     - The environment implementation `CartpoleEnv` by inheriting from `btb.env.BaseEnv`.
     - Instantiate `CartpoleEnv` and use an instance of `btb.env.RemoteControlledAgent` upon startup.
- - Create `cartpole_env.py` and expose `CartpoleEnv` by inheriting from `btt.env.OpenAIRemoteEnv` and define OpenAI action and observation spaces.
+ - Add a `cartpole_env.py` and expose `CartpoleEnv` by inheriting from `btt.env.OpenAIRemoteEnv`. Additionally define OpenAI action and observation spaces.
  - Register your gym `blendtorch-cartpole-v0` with OpenAI in `__init__.py`.
  - Optionally provide a `setup.py` to make your package installable.
 
