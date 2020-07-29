@@ -44,6 +44,39 @@ Environments running via **blendtorch** support a real-time execution mode `real
 ### Environment rendering
 We consider Blender itself as the main tool to view and (interactively) manipulate the state of the environment. In case you want a separate viewer call `env.render()` during your training loop.
 
+### Architecture
+In Reinforcement Learning (RL) we are interested in training an agent, embedded in an environment, to solve a specific task through experience. 
+
+OpenAI's [gym](https://gym.openai.com/) offers a well established API and a set of predefined environments/tasks to work with RL challenges. Our goal with **blendtorch** is to integrate Blender as an ecosystem into OpenAI's [gym]. With Blender, the RL community gains a tool that allows them to easily model, simulate and manipulate an environment.
+
+Our design separates the agent from the Blender environment. The figure below shows the architecture for a simple cartpole environment. While the actual environment is designed and implemented in Blender, the agent lives in a separate Python process. The agent interacts through a proxy cartpole environment with the actual environment running in Blender. The environment interface exposed to the agent follows standard OpenAI recommendations.
+
+<p align="center">
+<img src="./etc/blendtorch_gym.svg" width="600">
+</p>
+
+Adding a new environment usually requires the following steps (see [cartpole_env](./cartpole_env) for details):
+ - Create a new Python package `cartpole_gym`.
+ - Create a new Blender scene `cartpole.blend` and model the entities required.
+ - Create a new `cartpole.blend.py` to contain    
+    - The environment implementation `CartpoleEnv` by inheriting from `btb.env.BaseEnv`.
+    - Instantiate `CartpoleEnv` and use an instance of `btb.env.RemoteControlledAgent` upon startup.
+ - Create `cartpole_env.py` and expose `CartpoleEnv` by inheriting from `btt.env.OpenAIRemoteEnv` and define OpenAI action and observation spaces.
+ - Register your gym `blendtorch-cartpole-v0` with OpenAI in `__init__.py`.
+ - Optionally provide a `setup.py` to make your package installable.
+
+You may use your environment as follows
+```python
+import gym
+import cartpole_gym
+
+env = gym.make('blendtorch-cartpole-v0')
+...
+```
+
+In the background, `btt.env.OpenAIRemoteEnv` starts a single Blender instance which executes the scene `cartpole.blend` and the script `cartpole.blend.py`. Resetting `env.reset()` and stepping `env.step()` are automatically converted to remote service calls to Blender that are invisible to the agent.
+
+
 
 
 
