@@ -18,11 +18,12 @@ class DataPublisher:
         Max send queue size before blocking caller of `publish`.
     '''
 
-    def __init__(self, bind_address, btid=None, send_hwm=10):
+    def __init__(self, bind_address, btid=None, send_hwm=10, lingerms=0):
         self.ctx = zmq.Context()
         self.sock = self.ctx.socket(zmq.PUSH)
         self.sock.setsockopt(zmq.SNDHWM, send_hwm)
-        self.sock.setsockopt(zmq.LINGER, 0)
+        self.sock.setsockopt(zmq.LINGER, lingerms)
+        self.sock.setsockopt(zmq.IMMEDIATE, 1)
         self.sock.bind(bind_address)
         self.btid = btid
         
