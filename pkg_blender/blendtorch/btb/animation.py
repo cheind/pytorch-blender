@@ -48,17 +48,19 @@ class AnimationController:
             self.use_offline_render = use_offline_render
             self.episode = 0
             self.num_episodes = num_episodes
-            self.pending_post_pixel = False
+            self.pending_post_frame = False
             self.draw_handler = None
             self.draw_space = None
+            self.last_post_frame = 0
 
-        def skip_post_frame(self):
+        def skip_post_frame(self, current_frame):
             return (
-                self.use_offline_render and 
-                self.use_animation and
+                not self.pending_post_frame or
+                self.last_post_frame == current_frame or
                 (
-                    bpy.context.space_data != self.draw_space or
-                    not self.pending_post_pixel
+                    self.use_animation and 
+                    self.use_offline_render and
+                    bpy.context.space_data != self.draw_space
                 )
             )
 
@@ -161,7 +163,7 @@ class AnimationController:
         # Post-play is called from `_cancel`.
 
     def rewind(self):
-        '''Reset animation to first frame.'''
+        '''Request resetting the animation to first frame.'''
         if self._plyctx is not None:
             self._set_frame(self._plyctx.frame_range[0])
 
@@ -178,13 +180,14 @@ class AnimationController:
         self.pre_frame.invoke()
         # The following guards us from multiple calls to `_on_post_frame`
         # when we hooked into `POST_PIXEL`
-        self._plyctx.pending_post_pixel = True
+        self._plyctx.pending_post_frame = True
 
     def _on_post_frame(self, *args):
         '''Handle post-frame events internally.'''
-        if self._plyctx.skip_post_frame():
+        if self._plyctx.skip_post_frame(self.frameid):
             return
-        self._plyctx.pending_post_pixel = False
+        self._plyctx.pending_post_frame = False
+        self._plyctx.last_post_frame = self.frameid
         
         self.post_frame.invoke()
         post_last = (self.frameid == self._plyctx.frame_range[1])
