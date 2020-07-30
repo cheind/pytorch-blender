@@ -109,7 +109,7 @@ class BaseEnv:
                 self.state = BaseEnv.STATE_RUN
             
     def _pre_animation(self):
-        '''Internal pre-animation callback.'''  
+        '''Internal pre-animation callback.'''
         self.state = BaseEnv.STATE_INIT
         self.ctx = {'prev_action':None, 'done':False}
         self._env_reset()
