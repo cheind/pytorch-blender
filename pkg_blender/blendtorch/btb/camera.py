@@ -5,7 +5,28 @@ import numpy as np
 from . import utils
 
 class Camera:
+    '''Camera related settings and functions.
+
+    An instance of `Camera` is a shallow wrapper around `bpy.types.Camera`
+    that provides additional convenience functions as well as intrinsic
+    and extrinsic parameters. `Camera` is mainly to be used together with 
+    `btb.OffScreenRenderer` to create scene renderings and to convert world
+    coordinates to pixel coordinates and linear depth measurements.
+    '''
+
+
     def __init__(self, bpy_camera=None, shape=None):
+        '''Initialize camera object
+        
+        Params
+        ------
+        bpy_camera: bpy.types.Camera, None
+            Blender camera to attach to. When None, uses the scenes
+            default camera.
+        shape: tuple, None
+            (H,W) of image to create. When None, uses the default 
+            render settings.
+        '''
         self.bpy_camera = bpy_camera or bpy.context.scene.camera
         self.shape = shape or Camera.shape_from_bpy()
         self.view_matrix = Camera.view_from_bpy(self.bpy_camera)
