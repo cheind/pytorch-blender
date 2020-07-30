@@ -15,11 +15,11 @@ before_install:
 
 install:
   #- pip install --download-cache $HOME/.pip-cache -r scripts/test-requirements.txt
-  - scripts/install_blender.sh
+  - scripts/install_blender.sh # requires https://stackoverflow.com/questions/42154912/permission-denied-for-build-sh-file
   - source .envs
 
 script:
-  - blender --version
+  - ${BLENDER_BIN} --version
 #    - make test-ci
 
 after_success:
