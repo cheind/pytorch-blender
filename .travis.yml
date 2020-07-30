@@ -1,29 +1,30 @@
 
 language: python
 python:
-    - 3.7
+  - 3.7
 
 cache:
-    apt: true
-    directories:
-        - $HOME/.pip-cache
-        - $HOME/.blender-cache
+  apt: true
+  directories:
+    - $HOME/.pip-cache
+    - $HOME/.blender-cache
 
 before_install:
-    - sudo apt-get update
-    #- sudo apt-get install --no-install-recommends -y libsdl1.2debian
+  - sudo apt-get update
+  #- sudo apt-get install --no-install-recommends -y libsdl1.2debian
 
 install:
-    #- pip install --download-cache $HOME/.pip-cache -r scripts/test-requirements.txt
-    - scripts/install_blender.sh
-    #- source .envs
+  #- pip install --download-cache $HOME/.pip-cache -r scripts/test-requirements.txt
+  - scripts/install_blender.sh
+  - source .envs
 
-#script:
+script:
+  - blender --version
 #    - make test-ci
 
 after_success:
 
 notifications:
-    email:
-        on_success: change
-        on_failure: always
+  email:
+      on_success: never # change
+      on_failure: never # always
