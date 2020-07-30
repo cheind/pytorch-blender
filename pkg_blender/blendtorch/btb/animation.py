@@ -160,7 +160,8 @@ class AnimationController:
             bpy.context.scene.frame_set(self._plyctx.frame_range[0])
             while self.frameid < self._plyctx.frame_range[1]:
                 bpy.context.scene.frame_set(self.frameid+1)
-        # Post-play is called from `_cancel`.
+                if self._plyctx == None: # The above frame_set might have called _cancel, 
+                    return               # which in turn deletes _plyctx
 
     def rewind(self):
         '''Request resetting the animation to first frame.'''
@@ -200,11 +201,12 @@ class AnimationController:
     def _cancel(self):
         '''Stop the animation.'''
         bpy.app.handlers.frame_change_pre.remove(self._on_pre_frame)
-        bpy.app.handlers.frame_change_post.remove(self._on_post_frame)
-        if self._plyctx.draw_handler is not None:
-            bpy.types.SpaceView3D.draw_handler_remove(self._plyctx.draw_handler)
+        if self._plyctx.draw_handler != None:
+            bpy.types.SpaceView3D.draw_handler_remove(self._plyctx.draw_handler, 'WINDOW')
             self._plyctx.draw_handler = None
-        bpy.ops.screen.animation_cancel(restore_frame=False)        
+        else:
+            bpy.app.handlers.frame_change_post.remove(self._on_post_frame)
+        bpy.ops.screen.animation_cancel(restore_frame=False)
         self.post_play.invoke()
         del self._plyctx
         self._plyctx = None
