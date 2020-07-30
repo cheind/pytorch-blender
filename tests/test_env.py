@@ -36,11 +36,12 @@ def _run_remote_env(background):
     assert not done
     assert info['count']==2
 
-    env.close()        
+    env.close()
 
 @pytest.mark.background
-def test_remote_env():
+def test_remote_env_background():
     _run_remote_env(background=True)
-    _run_remote_env(background=False)
     
+def test_remote_env_ui():
+    _run_remote_env(background=False)    
     
