@@ -11,6 +11,6 @@ mkdir -p $CACHE
 if [ ! -f $TAR ]; then
     wget -O $TAR $URL
 fi
-tar -xjf $TAR -C $HOME
+tar -xf $TAR -C $HOME
 
 echo "export BLENDER_BIN=\"${HOME}/${NAME}/blender\"" > .envs
