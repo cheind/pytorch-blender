@@ -47,6 +47,10 @@ class BlenderLauncher():
         Additional paths to look for Blender
     seed: integer, optional
         Optional launch seed. Each instance will be given
+    background: bool
+        Launch Blender in background mode. Note that certain
+        animation modes and rendering does require an UI and 
+        cannot run in background mode.
 
     Attributes
     ----------
@@ -55,7 +59,19 @@ class BlenderLauncher():
         context.
     '''
 
-    def __init__(self, scene, script, num_instances=1, named_sockets=None, start_port=11000, bind_addr='127.0.0.1', instance_args=None, proto='tcp', blend_path=None, seed=None):
+    def __init__(self, 
+            scene, 
+            script, 
+            num_instances=1, 
+            named_sockets=None, 
+            start_port=11000, 
+            bind_addr='127.0.0.1', 
+            instance_args=None, 
+            proto='tcp', 
+            blend_path=None, 
+            seed=None,
+            background=False,
+        ):
         '''Create BlenderLauncher'''
         self.num_instances = num_instances
         self.start_port = start_port
@@ -68,6 +84,7 @@ class BlenderLauncher():
         if named_sockets is None:
             self.named_sockets = []
         self.seed = seed
+        self.background = background
         self.instance_args = instance_args
         if instance_args is None:
             self.instance_args = [[] for _ in range(num_instances)]
@@ -107,12 +124,14 @@ class BlenderLauncher():
             ])
             iargs.extend(self.instance_args[idx])
         args = [' '.join(a) for a in final_args]
+
+        background = '--background' if self.background else ''
        
         processes = []
         commands = []
         env = os.environ.copy()
         for idx,arg in enumerate(args):
-            cmd = f'"{self.blender_info["path"]}" {self.scene} --python-use-system-env  --python {self.script} -- {arg}'
+            cmd = f'"{self.blender_info["path"]}" {self.scene} --python-use-system-env {background} --python {self.script} -- {arg}'
             p = subprocess.Popen(
                 cmd,
                 shell=False,
