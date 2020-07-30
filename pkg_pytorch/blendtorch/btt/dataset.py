@@ -54,7 +54,6 @@ class RemoteIterableDataset(utils.data.IterableDataset):
         '''Enable recording to given prefix path `fname`.
         
         Needs to be set before receiving items from the dataset.
-        
         '''
         self.record_path_prefix = fname
 
