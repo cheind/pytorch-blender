@@ -1,7 +1,7 @@
 import pytest
 from blendtorch.btt.file import FileRecorder, FileReader
 
-@pytest.mark.offscreen
+@pytest.mark.background
 def test_file_recorder_reader(tmp_path):
     with FileRecorder(outpath=tmp_path/'record.mpkl', max_messages=10) as rec:
         for i in range(7):
