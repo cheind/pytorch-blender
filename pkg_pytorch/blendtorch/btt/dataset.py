@@ -21,8 +21,6 @@ class RemoteIterableDataset(utils.data.IterableDataset):
     the caller
      - Provide an `item_transform` that takes a dictionary and returns transformed elements
      - Inherit from `RemoteIterableDataset` and override `RemoteIterableDataset._item()` method.
-
-    
     
     Params
     ------
