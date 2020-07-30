@@ -13,4 +13,5 @@ if [ ! -f $TAR ]; then
 fi
 tar -xf $TAR -C $HOME
 
-echo "export BLENDER_BIN=\"${HOME}/${NAME}/blender\"" > .envs
+echo "export BLENDER_PATH=\"${HOME}/${NAME}\"" > .envs
+echo "export PATH=${PATH}:${BLENDER_PATH}" >> .envs

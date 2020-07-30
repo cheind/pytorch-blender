@@ -19,7 +19,7 @@ install:
   - source .envs
 
 script:
-  - ${BLENDER_BIN} --version
+  - blender --version
 #    - make test-ci
 
 after_success:
