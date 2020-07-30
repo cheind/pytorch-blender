@@ -8,6 +8,23 @@ from pathlib import Path
 _logger = logging.getLogger('blendtorch')   
 
 class FileRecorder:
+    '''Provides raw message recording functionality.
+    
+    `FileRecorder` stores received pickled messages into a single file.
+    This file consists of a header and a sequence of messages received.
+    Upon closing, the header is updated to match the offsets of pickled
+    messages in the file. The offsets allow `FileReader` to quickly
+    read and unpickle a specific message stored in this file.
+
+    This class is meant to be used as context manager.
+
+    Params
+    ------
+    outpath: str
+        File path to write to
+    max_messages: int
+        Only up to `max_messages` can be stored.
+    '''
     def __init__(self, outpath='blendtorch.mpkl', max_messages=100000):
         outpath = Path(outpath)
         outpath.parent.mkdir(parents=True, exist_ok=True)
@@ -16,6 +33,16 @@ class FileRecorder:
         _logger.info(f'Recording configured for path {outpath}, max_messages {max_messages}.')
 
     def save(self, data, is_pickled=False):
+        '''Save new data if there is still capacity left.
+
+        Params
+        ------
+        data : object
+            Pickled bytes or unpickled message.
+        is_pickled: bool
+            Whether or not the input is already in pickled
+            represenation.
+        '''
         if self.num_messages < self.capacity:
             offset = self.file.tell()
             if not is_pickled:
@@ -42,15 +69,26 @@ class FileRecorder:
 
     @staticmethod
     def filename(prefix, worker_idx):
+        '''Return a unique filename for the given prefix and worker id.'''
         return f'{prefix}_{worker_idx:02d}.btr'
 
 class FileReader:
+    '''Read items from file.
+
+    Assumes file was written by `FileRecorder`.
+
+    Params
+    ------
+    path: str
+        File path to read.    
+    '''
     def __init__(self, path):
         self.path = path
         self.offsets = FileReader.read_offsets(path) 
         self._file = None
 
     def __len__(self):
+        '''Returns number of items stored.'''
         return len(self.offsets)
 
     def __getitem__(self, idx):
@@ -68,12 +106,14 @@ class FileReader:
         self._unpickler = pickle.Unpickler(self._file)
 
     def close(self):
+        '''Close the reader.'''
         if self._file is not None:
             self._file.close()
             self._file = None
 
     @staticmethod
     def read_offsets(fname):
+        '''Returns the offset header of file refered to by `fname`.'''
         assert Path(fname).exists(), f'Cannot open {fname} for reading.'
         with io.open(fname, 'rb') as f:
             unpickler = pickle.Unpickler(f)

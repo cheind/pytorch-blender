@@ -1,8 +1,18 @@
+'''Create and maintain image renderers used in `env.render()` to display images.'''
 
 RENDER_BACKENDS={}
 LOOKUP_ORDER = ['openai', 'matplotlib']
 
 def create_renderer(backend=None, **kwargs):
+    '''Create image display.
+    
+    Params
+    ------
+    backend: str, None
+        The backend to use. When None, auto selects.
+    kwargs: dict
+        Additional keywords to be passed to initialization.
+    '''
     if backend is None:
         avail = [RENDER_BACKENDS[l] for l in LOOKUP_ORDER if l in RENDER_BACKENDS]
         assert len(avail) > 0, 'No render backends available.'

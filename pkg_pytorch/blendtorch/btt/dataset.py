@@ -12,7 +12,37 @@ def _identity_item_transform(x):
     return x
 
 class RemoteIterableDataset(utils.data.IterableDataset):
-    '''Base class for iteratable datasets that stream from remote Blender instances.'''
+    '''Base class for iteratable datasets that receive data from remote Blender instances.
+
+    To support multiple DataLoader workers in PyTorch, this class lazily constructs the data
+    stream upon start of iteration. Each received message is represented as item dictionary.
+
+    `RemoteIterableDataset` supports two ways to manipulate items before returning them to
+    the caller
+     - Provide an `item_transform` that takes a dictionary and returns transformed elements
+     - Inherit from `RemoteIterableDataset` and override `RemoteIterableDataset._item()` method.
+
+    
+    
+    Params
+    ------
+    addresses: list-like
+        ZMQ addresses to connect to.
+    max_items: integer
+        Artificial length of this dataset. Also affects the 
+        maximum capacity of any recorder used to record messages.
+    item_transform: callable
+        Any transform to apply to received items. Each item is
+        a dictionary whose content is defined by the Blender script
+        sending the data via `btb.DataPublisher`.
+    record_path_prefix: str, Path
+        Path prefix to record to. When given, each DataLoader worker will
+        create a recording file `{prefix}_{worker_idx:02d}.btr`.
+    queue_size: integer
+        Receive queue size before publisher get stalled.
+    timeoutms: integer
+        Max wait time before raising an error.
+    '''
 
     def __init__(self, addresses, queue_size=10, timeoutms=DEFAULT_TIMEOUTMS, max_items=100000, item_transform=None, record_path_prefix=None):
         self.addresses = addresses
@@ -23,12 +53,19 @@ class RemoteIterableDataset(utils.data.IterableDataset):
         self.item_transform = item_transform or _identity_item_transform
 
     def enable_recording(self, fname):
+        '''Enable recording to given prefix path `fname`.
+        
+        Needs to be set before receiving items from the dataset.
+        
+        '''
         self.record_path_prefix = fname
 
     def stream_length(self, max_items):
+        '''Return artificial dataset length.'''
         self.max_items = max_items
 
     def __iter__(self):
+        '''Return a dataset iterator.'''
         return self._stream()
 
     def _stream(self):
@@ -77,10 +114,13 @@ class RemoteIterableDataset(utils.data.IterableDataset):
                 socket.close()
 
     def _item(self, item):
+        '''Transform the given item.
+        Defaults to applying the `item_transform`.
+        '''
         return self.item_transform(item)
 
 class SingleFileDataset(utils.data.Dataset):
-    '''Replays from a specific recording file.'''
+    '''Replays from a particular recording file.'''
     def __init__(self, path, item_transform=None):
         self.reader = FileReader(path)
         self.item_transform = item_transform or _identity_item_transform
@@ -95,7 +135,12 @@ class SingleFileDataset(utils.data.Dataset):
         return self.item_transform(item)
 
 class FileDataset(utils.data.ConcatDataset):
-    '''Replays from multiple recording files matching a recording pattern.'''
+    '''Replays from multiple recordings matching a recording pattern.
+    
+    This dataset constructs one `SingleFileDataset` per file matching
+    the specified prefix pattern `record_path_prefix`. All datasets
+    are then concatenated to appear as a single larger dataset.     
+    '''
     def __init__(self, record_path_prefix, item_transform=None):
         fnames = sorted(glob(f'{record_path_prefix}_*.btr'))
         assert len(fnames) > 0, f'Found no recording files with prefix {record_path_prefix}'
