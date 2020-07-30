@@ -134,7 +134,7 @@ class RemoteEnv:
         
 from contextlib import contextmanager
 @contextmanager
-def launch_env(scene, script, **kwargs):
+def launch_env(scene, script, background=False, **kwargs):
     '''Launch a remote environment wrapped in a context manager.
 
     Params
@@ -143,6 +143,9 @@ def launch_env(scene, script, **kwargs):
         Blender scene file
     script: path, str
         Python script containing environment implementation.
+    background: bool
+        Whether or not this environment can run in Blender background mode.
+        Defaults to False.
     kwargs: dict
         Any other arguments passed as command-line arguments
         to the remote environment. Note by default a <key,value>
@@ -156,8 +159,6 @@ def launch_env(scene, script, **kwargs):
     env: `btt.RemoteEnv`
         Remote environement to interact with.
     '''
-
-
     env = None
     try:
         additional_args = []
@@ -177,7 +178,8 @@ def launch_env(scene, script, **kwargs):
             script=script, 
             num_instances=1, 
             named_sockets=['GYM'],
-            instance_args=[additional_args]
+            instance_args=[additional_args],
+            background=background
         )
         with BlenderLauncher(**launcher_args) as bl:            
             env = RemoteEnv(bl.launch_info.addresses['GYM'][0])
@@ -211,7 +213,7 @@ try:
             self._es = ExitStack()
             self._env = None
 
-        def launch(self, scene, script, **kwargs):
+        def launch(self, scene, script, background=False, **kwargs):
             '''Launch the remote environment.
             
             Params
@@ -220,6 +222,8 @@ try:
                 Blender scene file
             script: path, str
                 Python script containing environment implementation.
+            background: bool
+                Whether or not this environment can run in Blender background mode.
             kwargs: dict
                 Any keyword arguments passes as command-line arguments
                 to the remote environment. See `btt.env.launch_env` for
@@ -230,6 +234,7 @@ try:
                 launch_env(
                     scene=scene,
                     script=script,
+                    background=background,
                     **kwargs
                 )
             )
