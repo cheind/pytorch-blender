@@ -27,7 +27,7 @@ install:
 
 
 script:
-  - pytest tests
+  - pytest tests -m background
 
 after_success:
 
