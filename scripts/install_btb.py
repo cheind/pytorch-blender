@@ -27,6 +27,7 @@ def install(name, upgrade=True, user=True, editable=False):
         cmd.append('--user')
     if editable:
         cmd.append('-e')
+    cmd.append(name)
     run(cmd)
 
 def bootstrap(user=True):
