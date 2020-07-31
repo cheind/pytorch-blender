@@ -27,8 +27,7 @@ install:
 
 
 script:
-  - blender --version
-#    - make test-ci
+  - pytest tests
 
 after_success:
 
