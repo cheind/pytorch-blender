@@ -15,9 +15,11 @@ before_install:
 
 install:
   #- pip install --download-cache $HOME/.pip-cache -r scripts/test-requirements.txt
+  # --download-cache ${HOME}/.pip-cache
   - scripts/install_blender.sh # requires https://stackoverflow.com/questions/42154912/permission-denied-for-build-sh-file
   - source .envs
-  - pip install --download-cache ${HOME}/.pip-cache -e pkg_pytorch
+  - pip install -e pkg_pytorch
+  - pip install -r requirements_dev.txt
   - python -c "import blendtorch.btt as btt; print(btt.__version__)"
   - blender --background --python scripts/install_btb.py
   - blender --background --python-use-system-env --python-expr "import blendtorch.btb as btb; print(btb.__version__)"
