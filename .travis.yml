@@ -10,13 +10,7 @@ cache:
     - $HOME/.pip-cache
     - $HOME/.blender-cache
 
-before_install:
-  #- sudo apt-get update
-  #- sudo apt-get install --no-install-recommends -y libsdl1.2debian
-
 install:
-  #- pip install --download-cache $HOME/.pip-cache -r scripts/test-requirements.txt
-  # --download-cache ${HOME}/.pip-cache
   - scripts/install_blender.sh # requires https://stackoverflow.com/questions/42154912/permission-denied-for-build-sh-file
   - source .envs
   - pip install -e pkg_pytorch
@@ -25,11 +19,8 @@ install:
   - blender --background --python scripts/install_btb.py
   - blender --background --python-use-system-env --python-expr "import blendtorch.btb as btb; print(btb.__version__)"
 
-
 script:
   - pytest tests -m background
-
-after_success:
 
 notifications:
   email:
