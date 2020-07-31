@@ -52,7 +52,7 @@ def discover_blender(additional_blender_paths=None):
         return None
 
     # Check if a minimal Python script works 
-    with tempfile.TemporaryFile(mode='w', delete=False) as fp:
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as fp:
         fp.write(script)
     
     p = subprocess.Popen(f'"{bpath}" --background --python-use-system-env --python-exit-code 255 --python {fp.name}', 
