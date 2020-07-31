@@ -4,6 +4,7 @@ python:
   - 3.7
 
 cache:
+  pip: true
   apt: true
   directories:
     - $HOME/.pip-cache
