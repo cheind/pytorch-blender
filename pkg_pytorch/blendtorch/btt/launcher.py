@@ -1,9 +1,6 @@
 import subprocess
-import sys
 import os
 import logging
-import platform
-import signal
 import numpy as np
 
 from .finder import discover_blender
@@ -126,6 +123,16 @@ class BlenderLauncher():
         args = [' '.join(a) for a in final_args]
 
         background = '--background' if self.background else ''
+
+        popen_kwargs = {}
+        if os.name == 'posix':
+            kwargs = {
+                'preexec_fn': os.setsid
+            }
+        elif os.name == 'nt':
+            kwargs = {
+                'creationflags': subprocess.CREATE_NEW_PROCESS_GROUP
+            }
        
         processes = []
         commands = []
@@ -139,7 +146,7 @@ class BlenderLauncher():
                 stdout=None,
                 stderr=None,
                 env=env,
-                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
+                **popen_kwargs
             )
 
             processes.append(p)
