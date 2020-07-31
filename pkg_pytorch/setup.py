@@ -6,7 +6,7 @@ THISDIR = Path(__file__).parent
 with open(THISDIR/'requirements.txt') as f:
     required = f.read().splitlines()
 
-with open(THISDIR/'..'/'README.md', encoding='utf-8') as f:
+with open(THISDIR/'..'/'Readme.md', encoding='utf-8') as f:
     long_description = f.read()
 print(required)
 
