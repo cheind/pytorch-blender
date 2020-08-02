@@ -141,6 +141,7 @@ class Camera:
         z = np.atleast_2d(ndc)[:, -1]
         z = (z + 1)*0.5         
         z = (ce - cs)*z + cs
+
         return z
 
     def object_to_pixel(self, *objs):
