@@ -136,7 +136,7 @@ class BlenderLauncher():
         env = os.environ.copy()
         for idx, script_args in enumerate(instance_script_args):
             cmd = [f'{self.blender_info["path"]}']
-            if self.scene != None and len(self.scene) > 0:
+            if self.scene != None and len(str(self.scene)) > 0:
                 cmd.append(f'{self.scene}')
             if self.background:
                 cmd.append('--background')
