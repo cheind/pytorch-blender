@@ -102,8 +102,7 @@ class BlenderLauncher():
         assert self.launch_info is None, 'Already launched.'
         
         addresses = {}
-        addrgen = self._address_generator(self.proto, self.bind_addr, self.start_port)
-        format_addr = lambda idx: ' '.join([f'{k}={v[idx]}' for k,v in addresses.items()])
+        addrgen = self._address_generator(self.proto, self.bind_addr, self.start_port)        
         for s in self.named_sockets:
             addresses[s] = [next(addrgen) for _ in range(self.num_instances)]
         
@@ -112,17 +111,15 @@ class BlenderLauncher():
             seed = np.random.randint(np.iinfo(np.int32).max - self.num_instances)
         seeds = [seed + i for i in range(self.num_instances)]
 
-        final_args = [[] for _ in range(self.num_instances)]
-        for idx, iargs in enumerate(final_args):
+        instance_script_args = [[] for _ in range(self.num_instances)]
+        for idx, iargs in enumerate(instance_script_args):
             iargs.extend([
                 '-btid', str(idx),
                 '-btseed', str(seeds[idx]),
-                '-btsockets', format_addr(idx),
+                '-btsockets',
             ])
+            iargs.extend([f'{k}={v[idx]}' for k,v in addresses.items()])
             iargs.extend(self.instance_args[idx])
-        args = [' '.join(a) for a in final_args]
-
-        background = '--background' if self.background else ''
 
         popen_kwargs = {}
         if os.name == 'posix':
@@ -137,8 +134,18 @@ class BlenderLauncher():
         processes = []
         commands = []
         env = os.environ.copy()
-        for idx,arg in enumerate(args):
-            cmd = f'"{self.blender_info["path"]}" {self.scene} --python-use-system-env {background} --python {self.script} -- {arg}'
+        for idx, script_args in enumerate(instance_script_args):
+            cmd = [f'{self.blender_info["path"]}']
+            if self.scene != None and len(self.scene) > 0:
+                cmd.append(f'{self.scene}')
+            if self.background:
+                cmd.append('--background')
+            cmd.append('--python-use-system-env')
+            cmd.append('--python')
+            cmd.append(f'{self.script}')
+            cmd.append('--')
+            cmd.extend(script_args)
+
             p = subprocess.Popen(
                 cmd,
                 shell=False,
@@ -150,7 +157,7 @@ class BlenderLauncher():
             )
 
             processes.append(p)
-            commands.append(cmd)
+            commands.append(' '.join(cmd))
             logger.info(f'Started instance: {cmd}')
 
         self.launch_info = LaunchInfo(addresses, processes, commands)
