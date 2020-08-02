@@ -64,4 +64,4 @@ def hom(x, v=1.):
 
 def dehom(x):
     '''Return de-homogeneous coordinates by perspective division.'''
-    return x[...,:-1] / x[...,-2:-1]
+    return x[...,:-1] / x[...,-1:]
