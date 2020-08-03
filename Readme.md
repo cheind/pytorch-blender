@@ -34,7 +34,7 @@ git clone https://github.com/cheind/pytorch-blender.git <DST>
 ```
 
 ### Extend `PATH`
-Next, ensure Blender executable is in your environments lookup `PATH`. On Windows this can be accomplished by
+Ensure Blender executable is in your environments lookup `PATH`. On Windows this can be accomplished by
 ```
 set PATH=c:\Program Files\Blender Foundation\Blender 2.83;%PATH%
 ```
