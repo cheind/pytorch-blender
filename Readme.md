@@ -39,23 +39,21 @@ set PATH=c:\Program Files\Blender Foundation\Blender 2.83;%PATH%
 ```
 
 ### Install `blendtorch-btb` 
-Invoke
 ```
 blender --background --python <DST>/scripts/install_btb.py
 ```
-to install `blendtorch-btb` into the Python environment bundled with Blender. 
+installs `blendtorch-btb` into the Python environment bundled with Blender. 
 
 ### Install `blendtorch-btt` 
-Invoke
 ```
 pip install -e <DST>/pkg_pytorch
 ```
-to install `blendtorch-btt` into the Python environment that you intend to run PyTorch from. While not required, it is advised to install OpenAI gym if you intend to use **blendtorch** for reinforcement learning
+installs `blendtorch-btt` into the Python environment that you intend to run PyTorch from. While not required, it is advised to install OpenAI gym if you intend to use **blendtorch** for reinforcement learning
 ```
 pip install gym
 ```
-### Install developer dependencies and run tests
-This step is only necessary if you plan to run the unit tests
+### Developer instructions
+This step is optional. If you plan to run the unit tests
 ```
 pip install -r requirements_dev.txt
 pytest tests/
