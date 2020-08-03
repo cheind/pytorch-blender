@@ -39,13 +39,13 @@ Ensure Blender executable is in your environments lookup `PATH`. On Windows this
 set PATH=c:\Program Files\Blender Foundation\Blender 2.83;%PATH%
 ```
 
-### Install `blendtorch-btb` 
+### Install **blendtorch** Blender part
 ```
 blender --background --python <DST>/scripts/install_btb.py
 ```
 installs `blendtorch-btb` into the Python environment bundled with Blender. 
 
-### Install `blendtorch-btt` 
+### Install **blendtorch** PyTorch part
 ```
 pip install -e <DST>/pkg_pytorch
 ```
