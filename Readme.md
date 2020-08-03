@@ -20,28 +20,61 @@ The figure below visualizes a single image/label batch received by PyTorch from 
 
 ## Installation
 
+### Prerequisites
 This package has been tested using the following packages
  - [Blender](https://www.blender.org/) >= 2.83 (Python 3.7)
- - [PyTorch](http://pytorch.org) >= 1.50 (Python 3.7)
+ - [PyTorch](http://pytorch.org) >= 1.50 (Python 3.7/3.8)
 
 Other versions might work as well, but have not been tested. 
 
-Clone **blendtorch** to `<SRC>`
+### Clone this repository
 ```
-git clone https://github.com/cheind/pytorch-blender.git <SRC>
+git clone https://github.com/cheind/pytorch-blender.git <DST>
 ```
-Next, ensure Blender executable can be found via the `PATH` environment variable and install Python dependencies into Blender's packaged Python distribution
+
+### Extend `PATH`
+Next, ensure Blender executable is in your environments lookup `PATH`. On Windows this can be accomplished by
 ```
-blender --background --python <SRC>/pkg_blender/install_dependencies.py
+set PATH=c:\Program Files\Blender Foundation\Blender 2.83;%PATH%
 ```
-To access **blendtorch** from PyTorch and Blender, we currently recommend updating your `PYTHONPATH` as follows (Windows)
+
+### Install `blendtorch-btb` 
+Invoke
 ```
-set PYTHONPATH=%PYTHONPATH%;<SRC>/pkg_pytorch;<SRC>/pkg_blender
+blender --background --python <DST>/scripts/install_btb.py
 ```
-or (Mac or GNU/Linux) 
+to install `blendtorch-btb` into the Python environment bundled with Blender. 
+
+### Install `blendtorch-btt` 
+Invoke
 ```
-export PYTHONPATH="${PYTHONPATH}:<SRC>/pkg_pytorch:<SRC>/pkg_blender"
+pip install -e <DST>/pkg_pytorch
 ```
+to install `blendtorch-btt` into the Python environment that you intend to run PyTorch from. While not required, it is advised to install OpenAI gym if you intend to use **blendtorch** for reinforcement learning
+```
+pip install gym
+```
+### Install developer dependencies and run tests
+This step is only necessary if you plan to run the unit tests
+```
+pip install -r requirements_dev.txt
+pytest tests/
+```
+
+### Troubleshooting
+Run
+```
+blender --version
+```
+and check if the correct Blender version (>=2.83) is written to console. Next, ensure that `blendtorch-btb` installed correctly
+```
+blender --background --python-use-system-env --python-expr "import blendtorch.btb as btb; print(btb.__version__)"
+```
+which should print **blendtorch** version number on success. Next, ensure that `blendtorch-btt` installed correctly
+```
+python -c "import blendtorch.btt as btt; print(btt.__version__)"
+```
+which should print **blendtorch** version number on success.
 
 ## Architecture
 Please see [\[examples/datagen\]](examples/datagen) and [examples/control\]](examples/control) for an in-depth discussion.
