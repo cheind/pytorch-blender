@@ -80,25 +80,35 @@ class Camera:
             x=shape[1], y=shape[0]
         )
 
-    def world_to_ndc(self, xyz_world):
-        '''Returns normalized device coordinates (NDC) for the given world coordinates.
+    def world_to_ndc(self, xyz_world, return_depth=False):
+        '''Returns normalized device coordinates (NDC) and optionally linear depth for the given world coordinates.
 
         Params
         ------
         xyz_world: Nx3 array
             World coordinates given as numpy compatible array.
+        return_depth: bool
+            Whether or not to return depths w.r.t camera frame.
 
         Returns
         -------
-        xyz_ndc: Nx3 array
+        ndc: Nx3 array
             Normalized device coordinates.
+        z: N array
+            Linear depth in camera space. Returned when `return_depth`
+            is True.
         '''
 
         xyz = np.atleast_2d(xyz_world)
         xyzw = utils.hom(xyz, 1.)
-        m = np.asarray(self.proj_matrix @ self.view_matrix)
-        ndc = utils.dehom(xyzw @ m.T)
-        return ndc
+        if return_depth:
+            xyzw = xyzw @ np.asarray(self.view_matrix).T
+            d = -xyzw[:, -2].copy()
+            xyzw = xyzw @ np.asarray(self.proj_matrix).T
+            return utils.dehom(xyzw), d
+        else:
+            m = np.asarray(self.proj_matrix @ self.view_matrix)
+            return utils.dehom(xyzw @ m.T)
 
 
     def ndc_to_pixel(self, ndc, origin='upper-left'):
@@ -123,26 +133,6 @@ class Camera:
         if origin == 'upper-left':
             xy[:, 1] = 1. - xy[:, 1]
         return xy * np.array([[w,h]]) 
-
-    def ndc_to_linear_depth(self, ndc):
-        '''Converts NDC depth coordinates to linear depth values.
-        
-        Params
-        ------
-        ndc: Nx3 array
-            Normalized device coordinates.
-
-        Returns
-        -------
-        z: N array
-            Linear depth values.
-        '''
-        cs, ce = self.clip_range
-        z = np.atleast_2d(ndc)[:, -1]
-        z = (z + 1)*0.5         
-        z = (ce - cs)*z + cs
-
-        return z
 
     def object_to_pixel(self, *objs):
         '''Convenience composition of `ndc_to_pixel(world_to_ndc(utils.world_coordinates(*objs)))`
