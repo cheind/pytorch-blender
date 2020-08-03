@@ -45,16 +45,22 @@ class FileRecorder:
         '''
         if self.num_messages < self.capacity:
             offset = self.file.tell()
+            self.offsets[self.num_messages] = offset
+            self.num_messages += 1
             if not is_pickled:
                 self.pickler.dump(data)
             else:
                 self.file.write(data)
-            self.offsets[self.num_messages] = offset
-            self.num_messages += 1
+            
 
     def __enter__(self):
-        self.file = io.open(self.outpath, 'wb')
-        self.pickler = pickle.Pickler(self.file)        
+        self.file = io.open(self.outpath, 'wb', buffering=0)
+        # We currently cannot use the highest protocol but use a version
+        # compatible with Python 3.7 (Blender version).
+        # TODO even if we set this to highest (-1) and only run the tests
+        # we get an error when loading data from stream. We should ensure
+        # that what we do here is actually OK, independent of the protocol.
+        self.pickler = pickle.Pickler(self.file, protocol=3) 
         self.offsets = np.full(self.capacity, -1, dtype=int)
         self.num_messages = 0
         self.pickler.dump(self.offsets) # We fix this once we close the file.
@@ -63,7 +69,7 @@ class FileRecorder:
     def __exit__(self, *args):
         self.file.seek(0)
         # need to re-create unpickler
-        pickle.Pickler(self.file).dump(self.offsets)
+        pickle.Pickler(self.file, protocol=3).dump(self.offsets)
         self.file.close()
         self.file = None
 
@@ -102,7 +108,7 @@ class FileReader:
         return self._unpickler.load()
 
     def _create(self):
-        self._file = io.open(self.path, 'rb')
+        self._file = io.open(self.path, 'rb', buffering=0)
         self._unpickler = pickle.Unpickler(self._file)
 
     def close(self):
