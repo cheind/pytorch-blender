@@ -75,7 +75,7 @@ python -c "import blendtorch.btt as btt; print(btt.__version__)"
 which should print **blendtorch** version number on success.
 
 ## Architecture
-Please see [\[examples/datagen\]](examples/datagen) and [examples/control\]](examples/control) for an in-depth discussion.
+Please see [\[examples/datagen\]](examples/datagen) and [examples/control\]](examples/control) for an in-depth architectural discussion.
 
 ## Cite
 The code accompanies our [academic work](https://arxiv.org/abs/1907.01879) in the field of machine learning from artificial images. When using please cite the following work
