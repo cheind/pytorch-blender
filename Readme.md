@@ -24,9 +24,10 @@ The figure below visualizes a single image/label batch received by PyTorch from 
 **blendtorch** is composed of two distinct sub-packages: `bendtorch.btt` (in [pkg_pytorch](./pkg_pytorch)) and `blendtorch.btb` (in [pkg_blender](./pkg_blender)), providing the PyTorch and Blender views on **blendtorch**. 
 
 ### Prerequisites
-This package has been tested using the following packages
+This package has been tested with
  - [Blender](https://www.blender.org/) >= 2.83 (Python 3.7)
  - [PyTorch](http://pytorch.org) >= 1.50 (Python 3.7/3.8)
+running Windows 10 and Linux.
 
 Other versions might work as well, but have not been tested. 
 
