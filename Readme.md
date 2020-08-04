@@ -1,7 +1,7 @@
 # blendtorch v0.2
 ![](https://travis-ci.org/cheind/pytorch-blender.svg?branch=develop)
 
-**blendtorch** is a Python framework to seamlessly integrate [Blender](http://blender.orf) renderings into [PyTorch](http://pytorch.org) datasets for deep learning from artificial visual data. We utilize Eevee, a new physically based real-time renderer, to synthesize images and annotations in real-time and thus avoid stalling model training in many cases.
+**blendtorch** is a Python framework to seamlessly integrate [Blender](http://blender.org) into [PyTorch](http://pytorch.org) datasets for deep learning from artificial visual data. We utilize Eevee, a new physically based real-time renderer, to synthesize images and annotations in real-time and thus avoid stalling model training in many cases.
 
 Feature summary
  - ***Data Streaming***: Stream distributed Blender renderings directly into PyTorch data pipelines in real-time for supervised learning and domain randomization applications. Supports arbitrary pickle-able objects to be send alongside images/videos. Built-in recording capability to replay data without Blender.</br>More info [\[examples/datagen\]](examples/datagen)
