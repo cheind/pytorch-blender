@@ -104,5 +104,7 @@ venv.bak/
 .mypy_cache/
 
 tmp/*
-scene.blend1
-indin2019/pytorch-blender.pdf
+examples/datagen/tmp/*
+*.blend1
+
+!__keep__
