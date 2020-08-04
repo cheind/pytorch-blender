@@ -17,35 +17,29 @@ def main():
         c.data.materials.append(mat)
         c.active_material = mat
 
-    def pre_anim(offscreen):
-        # Random initial positions
+    def pre_anim():
         xyz = np.random.uniform((-3,-3,6),(3,3,12.),size=(len(cubes),3))
         rot = np.random.uniform(-np.pi, np.pi, size=(len(cubes),3))
         for idx, c in enumerate(cubes):
             c.location = xyz[idx]
             c.rotation_euler = rot[idx]
-        offscreen.enabled = True
-        
-    def post_anim(offscreen):
-        offscreen.enabled = False
 
-    def post_image(arr, pub): 
-        xy = [btb.camera.project_points(c, camera=cam) for c in cubes]   
+    def post_frame(anim, off, pub, cam): 
         pub.publish(
-            image=arr, 
-            xy=np.concatenate(xy, axis=0),
-            frameid=bpy.context.scene.frame_current)
+            image=off.render(), 
+            xy=cam.object_to_pixel(*cubes), 
+            frameid=anim.frameid
+        )
 
-    pub = btb.BlenderOutputChannel(args.bind_address, args.btid)
+    pub = btb.DataPublisher(args.btsockets['DATA'], args.btid)
 
-    off = btb.OffScreenRenderer()
-    off.view_matrix = btb.camera.view_matrix()
-    off.proj_matrix = btb.camera.projection_matrix()
-    off.post_image.add(post_image, pub=pub)
+    cam = btb.Camera()
+    off = btb.OffScreenRenderer(camera=cam, mode='rgb')
+    off.set_render_style(shading='RENDERED', overlays=False)
 
-    anim = btb.Controller()
-    anim.pre_animation.add(pre_anim, off)
-    anim.post_animation.add(post_anim, off)
-    anim.play(once=False, startframe=0, endframe=200)
+    anim = btb.AnimationController()
+    anim.pre_animation.add(pre_anim)
+    anim.post_frame.add(post_frame, anim, off, pub, cam)
+    anim.play(frame_range=(0,100), num_episodes=-1)
 
 main()

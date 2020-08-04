@@ -1,7 +1,19 @@
 from functools import partial
 
 class Signal:
-    '''Distribute messages to multiple callbacks.'''
+    '''Distribute messages to multiple callbacks.
+    
+    Usage
+        >>> from blendtorch.btb.signal import Signal
+        >>> def mul(a,b):
+        ...     print(a*b)
+        ... 
+        >>> sig = Signal()
+        >>> h = sig.add(mul, b=3)
+        >>> sig.invoke(4)
+        12
+    '''
+
     def __init__(self):
         self.slots = []
 

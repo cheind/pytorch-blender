@@ -1,4 +1,7 @@
 from .launcher import BlenderLauncher
-from .channel import BlenderInputChannel, FileInputChannel
+from .dataset import RemoteIterableDataset, FileDataset
 from .finder import discover_blender
-from .recorder import Recorder
+from .file import FileRecorder, FileReader
+from . import env
+
+__version__ = '0.2.0'
