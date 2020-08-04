@@ -4,6 +4,7 @@ from torch.utils import data
 from blendtorch import btt
 
 def main():
+    # Define how we want to launch Blender
     launch_args = dict(
         scene=Path(__file__).parent/'cube.blend',
         script=Path(__file__).parent/'cube.blend.py',
@@ -22,6 +23,7 @@ def main():
             # item is a dict with custom content (see cube.blend.py)
             img, xy = item['image'], item['xy']
             print('Received', img.shape, xy.shape)
+        # Will get here after 16/BATCH=4 iterations.
 
 if __name__ == '__main__':
     main()

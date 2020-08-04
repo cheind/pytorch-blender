@@ -4,7 +4,7 @@ import numpy as np
 from blendtorch import btb
 
 def main():
-    # Parse script arguments passed via blendtorch
+    # Parse script arguments passed via blendtorch launcher
     btargs, remainder = btb.parse_blendtorch_args()
 
     cam = bpy.context.scene.camera
@@ -16,6 +16,7 @@ def main():
         
     def post_frame(off, pub, anim, cam):
         # Called every after Blender finished processing a frame.
+        # Will be sent to one of the remote dataset listener connected.
         pub.publish(
             image=off.render(), 
             xy=cam.object_to_pixel(cube), 
