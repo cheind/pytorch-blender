@@ -35,7 +35,7 @@ def infinite_batch_generator(dl):
 class Discriminator(nn.Module):
     def __init__(self):
         super().__init__()
-        ndf = 64
+        ndf = 32
         nc = 3
         self.features = nn.Sequential(
             # input is (nc) x 64 x 64
@@ -102,11 +102,11 @@ def main():
         netD.apply(weights_init)
 
         last_mid = duplex.mid
-        sim_params = torch.tensor([5.0, 5.0], requires_grad=True)
+        sim_params = torch.tensor([7.0, 7.0], requires_grad=True)
         duplex.send(dict(m1=sim_params[0].item(), m2=sim_params[1].item(), mid=last_mid))
 
-        optD = optim.Adam(netD.parameters(), lr=1e-6, betas=(0.5, 0.999))
-        optS = optim.SGD([sim_params], lr=1e-2)
+        optD = optim.Adam(netD.parameters(), lr=5e-5, betas=(0.5, 0.999))
+        optS = optim.SGD([sim_params], lr=1e-1)
 
         gen_real = infinite_batch_generator(real_dl)
         gen_sim = infinite_batch_generator(sim_dl)
@@ -135,24 +135,28 @@ def main():
                 errD_sim = crit(output, label[mask])
                 errD_sim.mean().backward()
                 D_sim = output.mean().item()
-                optD.step()
+                if e%10 == 0:
+                    optD.step()
 
                 # Update sim params
                 optS.zero_grad()
                 label.fill_(REAL_LABEL)
-                errS_sim = crit(output, label[mask])
-                E_sim = errS_sim.mean().item()
-                mv0 = Normal(sim_params[0], 0.02)
+                with torch.no_grad():
+                    output = netD(sim_img.to(dev)[mask])
+                    errS_sim = crit(output, label[mask])
+                    GD_sim = output.mean().item()
+                
+                mv0 = Normal(sim_params[0], 0.2)
                 sf0 = mv0.log_prob(sim_param[mask][:, 0]) * errS_sim.detach().cpu()
                 sf0.mean().backward()
 
-                mv1 = Normal(sim_params[1], 0.02)
+                mv1 = Normal(sim_params[1], 0.2)
                 sf1 = mv1.log_prob(sim_param[mask][:, 1]) * errS_sim.detach().cpu()
                 sf1.mean().backward()
 
-                sim_params.grad.mul_(E_sim * 10)
-
-                optS.step()
+                #sim_params.grad.mul_(E_sim * 10)
+                if e > 10:
+                    optS.step()
 
                 print('sim params', sim_params)
 
@@ -164,7 +168,7 @@ def main():
                 vutils.save_image(real_img, 'tmp/real.png', normalize=True)
                 vutils.save_image(sim_img, 'tmp/sim_samples_%03d.png' % (e), normalize=True)
 
-            print('mean D real', D_real, 'mean D sim', D_sim, 'err_sim', E_sim)
+            print('mean D real', D_real, 'mean D sim', D_sim)
 
 if __name__ == '__main__':
     main()
