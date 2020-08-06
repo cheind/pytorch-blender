@@ -6,6 +6,12 @@ from .constants import DEFAULT_TIMEOUTMS
 
 class DuplexChannel:
     '''Provides generic bidirectional communication with a single Blender instance.
+
+    Attr
+    ----
+    mid : integer
+        Next unique message identifier
+
     '''
 
     def __init__(self, address, lingerms=0):
@@ -17,6 +23,7 @@ class DuplexChannel:
 
         self.poller = zmq.Poller()
         self.poller.register(self.sock, zmq.POLLIN)
+        self.mid = 0
 
     def send(self, data):
         '''Send a message to remote Blender process.
@@ -27,6 +34,7 @@ class DuplexChannel:
             Message to send.
         '''        
         self.sock.send_pyobj(data)
+        self.mid += 1
 
     def recv(self, timeoutms=None):
         '''Receive from PyTorch instance.
