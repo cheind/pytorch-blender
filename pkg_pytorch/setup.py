@@ -12,7 +12,7 @@ print(required)
 
 setup(
     name="blendtorch-btt",
-    author='Christoph Heindl and Sebastian Zambal Ebenhofer',
+    author='Christoph Heindl and Sebastian Zambal',
     description='PyTorch part of project blendtorch. See also blendtorch-btb.', 
     url='https://github.com/cheind/pytorch-blender',
     license='MIT',
