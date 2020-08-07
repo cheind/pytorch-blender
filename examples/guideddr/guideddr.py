@@ -95,7 +95,7 @@ def main():
     launch_args = dict(
         scene=Path(__file__).parent/'supershape.blend',
         script=Path(__file__).parent/'supershape.blend.py',
-        num_instances=1, 
+        num_instances=2, 
         named_sockets=['DATA', 'CTRL'],
     )
 
@@ -108,8 +108,8 @@ def main():
 
         addr = bl.launch_info.addresses['CTRL']
         duplex = btt.DuplexChannel(addr[0])
-        #duplex_uniform = btt.DuplexChannel(addr[1])
-        #duplex_uniform.send(type='uniform', low=0.0, high=20.0)
+        duplex_uniform = btt.DuplexChannel(addr[1])
+        duplex_uniform.send(type='uniform', low=0.0, high=20.0)
 
         real_ds = get_real_images(sim_ds, duplex, n=BATCH*2)
         real_dl = data.DataLoader(real_ds, batch_size=BATCH, num_workers=0, shuffle=True)
@@ -120,8 +120,8 @@ def main():
         netD.apply(weights_init)
 
         # Start solution
-        sim_theta_mean = torch.tensor([1.5, 1.5], requires_grad=True)
-        sim_theta_std = torch.log(torch.tensor([LOG_STD_TRUE*4, LOG_STD_TRUE*4])).requires_grad_()
+        sim_theta_mean = torch.tensor([1.0, 1.0], requires_grad=True)
+        sim_theta_std = torch.log(torch.tensor([LOG_STD_TRUE*8, LOG_STD_TRUE*8])).requires_grad_() # initial scale has to be larger the farther away we assume to be from solution.
         last_mid = duplex.send(type='lognormal', mean=sim_theta_mean.tolist(), std=torch.exp(sim_theta_std).tolist())
 
         optD = optim.Adam(netD.parameters(), lr=1e-5, betas=(0.5, 0.999))
