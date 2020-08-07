@@ -120,12 +120,12 @@ def main():
         netD.apply(weights_init)
 
         # Start solution
-        sim_theta_mean = torch.tensor([1.0, 1.0], requires_grad=True)
+        sim_theta_mean = torch.tensor([1.2, 3.0], requires_grad=True)
         sim_theta_std = torch.log(torch.tensor([LOG_STD_TRUE*8, LOG_STD_TRUE*8])).requires_grad_() # initial scale has to be larger the farther away we assume to be from solution.
         last_mid = duplex.send(type='lognormal', mean=sim_theta_mean.tolist(), std=torch.exp(sim_theta_std).tolist())
 
         optD = optim.Adam(netD.parameters(), lr=1e-5, betas=(0.5, 0.999))
-        optS = optim.Adam([sim_theta_mean, sim_theta_std], lr=1e-1, betas=(0.5, 0.999))
+        optS = optim.Adam([sim_theta_mean, sim_theta_std], lr=5e-2, betas=(0.5, 0.999))
 
         gen_real = infinite_batch_generator(real_dl)
         gen_sim = infinite_batch_generator(sim_dl)
