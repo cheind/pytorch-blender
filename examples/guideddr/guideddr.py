@@ -41,7 +41,7 @@ def infinite_batch_generator(dl):
 class Discriminator(nn.Module):
     def __init__(self):
         super().__init__()
-        ndf = 32
+        ndf = 16
         nc = 3
         self.features = nn.Sequential(
             # input is (nc) x 128 x 128
@@ -80,7 +80,13 @@ def weights_init(m):
         torch.nn.init.normal_(m.weight, 1.0, 0.02)
         torch.nn.init.zeros_(m.bias)
 
-
+def log_probs(theta_mean, theta_std, samples):
+    ln0 = LogNormal(theta_mean[0], torch.exp(theta_std[0]))
+    ln1 = LogNormal(theta_mean[1], torch.exp(theta_std[1]))
+    return (
+        ln0.log_prob(samples[:, 0]),
+        ln1.log_prob(samples[:, 1]),
+    )
 
 
 def main():
@@ -98,7 +104,7 @@ def main():
         # Create remote dataset and limit max length to 16 elements.
         addr = bl.launch_info.addresses['DATA']
         sim_ds = btt.RemoteIterableDataset(addr, max_items=100000, item_transform=item_transform)        
-        sim_dl = data.DataLoader(sim_ds, batch_size=BATCH, num_workers=2, shuffle=False)
+        sim_dl = data.DataLoader(sim_ds, batch_size=BATCH, num_workers=0, shuffle=False)
 
         addr = bl.launch_info.addresses['CTRL']
         duplex = btt.DuplexChannel(addr[0])
@@ -113,11 +119,13 @@ def main():
         netD = Discriminator().to(dev)
         netD.apply(weights_init)
 
-        sim_params = torch.tensor([1.5, 1.5], requires_grad=True)
-        last_mid = duplex.send(type='lognormal', mean=sim_params.tolist(), std=[LOG_STD_TRUE*4, LOG_STD_TRUE*4])
+        # Start solution
+        sim_theta_mean = torch.tensor([1.5, 1.5], requires_grad=True)
+        sim_theta_std = torch.log(torch.tensor([LOG_STD_TRUE*4, LOG_STD_TRUE*4])).requires_grad_()
+        last_mid = duplex.send(type='lognormal', mean=sim_theta_mean.tolist(), std=torch.exp(sim_theta_std).tolist())
 
         optD = optim.Adam(netD.parameters(), lr=1e-5, betas=(0.5, 0.999))
-        optS = optim.Adam([sim_params], lr=1e-1)
+        optS = optim.Adam([sim_theta_mean, sim_theta_std], lr=1e-1, betas=(0.5, 0.999))
 
         gen_real = infinite_batch_generator(real_dl)
         gen_sim = infinite_batch_generator(sim_dl)
@@ -127,7 +135,7 @@ def main():
         b = 0.
         first = True
         baseline = True
-        alpha = 0.98
+        alpha = 0.95
         while True:
             
             label = torch.full((BATCH,), REAL_LABEL, dtype=torch.float32, device=dev)
@@ -146,13 +154,13 @@ def main():
             errD_sim = crit(output, label)
             errD_sim.mean().backward()
             D_sim = output.mean().item()
-            if epoch % 5 == 0:
+            if (D_real - D_sim) < 0.95:
                 optD.step()
-            print('mean D real', D_real, 'mean D sim', D_sim)
+                print('D step: mean real', D_real, 'mean sim', D_sim)
 
             mask = (sim_mid == last_mid)
             have_sim = mask.sum() > BATCH//4
-            if have_sim and epoch > 20:
+            if have_sim and (not first or (D_real - D_sim) > 0.7):
                 # Update sim params, called only every 20epochs or so.
                 # blender generates new data meanwhile with old MID.
                 optS.zero_grad()
@@ -162,23 +170,22 @@ def main():
                     errS_sim = crit(output, label[mask])
                     GD_sim = output.mean().item()
 
-                ln0 = LogNormal(sim_params[0], LOG_STD_TRUE*4)
-                sf = ln0.log_prob(sim_param[mask][:, 0]) * (errS_sim.cpu() - b)
-                sf.mean().backward(retain_graph=True)
-
-                ln1 = LogNormal(sim_params[1], LOG_STD_TRUE*4)
-                sf = ln1.log_prob(sim_param[mask][:, 1]) * (errS_sim.cpu() - b)
-                sf.mean().backward()
+                lp = log_probs(sim_theta_mean, sim_theta_std, sim_param[mask])
+                loss = lp[0] * (errS_sim.cpu() - b)
+                loss.mean().backward(retain_graph=True)
+                loss = lp[1] * (errS_sim.cpu() - b)
+                loss.mean().backward()
+                optS.step()
 
                 if baseline:
                     if first:
                         b = errS_sim.mean().detach()
                     else:
                         b = alpha * errS_sim.mean().detach() + (1-alpha)*b
-                optS.step()                  
+                   
 
-                print('sim params', sim_params, 'mean D sim', GD_sim)
-                last_mid = duplex.send(type='lognormal', mean=sim_params.tolist(), std=[LOG_STD_TRUE*4, LOG_STD_TRUE*4])        
+                print('S step:', sim_theta_mean.detach().numpy(), torch.exp(sim_theta_std).tolist(), 'mean sim', GD_sim)
+                last_mid = duplex.send(type='lognormal', mean=sim_theta_mean.tolist(), std=torch.exp(sim_theta_std).tolist())   
                 first = False        
                 
             epoch += 1
