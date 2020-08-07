@@ -1,45 +1,28 @@
 import zmq
-import pickle
 import time
+import os
+import sys
 
 from .constants import DEFAULT_TIMEOUTMS
 
 class DuplexChannel:
-    '''Provides generic bidirectional communication with a single Blender instance.
-
-    Attr
-    ----
-    mid : integer
-        Next unique message identifier
-
-    '''
-
-    def __init__(self, address, lingerms=0):
-        self.address = address
+    '''Provides generic bidirectional communication with a single PyTorch instance.'''
+    def __init__(self, address, btid=None, lingerms=0, timeoutms=DEFAULT_TIMEOUTMS):
         self.ctx = zmq.Context()
         self.sock = self.ctx.socket(zmq.PAIR)
         self.sock.setsockopt(zmq.LINGER, lingerms)
+        self.sock.setsockopt(zmq.RCVHWM, 10)
+        self.sock.setsockopt(zmq.SNDHWM, 10)
+        self.sock.setsockopt(zmq.SNDTIMEO, timeoutms)
+        self.sock.setsockopt(zmq.RCVTIMEO, timeoutms)
         self.sock.connect(address)
 
         self.poller = zmq.Poller()
         self.poller.register(self.sock, zmq.POLLIN)
-        self.mid = 0
-
-    def send(self, data):
-        '''Send a message to remote Blender process.
-
-        Params
-        ------
-        data: object
-            Message to send.
-        '''        
-        self.sock.send_pyobj(data)
-        self.mid += 1
+        self.btid = btid
 
     def recv(self, timeoutms=None):
-        '''Receive from PyTorch instance.
-                
-        Receives and unpickles all available messages, returned as list.
+        '''Return next message or None.
         
         Kwargs
         ------
@@ -49,19 +32,36 @@ class DuplexChannel:
 
         Returns
         -------
-        msgs: list(object), None
-            List of received messages within `timeoutms`.
+        msg: dict, None
+            Message received or None.        
         '''
-        t = time.time()
-        leftms = timeoutms        
-        messages = []
-        while leftms is None or leftms >= 0:
-            socks = dict(self.poller.poll(leftms))
-            if self.sock in socks:
-                messages.append(self.sock.recv_pyobj())
-            if leftms is None:
-                break
-            now = time.time()
-            leftms -= (now - t)*1e3
-            t = now
-        return messages
+        socks = dict(self.poller.poll(timeoutms))
+        if self.sock in socks:
+            return self.sock.recv_pyobj()
+        else:
+            return None
+
+    def send(self, **kwargs):
+        '''Send a message to remote Blender process.
+
+        Automatically attaches the process identifier `btid` and
+        a unique message id `btmid` to the dictionary.
+
+        Params
+        ------
+        kwargs: dict
+            Message to send.
+
+        Returns
+        -------
+        messageid: integer
+            Message id attached to dictionary
+        '''
+        mid = int.from_bytes(os.urandom(4), sys.byteorder)
+        data = {
+            'btid':self.btid, 
+            'btmid': mid, 
+            **kwargs
+        }
+        self.sock.send_pyobj(data)
+        return mid
