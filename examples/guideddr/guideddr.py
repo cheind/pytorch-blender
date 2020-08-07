@@ -14,8 +14,7 @@ def item_transform(item):
     return np.transpose(x, (2, 0, 1)),  item['params'], item['mid']
 
 def get_real_images(ds, duplex, m1true, m2true, n=128):
-    mid = duplex.mid
-    duplex.send(dict(m1=m1true, m2=m2true, mid=mid))
+    mid = duplex.send(m1=m1true, m2=m2true)
     images = []
     mids = []
     for (img, params, rmid) in ds:
@@ -101,24 +100,25 @@ def main():
         netD = Discriminator().to(dev)
         netD.apply(weights_init)
 
-        last_mid = duplex.mid
         sim_params = torch.tensor([7.0, 7.0], requires_grad=True)
-        duplex.send(dict(m1=sim_params[0].item(), m2=sim_params[1].item(), mid=last_mid))
+        last_mid = duplex.send(m1=sim_params[0].item(), m2=sim_params[1].item())
 
         optD = optim.Adam(netD.parameters(), lr=5e-5, betas=(0.5, 0.999))
-        optS = optim.SGD([sim_params], lr=1e-1)
+        optS = optim.Adam([sim_params], lr=5e-1, betas=(0.5, 0.999))
 
         gen_real = infinite_batch_generator(real_dl)
         gen_sim = infinite_batch_generator(sim_dl)
         crit = nn.BCELoss(reduction='none')
         
         e = 0
+        b = None
         while True:
             sim_img, sim_param, sim_mid = next(gen_sim)
             mask = (sim_mid == last_mid)
             have_sim = mask.sum() > BATCH//2
 
-            if have_sim:                
+            if have_sim:
+                print('got data')           
                 label = torch.full((BATCH,), REAL_LABEL, dtype=torch.float32, device=dev)
 
                 # Update D with real
@@ -146,22 +146,32 @@ def main():
                     errS_sim = crit(output, label[mask])
                     GD_sim = output.mean().item()
                 
-                mv0 = Normal(sim_params[0], 0.2)
-                sf0 = mv0.log_prob(sim_param[mask][:, 0]) * errS_sim.detach().cpu()
-                sf0.mean().backward()
+                mv = MultivariateNormal(sim_params, torch.eye(2)*0.2)
+                sf = mv.log_prob(sim_param[mask]) * errS_sim.cpu()
+                if b != None:
+                    sf = sf - b
+                    b = 0.9 * sf.mean().detach() + (1-0.9)*b
+                else:
+                    b = sf.mean().detach()
 
-                mv1 = Normal(sim_params[1], 0.2)
-                sf1 = mv1.log_prob(sim_param[mask][:, 1]) * errS_sim.detach().cpu()
-                sf1.mean().backward()
+                sf.mean().backward()
+
+
+                # mv0 = Normal(sim_params[0], 0.2)
+                # sf0 = mv0.log_prob(sim_param[mask][:, 0]) * errS_sim.detach().cpu()
+                # sf0.mean().backward()
+
+                # mv1 = Normal(sim_params[1], 0.2)
+                # sf1 = mv1.log_prob(sim_param[mask][:, 1]) * errS_sim.detach().cpu()
+                # sf1.mean().backward()
 
                 #sim_params.grad.mul_(E_sim * 10)
-                if e > 10:
+                if e > 5:
                     optS.step()
 
                 print('sim params', sim_params)
 
-                last_mid = duplex.mid
-                duplex.send(dict(m1=sim_params[0].item(), m2=sim_params[1].item(), mid=last_mid))
+                last_mid = duplex.send(m1=sim_params[0].item(), m2=sim_params[1].item())
 
             e += 1
             if e % 20 == 0:

@@ -23,12 +23,12 @@ def main():
     def pre_frame(duplex):
         nonlocal mid,  cur_params
         # Randomize cube rotation
-        msgs = duplex.recv(timeoutms=0)
-        if len(msgs) > 0:
-            PARAMS[0,0] = msgs[-1]['m1']
-            PARAMS[1,0] = msgs[-1]['m2']
-            mid = msgs[-1]['mid']
-            print('cur params are now ', PARAMS[:, 0])
+        msg = duplex.recv(timeoutms=0)
+        if msg != None:
+            PARAMS[0,0] = msg['m1']
+            PARAMS[1,0] = msg['m2']
+            mid = msg['btmid']
+            print('cur params are now', PARAMS[:, 0])
 
         cur_params = PARAMS.copy()
         cur_params[:, 0] += np.random.normal(scale=STDSCALE, size=2).astype(np.float32)
