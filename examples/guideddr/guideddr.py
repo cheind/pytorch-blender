@@ -41,30 +41,27 @@ def infinite_batch_generator(dl):
 class Discriminator(nn.Module):
     def __init__(self):
         super().__init__()
-        ndf = 16
+        ndf = 32
         nc = 3
         self.features = nn.Sequential(
-            # input is (nc) x 128 x 128
-            nn.Conv2d(nc, ndf, 4, 2, 1, bias=False),
-            nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf) x 64 x 64
+            nn.Conv2d(3, ndf, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*2) x 32 x 32
             nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False),
             nn.BatchNorm2d(ndf * 2),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*2) x 32 x 32
+            # state size. (ndf*4) x 16 x 16
             nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False),
             nn.BatchNorm2d(ndf * 4),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*4) x 16 x 16
+            # state size. (ndf*4) x 8 x 8
             nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False),
             nn.BatchNorm2d(ndf * 8),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*4) x 8 x 8
-            nn.Conv2d(ndf * 8, ndf * 16, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(ndf * 16),
-            nn.LeakyReLU(0.2, inplace=True),
             # state size. (ndf*8) x 4 x 4
-            nn.Conv2d(ndf * 16, 1, 4, 1, 0, bias=False),
+            nn.Conv2d(ndf * 8, 1, 4, 1, 0, bias=False),
             nn.Sigmoid()
         )
 
@@ -124,8 +121,13 @@ def main():
         sim_theta_std = torch.log(torch.tensor([LOG_STD_TRUE*8, LOG_STD_TRUE*8])).requires_grad_() # initial scale has to be larger the farther away we assume to be from solution.
         last_mid = duplex.send(type='lognormal', mean=sim_theta_mean.tolist(), std=torch.exp(sim_theta_std).tolist())
 
-        optD = optim.Adam(netD.parameters(), lr=1e-5, betas=(0.5, 0.999))
-        optS = optim.Adam([sim_theta_mean, sim_theta_std], lr=5e-2, betas=(0.5, 0.999))
+        # ok slow
+        # optD = optim.Adam(netD.parameters(), lr=1e-5, betas=(0.5, 0.999))
+        # optS = optim.Adam([sim_theta_mean, sim_theta_std], lr=5e-2, betas=(0.5, 0.999))
+
+        # ok faster
+        optD = optim.Adam(netD.parameters(), lr=1e-4, betas=(0.5, 0.999))
+        optS = optim.Adam([sim_theta_mean, sim_theta_std], lr=5e-2, betas=(0.7, 0.999))
 
         gen_real = infinite_batch_generator(real_dl)
         gen_sim = infinite_batch_generator(sim_dl)
@@ -134,8 +136,7 @@ def main():
         epoch = 0
         b = 0.
         first = True
-        baseline = True
-        alpha = 0.95
+        balpha = 0.95
         while True:
             
             label = torch.full((BATCH,), REAL_LABEL, dtype=torch.float32, device=dev)
@@ -171,19 +172,15 @@ def main():
                     GD_sim = output.mean().item()
 
                 lp = log_probs(sim_theta_mean, sim_theta_std, sim_param[mask])
-                loss = lp[0] * (errS_sim.cpu() - b)
-                loss.mean().backward(retain_graph=True)
-                loss = lp[1] * (errS_sim.cpu() - b)
+                loss = lp[0] * (errS_sim.cpu() - b) + lp[1] * (errS_sim.cpu() - b)                
                 loss.mean().backward()
                 optS.step()
 
-                if baseline:
-                    if first:
-                        b = errS_sim.mean().detach()
-                    else:
-                        b = alpha * errS_sim.mean().detach() + (1-alpha)*b
+                if first:
+                    b = errS_sim.mean().detach()
+                else:
+                    b = balpha * errS_sim.mean().detach() + (1-balpha)*b
                    
-
                 print('S step:', sim_theta_mean.detach().numpy(), torch.exp(sim_theta_std).tolist(), 'mean sim', GD_sim)
                 last_mid = duplex.send(type='lognormal', mean=sim_theta_mean.tolist(), std=torch.exp(sim_theta_std).tolist())   
                 first = False        
