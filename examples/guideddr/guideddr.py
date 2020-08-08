@@ -15,23 +15,31 @@ SIM_LABEL = 0
 LOG_MEAN_TRUE = 2.25 # rough sample range: 8.5-10.5
 LOG_STD_TRUE = 0.1
 
+def generate_samples(n, theta_mean, theta_std):
+    proto = np.array([
+        [0, 1, 1, 3, 3, 3],
+        [0, 1, 1, 3, 3, 3],
+    ], dtype=np.float32).reshape(1,2,6)
+    samples = np.tile(proto, (n,1,1))
+    samples[:, 0, 0] = np.random.lognormal(theta_mean[0], theta_std[0], size=n) 
+    samples[:, 1, 0] = np.random.lognormal(theta_mean[1], theta_std[1], size=n) 
+    return samples
+
+
 def item_transform(item):
     x = item['image'].astype(np.float32)
     x = (x - 127.5) / 127.5
-    return np.transpose(x, (2, 0, 1)),  item['params'], item['mid'], item['btid']
+    return np.transpose(x, (2, 0, 1)),  item['params'], item['btid']
 
-def get_real_images(ds, duplex, n=128):
-    mid = duplex.send(type='lognormal', mean=[LOG_MEAN_TRUE, LOG_MEAN_TRUE], std=[LOG_STD_TRUE, LOG_STD_TRUE])
+def get_real_images(dl, duplex, n=128):
+    samples = generate_samples(n, [LOG_MEAN_TRUE, LOG_MEAN_TRUE], [LOG_STD_TRUE, LOG_STD_TRUE])
+    duplex.send(shape_params=samples)
     images = []
-    mids = []
-    for (img, params, rmid, btid) in ds:
-        if rmid == mid:
-            images.append(img)
-            mids.append(mid)
-        if len(images) == n:
-            break
-
-    return data.TensorDataset(torch.tensor(images))
+    gen = iter(dl)
+    for _ in range(n//BATCH):
+        (img, params, btid) = next(gen)
+        images.append(img)     
+    return data.TensorDataset(torch.tensor(np.concatenate(images, 0)))
 
 def infinite_batch_generator(dl):
     while True:
@@ -85,6 +93,9 @@ def log_probs(theta_mean, theta_std, samples):
         ln1.log_prob(samples[:, 1]),
     )
 
+def update_sim(duplex, n, sim_theta_mean, sim_theta_std):
+    samples = generate_samples(n, sim_theta_mean.detach().numpy(), torch.exp(sim_theta_std.detach()).numpy())
+    duplex.send(shape_params=samples)
 
 def main():
 
@@ -92,7 +103,7 @@ def main():
     launch_args = dict(
         scene=Path(__file__).parent/'supershape.blend',
         script=Path(__file__).parent/'supershape.blend.py',
-        num_instances=2, 
+        num_instances=1, 
         named_sockets=['DATA', 'CTRL'],
     )
 
@@ -105,25 +116,21 @@ def main():
 
         addr = bl.launch_info.addresses['CTRL']
         duplex = btt.DuplexChannel(addr[0])
-        duplex_uniform = btt.DuplexChannel(addr[1])
-        duplex_uniform.send(type='uniform', low=0.0, high=20.0)
 
-        real_ds = get_real_images(sim_ds, duplex, n=BATCH*2)
+        real_ds = get_real_images(sim_dl, duplex, n=BATCH*2)
         real_dl = data.DataLoader(real_ds, batch_size=BATCH, num_workers=0, shuffle=True)
 
         dev = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
         netD = Discriminator().to(dev)
         netD.apply(weights_init)
 
-        # Start solution
+        # # Start solution
         sim_theta_mean = torch.tensor([1.2, 3.0], requires_grad=True)
         sim_theta_std = torch.log(torch.tensor([LOG_STD_TRUE*8, LOG_STD_TRUE*8])).requires_grad_() # initial scale has to be larger the farther away we assume to be from solution.
-        last_mid = duplex.send(type='lognormal', mean=sim_theta_mean.tolist(), std=torch.exp(sim_theta_std).tolist())
-
-        # ok slow
-        # optD = optim.Adam(netD.parameters(), lr=1e-5, betas=(0.5, 0.999))
-        # optS = optim.Adam([sim_theta_mean, sim_theta_std], lr=5e-2, betas=(0.5, 0.999))
+        
+        # # ok slow
+        # # optD = optim.Adam(netD.parameters(), lr=1e-5, betas=(0.5, 0.999))
+        # # optS = optim.Adam([sim_theta_mean, sim_theta_std], lr=5e-2, betas=(0.5, 0.999))
 
         # ok faster
         optD = optim.Adam(netD.parameters(), lr=1e-4, betas=(0.5, 0.999))
@@ -137,21 +144,22 @@ def main():
         b = 0.
         first = True
         balpha = 0.95
-        while True:
+
+        update_sim(duplex, BATCH, sim_theta_mean, sim_theta_std)
+        for (real, sim) in zip(gen_real, gen_sim):
             
             label = torch.full((BATCH,), REAL_LABEL, dtype=torch.float32, device=dev)
-            # Update D with real
             netD.zero_grad()
-            real_img = next(gen_real)[0].to(dev)
+            real_img = real[0].to(dev)
             output = netD(real_img)
             errD_real = crit(output, label)
             errD_real.mean().backward()
             D_real = output.mean().item()
 
-            # Update D with sim
-            sim_img, sim_param, sim_mid, sim_btid = next(gen_sim)
+            sim_img, sim_param, sim_btid = sim
+            sim_img = sim_img.to(dev)
             label.fill_(SIM_LABEL)
-            output = netD(sim_img.to(dev))
+            output = netD(sim_img)
             errD_sim = crit(output, label)
             errD_sim.mean().backward()
             D_sim = output.mean().item()
@@ -159,20 +167,18 @@ def main():
                 optD.step()
                 print('D step: mean real', D_real, 'mean sim', D_sim)
 
-            mask = (sim_mid == last_mid)
-            have_sim = mask.sum() > BATCH//4
-            if have_sim and (not first or (D_real - D_sim) > 0.7):
+            if not first or (D_real - D_sim) > 0.7:
                 # Update sim params, called only every 20epochs or so.
                 # blender generates new data meanwhile with old MID.
                 optS.zero_grad()
                 label.fill_(REAL_LABEL)
                 with torch.no_grad():
-                    output = netD(sim_img.to(dev)[mask])
-                    errS_sim = crit(output, label[mask])
+                    output = netD(sim_img)
+                    errS_sim = crit(output, label)
                     GD_sim = output.mean().item()
 
-                lp = log_probs(sim_theta_mean, sim_theta_std, sim_param[mask])
-                loss = lp[0] * (errS_sim.cpu() - b) + lp[1] * (errS_sim.cpu() - b)                
+                lp = log_probs(sim_theta_mean, sim_theta_std, sim_param[...,0].view(-1,2))
+                loss = lp[0] * (errS_sim.cpu() - b) + lp[1] * (errS_sim.cpu() - b)
                 loss.mean().backward()
                 optS.step()
 
@@ -182,17 +188,15 @@ def main():
                     b = balpha * errS_sim.mean().detach() + (1-balpha)*b
                    
                 print('S step:', sim_theta_mean.detach().numpy(), torch.exp(sim_theta_std).tolist(), 'mean sim', GD_sim)
-                last_mid = duplex.send(type='lognormal', mean=sim_theta_mean.tolist(), std=torch.exp(sim_theta_std).tolist())   
                 first = False        
+
+            update_sim(duplex, BATCH, sim_theta_mean, sim_theta_std)
                 
             epoch += 1
             if epoch % 10 == 0:
                 vutils.save_image(real_img, 'tmp/real.png', normalize=True)
                 vutils.save_image(sim_img, 'tmp/sim_samples_%03d.png' % (epoch), normalize=True)
                 vutils.save_image(sim_img[sim_btid==0], 'tmp/sim_samples_mask_%03d.png' % (epoch), normalize=True)
-                
-
-            
 
 if __name__ == '__main__':
     main()
