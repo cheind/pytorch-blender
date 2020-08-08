@@ -18,20 +18,22 @@ MEAN_TRUE = 2.25 # rough sample range: 8.5-10.5
 STD_TRUE = 0.1 
 
 def generate_samples(n, mean, std):
-    proto = np.array([
+    samples = torch.tensor([
         [0, 1, 1, 3, 3, 3],
         [0, 1, 1, 3, 3, 3],
-    ], dtype=np.float32).reshape(1,2,6)
-    samples = np.tile(proto, (n,1,1))
-    samples[:, 0, 0] = np.random.lognormal(mean[0], std[0], size=n) 
-    samples[:, 1, 0] = np.random.lognormal(mean[1], std[1], size=n) 
+    ]).float().view(1,2,6).repeat(n,1,1)
+    m1 = torch.empty(n).log_normal_(mean[0], std[0])
+    m2 = torch.empty(n).log_normal_(mean[1], std[1])
+    samples[:, 0, 0] = m1
+    samples[:, 1, 0] = m2
     return samples
 
 def update_simulations(remote_sims, n, mean, std):
     samples = generate_samples(n, mean, std)
     R = len(remote_sims)
-    for remote, subset in zip(remote_sims, np.split(samples, R)):
-        remote.send(shape_params=subset)
+    for remote, subset in zip(remote_sims, torch.chunk(samples, R)):
+        print(subset.shape)
+        remote.send(shape_params=subset.numpy())
 
 def item_transform(item):
     x = item['image'].astype(np.float32)
@@ -115,6 +117,10 @@ def main():
         named_sockets=['DATA', 'CTRL'],
     )
 
+    dev = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    netD = Discriminator().to(dev)
+    netD.apply(weights_init)
+
     # Launch Blender
     with btt.BlenderLauncher(**launch_args) as bl:
         # Create remote dataset and limit max length to 16 elements.
@@ -127,11 +133,7 @@ def main():
 
         real_ds = get_real_images(sim_dl, remotes, n=BATCH)
         real_dl = data.DataLoader(real_ds, batch_size=BATCH, num_workers=0, shuffle=True)
-
-        dev = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        netD = Discriminator().to(dev)
-        netD.apply(weights_init)
-
+       
         # # Start solution
         theta_mean = torch.tensor([1.2, 3.0], requires_grad=True)
         theta_std = torch.log(torch.tensor([STD_TRUE*8, STD_TRUE*8])).requires_grad_() # initial scale has to be larger the farther away we assume to be from solution.
@@ -141,7 +143,7 @@ def main():
         # # optS = optim.Adam([sim_theta_mean, sim_theta_std], lr=5e-2, betas=(0.5, 0.999))
 
         # ok faster
-        optD = optim.Adam(netD.parameters(), lr=1e-4, betas=(0.5, 0.999))
+        optD = optim.Adam(netD.parameters(), lr=5e-5, betas=(0.5, 0.999))
         optS = optim.Adam([theta_mean, theta_std], lr=5e-2, betas=(0.7, 0.999))
 
         gen_real = infinite_batch_generator(real_dl)
