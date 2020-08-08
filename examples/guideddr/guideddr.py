@@ -4,36 +4,46 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils import data
-from torch.distributions import MultivariateNormal, Normal, LogNormal
-from blendtorch import btt
+from torch.distributions import LogNormal
 import torchvision.utils as vutils
+
+from blendtorch import btt
 
 BATCH = 64
 REAL_LABEL = 1
 SIM_LABEL = 0
+SIM_INSTANCES = 4
 
-LOG_MEAN_TRUE = 2.25 # rough sample range: 8.5-10.5
-LOG_STD_TRUE = 0.1
+MEAN_TRUE = 2.25 # rough sample range: 8.5-10.5
+STD_TRUE = 0.1 
 
-def generate_samples(n, theta_mean, theta_std):
+def generate_samples(n, mean, std):
     proto = np.array([
         [0, 1, 1, 3, 3, 3],
         [0, 1, 1, 3, 3, 3],
     ], dtype=np.float32).reshape(1,2,6)
     samples = np.tile(proto, (n,1,1))
-    samples[:, 0, 0] = np.random.lognormal(theta_mean[0], theta_std[0], size=n) 
-    samples[:, 1, 0] = np.random.lognormal(theta_mean[1], theta_std[1], size=n) 
+    samples[:, 0, 0] = np.random.lognormal(mean[0], std[0], size=n) 
+    samples[:, 1, 0] = np.random.lognormal(mean[1], std[1], size=n) 
     return samples
 
+def update_simulations(remote_sims, n, mean, std):
+    samples = generate_samples(n, mean, std)
+    R = len(remote_sims)
+    for remote, subset in zip(remote_sims, np.split(samples, R)):
+        remote.send(shape_params=subset)
 
 def item_transform(item):
     x = item['image'].astype(np.float32)
     x = (x - 127.5) / 127.5
     return np.transpose(x, (2, 0, 1)),  item['params'], item['btid']
 
-def get_real_images(dl, duplex, n=128):
-    samples = generate_samples(n, [LOG_MEAN_TRUE, LOG_MEAN_TRUE], [LOG_STD_TRUE, LOG_STD_TRUE])
-    duplex.send(shape_params=samples)
+def get_real_images(dl, remotes, n=128):
+    update_simulations(
+        remotes, 
+        n, 
+        torch.tensor([MEAN_TRUE, MEAN_TRUE]), 
+        torch.tensor([STD_TRUE, STD_TRUE]))
     images = []
     gen = iter(dl)
     for _ in range(n//BATCH):
@@ -93,9 +103,7 @@ def log_probs(theta_mean, theta_std, samples):
         ln1.log_prob(samples[:, 1]),
     )
 
-def update_sim(duplex, n, sim_theta_mean, sim_theta_std):
-    samples = generate_samples(n, sim_theta_mean.detach().numpy(), torch.exp(sim_theta_std.detach()).numpy())
-    duplex.send(shape_params=samples)
+
 
 def main():
 
@@ -103,7 +111,7 @@ def main():
     launch_args = dict(
         scene=Path(__file__).parent/'supershape.blend',
         script=Path(__file__).parent/'supershape.blend.py',
-        num_instances=1, 
+        num_instances=SIM_INSTANCES, 
         named_sockets=['DATA', 'CTRL'],
     )
 
@@ -115,9 +123,9 @@ def main():
         sim_dl = data.DataLoader(sim_ds, batch_size=BATCH, num_workers=0, shuffle=False)
 
         addr = bl.launch_info.addresses['CTRL']
-        duplex = btt.DuplexChannel(addr[0])
+        remotes = [btt.DuplexChannel(a) for a in addr]
 
-        real_ds = get_real_images(sim_dl, duplex, n=BATCH*2)
+        real_ds = get_real_images(sim_dl, remotes, n=BATCH)
         real_dl = data.DataLoader(real_ds, batch_size=BATCH, num_workers=0, shuffle=True)
 
         dev = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -125,8 +133,8 @@ def main():
         netD.apply(weights_init)
 
         # # Start solution
-        sim_theta_mean = torch.tensor([1.2, 3.0], requires_grad=True)
-        sim_theta_std = torch.log(torch.tensor([LOG_STD_TRUE*8, LOG_STD_TRUE*8])).requires_grad_() # initial scale has to be larger the farther away we assume to be from solution.
+        theta_mean = torch.tensor([1.2, 3.0], requires_grad=True)
+        theta_std = torch.log(torch.tensor([STD_TRUE*8, STD_TRUE*8])).requires_grad_() # initial scale has to be larger the farther away we assume to be from solution.
         
         # # ok slow
         # # optD = optim.Adam(netD.parameters(), lr=1e-5, betas=(0.5, 0.999))
@@ -134,7 +142,7 @@ def main():
 
         # ok faster
         optD = optim.Adam(netD.parameters(), lr=1e-4, betas=(0.5, 0.999))
-        optS = optim.Adam([sim_theta_mean, sim_theta_std], lr=5e-2, betas=(0.7, 0.999))
+        optS = optim.Adam([theta_mean, theta_std], lr=5e-2, betas=(0.7, 0.999))
 
         gen_real = infinite_batch_generator(real_dl)
         gen_sim = infinite_batch_generator(sim_dl)
@@ -145,7 +153,7 @@ def main():
         first = True
         balpha = 0.95
 
-        update_sim(duplex, BATCH, sim_theta_mean, sim_theta_std)
+        update_simulations(remotes, BATCH, theta_mean.detach(), torch.exp(theta_std.detach()))
         for (real, sim) in zip(gen_real, gen_sim):
             
             label = torch.full((BATCH,), REAL_LABEL, dtype=torch.float32, device=dev)
@@ -177,7 +185,7 @@ def main():
                     errS_sim = crit(output, label)
                     GD_sim = output.mean().item()
 
-                lp = log_probs(sim_theta_mean, sim_theta_std, sim_param[...,0].view(-1,2))
+                lp = log_probs(theta_mean, theta_std, sim_param[...,0].view(-1,2))
                 loss = lp[0] * (errS_sim.cpu() - b) + lp[1] * (errS_sim.cpu() - b)
                 loss.mean().backward()
                 optS.step()
@@ -187,10 +195,10 @@ def main():
                 else:
                     b = balpha * errS_sim.mean().detach() + (1-balpha)*b
                    
-                print('S step:', sim_theta_mean.detach().numpy(), torch.exp(sim_theta_std).tolist(), 'mean sim', GD_sim)
+                print('S step:', theta_mean.detach().numpy(), torch.exp(theta_std).tolist(), 'mean sim', GD_sim)
                 first = False        
 
-            update_sim(duplex, BATCH, sim_theta_mean, sim_theta_std)
+            update_simulations(remotes, BATCH, theta_mean.detach(), torch.exp(theta_std.detach()))
                 
             epoch += 1
             if epoch % 10 == 0:
