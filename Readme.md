@@ -111,5 +111,5 @@ The following tables show the mean runtimes per batch (8) and per image for a si
 Note: If no image transfer is needed, i.e in reinforcement learning of physical simulations, 2000Hz are easily achieved.
 
 ## Caveats
-- Despite offscreen rendering is supported in Blender 2.8x it requires a UI frontend and thus cannot run in `--background` mode.
+- Despite offscreen rendering is supported in Blender 2.8x it requires a UI frontend and thus cannot run in `--background` mode. You might be able to work around this issue using a [fake screen](https://blender.stackexchange.com/questions/144083/how-to-get-blender-2-80-to-render-through-an-ssh-connection-minimal-working-ex/176110#176110) as suggested by [GNovich](https://github.com/GNovich).
 - The renderings produced by Blender are by default in linear color space and thus will appear darker than expected when displayed.
