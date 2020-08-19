@@ -25,43 +25,79 @@ MEAN_TARGET = 2.25 # rough sample range: 8.5-10.5
 '''Long./Lat. log-normal supershape frequency (m1,m2) target standard deviation'''
 STD_TARGET = 0.1 
 
-def generate_samples(n, mean, std):
-    '''Generate supershape examples via parameter sampling.
-    
-    We assume all parameter except for m1/m2 to be fixed in this
-    example. We consider mean/std parameters to be the parameters
-    of a log-normal distribution in order to avoid +/- parameter 
-    ambiguities that yield the same shape.
+class ProbModel(nn.Module):
+    '''Probabilistic model governing supershape parameters.
 
-    Params
-    ------
-    n: int
-        Number of supershape parameter samples to generate
-    mean: array
-        Log-normal frequency mean for m1/m2 parameter
-    std: array
-        Log-normal standard deviation for m1/m2 parameter
-    '''
-    samples = torch.tensor([
-        [0, 1, 1, 3, 3, 3],
-        [0, 1, 1, 3, 3, 3],
-    ]).float().view(1,2,6).repeat(n,1,1)
-    m1 = torch.empty(n).log_normal_(mean[0], std[0])
-    m2 = torch.empty(n).log_normal_(mean[1], std[1])
-    samples[:, 0, 0] = m1
-    samples[:, 1, 0] = m2
-    return samples
+    In this example, we model the shape m1/m2 as random variables. We assume
+    independence and associate a log-normal distribution for each of them. We choose
+    in order to avoid +/- parameter ambiguities that yield the same shape.
 
-def update_simulations(remote_sims, n, mean, std):
-    '''Updates all remote simulations with new shape parameter samples.
-    
-    We split N samples into N//R chunks where R is the number of
-    simulation instances.
+    We consider the mean/scale of each distribution to be parameters subject to
+    optimization. Note, we model the scale parameter as log-scale to allow 
+    unconstrained (scale > 0) optimization.
     '''
-    samples = generate_samples(n, mean, std)
+
+    def __init__(self, m1m2_mean, m1m2_std):
+        super().__init__()
+        
+        self.m1m2_mean = nn.Parameter(torch.as_tensor(m1m2_mean).float(), requires_grad=True)
+        self.m1m2_log_std = nn.Parameter(torch.log(torch.as_tensor(m1m2_std).float()), requires_grad=True)
+
+    def sample(self, n):
+        '''Returns n samples.'''
+        m1,m2 = self.dists
+        return {
+            'm1': m1.sample_n(n),
+            'm2': m2.sample_n(n),
+        }
+    
+    def log_prob(self, samples):
+        '''Returns the log-probabilities of the given samples.'''
+        m1,m2 = self.dists
+        return {
+            'm1': m1.log_prob(samples['m1']),
+            'm2': m2.log_prob(samples['m2']),
+        }
+
+    @property
+    def dists(self):
+        '''Returns the parametrized distributions for m1/m2.'''
+        # Creating the distributions always on the fly, otherwise we get
+        # PyTorch warnings about differentiating a second time.
+        return (
+            LogNormal(self.m1m2_mean[0], torch.exp(self.m1m2_log_std[0])),
+            LogNormal(self.m1m2_mean[1], torch.exp(self.m1m2_log_std[1]))
+        )        
+
+    @staticmethod
+    def to_supershape(samples):
+        '''Converts m1/m2 samples to full supershape parameters.
+        
+        We assume all parameter except for m1/m2 to be fixed in this
+        example.
+        '''
+        N = samples['m1'].shape[0]
+        params = samples['m1'].new_tensor([
+            [0, 1, 1, 3, 3, 3],
+            [0, 1, 1, 3, 3, 3],
+        ]).float().view(1,2,6).repeat(N,1,1)
+        params[:, 0, 0] = samples['m1'].detach()
+        params[:, 1, 0] = samples['m2'].detach()
+        return params
+
+def update_simulations(remote_sims, params):
+    '''Updates all remote simulations with new supershape samples.
+    
+    We split N parameter samples into N/R chunks where R is the number of
+    simulation instances. Besides the parameters, we send subset indices
+    to the simulation instances which will be returned to us alongside 
+    with the rendered images. The subset indices allow us to associate
+    parameters with images in the optimization.
+    '''
+    ids = torch.arange(params.shape[0]).long()
     R = len(remote_sims)
-    for remote, subset in zip(remote_sims, torch.chunk(samples, R)):
-        remote.send(shape_params=subset.numpy())
+    for remote, subset, subset_ids in zip(remote_sims, torch.chunk(params, R), torch.chunk(ids, R)):
+        remote.send(shape_params=subset.cpu().numpy(), shape_ids=subset_ids.numpy())
 
 def item_transform(item):
     '''Transformation applied to each received simulation item.
@@ -71,19 +107,17 @@ def item_transform(item):
     '''
     x = item['image'].astype(np.float32)
     x = (x - 127.5) / 127.5
-    return np.transpose(x, (2, 0, 1)),  item['params'], item['btid']
+    return np.transpose(x, (2, 0, 1)), item['shape_id']
 
-def get_target_images(dl, remotes, n=128):
+def get_target_images(dl, remotes, n):
     '''Returns a set of images from the target distribution.'''
-    update_simulations(
-        remotes, 
-        n, 
-        torch.tensor([MEAN_TARGET, MEAN_TARGET]), 
-        torch.tensor([STD_TARGET, STD_TARGET]))
+    pm = ProbModel([MEAN_TARGET, MEAN_TARGET], [STD_TARGET, STD_TARGET])
+    samples = pm.sample(n)
+    update_simulations(remotes, ProbModel.to_supershape(samples))
     images = []
     gen = iter(dl)
     for _ in range(n//BATCH):
-        (img, params, btid) = next(gen)
+        (img, shape_id) = next(gen)
         images.append(img)     
     return data.TensorDataset(torch.tensor(np.concatenate(images, 0)))
 
@@ -146,18 +180,6 @@ class Discriminator(nn.Module):
         x = self.features(x)
         return x.view(-1, 1).squeeze(1)
 
-
-def log_probs(theta_mean, theta_std, samples):
-    '''Returns the log-probabilities of the given samples w.r.t the log-normal distributions.'''
-    ln0 = LogNormal(theta_mean[0], torch.exp(theta_std[0]))
-    ln1 = LogNormal(theta_mean[1], torch.exp(theta_std[1]))
-    return (
-        ln0.log_prob(samples[:, 0]),
-        ln1.log_prob(samples[:, 1]),
-    )
-
-
-
 def main():
 
     # Define how we want to launch Blender
@@ -192,12 +214,13 @@ def main():
         # Initial simulation parameters. The parameters in mean and std are off from the target
         # distribution parameters. Note that we especially enlarge the scale of the distribution
         # to get explorative behaviour in the beginning.
-        theta_mean = torch.tensor([1.2, 3.0], requires_grad=True)
-        theta_std = torch.log(torch.tensor([STD_TARGET*4, STD_TARGET*4])).requires_grad_() # initial scale has to be larger the farther away we assume to be from solution.
+        pm = ProbModel([1.2, 3.0], [STD_TARGET*4, STD_TARGET*4])
+        # theta_mean = torch.tensor([1.2, 3.0], requires_grad=True)
+        # theta_std = torch.log(torch.tensor([STD_TARGET*4, STD_TARGET*4])).requires_grad_() # initial scale has to be larger the farther away we assume to be from solution.
 
         # Setup discriminator and simulation optimizer
         optD = optim.Adam(netD.parameters(), lr=5e-5, betas=(0.5, 0.999))
-        optS = optim.Adam([theta_mean, theta_std], lr=5e-2, betas=(0.7, 0.999))
+        optS = optim.Adam(pm.parameters(), lr=5e-2, betas=(0.7, 0.999))
 
         # Get generators for image batches from target and simulation.
         gen_real = infinite_batch_generator(target_dl)
@@ -210,7 +233,8 @@ def main():
         first = True
 
         # Send instructions to render supershapes from the starting point.
-        update_simulations(remotes, BATCH, theta_mean.detach(), torch.exp(theta_std.detach()))
+        samples = pm.sample(BATCH)
+        update_simulations(remotes, pm.to_supershape(samples))
         for (real, sim) in zip(gen_real, gen_sim):
             ### Train the discriminator from target and simulation images.
             label = torch.full((BATCH,), TARGET_LABEL, dtype=torch.float32, device=dev)
@@ -221,7 +245,7 @@ def main():
             errD_real.mean().backward()
             D_real = output.mean().item()
 
-            sim_img, sim_param, sim_btid = sim
+            sim_img, sim_shape_id = sim
             sim_img = sim_img.to(dev)
             label.fill_(SIM_LABEL)
             output = netD(sim_img)
@@ -252,27 +276,32 @@ def main():
                     errS_sim = crit(output, label)
                     GD_sim = output.mean().item()
 
-                lp = log_probs(theta_mean, theta_std, sim_param[...,0].view(-1,2))
-                loss = lp[0] * (errS_sim.cpu() - b) + lp[1] * (errS_sim.cpu() - b)
+                log_probs = pm.log_prob(samples)
+                loss = (
+                    log_probs['m1'][sim_shape_id] * (errS_sim.cpu() - b) + 
+                    log_probs['m2'][sim_shape_id] * (errS_sim.cpu() - b)
+                )
+                #loss = lp[0] * (errS_sim.cpu() - b) + lp[1] * (errS_sim.cpu() - b)
                 loss.mean().backward()
-                optS.step()
+                optS.step()                
 
                 if first:
-                    b = errS_sim.mean().detach()
+                    b = errS_sim.mean()
                 else:
-                    b = balpha * errS_sim.mean().detach() + (1-balpha)*b
-                   
-                print('S step:', theta_mean.detach().numpy(), torch.exp(theta_std).tolist(), 'mean sim', GD_sim)
+                    b = balpha * errS_sim.mean() + (1-balpha)*b
+
+                print('S step:', pm.m1m2_mean.detach().numpy(), torch.exp(pm.m1m2_log_std).detach().numpy(), 'mean sim', GD_sim)  
                 first = False        
+                del log_probs, loss
 
             # Generate shapes according to updated parameters.
-            update_simulations(remotes, BATCH, theta_mean.detach(), torch.exp(theta_std.detach()))
+            samples = pm.sample(BATCH)
+            update_simulations(remotes, pm.to_supershape(samples))
                 
             epoch += 1
             if epoch % 10 == 0:
                 vutils.save_image(target_img, 'tmp/real.png', normalize=True)
                 vutils.save_image(sim_img, 'tmp/sim_samples_%03d.png' % (epoch), normalize=True)
-                vutils.save_image(sim_img[sim_btid==0], 'tmp/sim_samples_mask_%03d.png' % (epoch), normalize=True)
 
 if __name__ == '__main__':
     main()

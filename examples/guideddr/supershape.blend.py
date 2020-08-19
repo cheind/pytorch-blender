@@ -7,25 +7,30 @@ sys.path.append('C:/dev/supershape')
 import supershape as sshape
 
 def generate_supershape(msg, shape=(100,100)):
-    for p in msg['shape_params']:
-        yield p, sshape.supercoords(p, shape=shape)
+    for params, shape_id in zip(msg['shape_params'], msg['shape_ids']):
+        yield (
+            params, 
+            shape_id, 
+            sshape.supercoords(params, shape=shape)
+        )
 
 def main():
     btargs, remainder = btb.parse_blendtorch_args()
 
     obj = None
+    idx = None
     coords = None
     params = None
     gen = None
     
     def pre_frame(duplex):
-        nonlocal gen, params, coords, obj        
+        nonlocal gen, params, coords, obj, idx     
         msg = duplex.recv(timeoutms=0)
         if msg != None:
             gen = generate_supershape(msg)
         if gen != None:
             try:
-                params, coords = next(gen)
+                params, idx, coords = next(gen)
                 if obj == None:
                     obj = sshape.make_bpy_mesh(*coords)
                 else:
@@ -38,7 +43,7 @@ def main():
         if gen != None:
             pub.publish(
                 image=off.render(), 
-                params=params
+                shape_id = idx
             )
 
     # Data source
