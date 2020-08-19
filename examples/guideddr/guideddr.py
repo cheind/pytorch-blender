@@ -32,6 +32,10 @@ class ProbModel(nn.Module):
     independence and associate a log-normal distribution for each of them. We choose
     in order to avoid +/- parameter ambiguities that yield the same shape.
 
+        p(m1,m2) = p(m1)p(m2) with 
+        p(m1) = LogNormal(mu_m1, std_m1),
+        p(m2) = LogNormal(mu_m2, std_m2)
+
     We consider the mean/scale of each distribution to be parameters subject to
     optimization. Note, we model the scale parameter as log-scale to allow 
     unconstrained (scale > 0) optimization.
@@ -52,12 +56,9 @@ class ProbModel(nn.Module):
         }
     
     def log_prob(self, samples):
-        '''Returns the log-probabilities of the given samples.'''
+        '''Returns the joint log-probabilities of the given samples.'''
         m1,m2 = self.dists
-        return {
-            'm1': m1.log_prob(samples['m1']),
-            'm2': m2.log_prob(samples['m2']),
-        }
+        return m1.log_prob(samples['m1']) + m2.log_prob(samples['m2'])
 
     @property
     def dists(self):
@@ -277,11 +278,7 @@ def main():
                     GD_sim = output.mean().item()
 
                 log_probs = pm.log_prob(samples)
-                loss = (
-                    log_probs['m1'][sim_shape_id] * (errS_sim.cpu() - b) + 
-                    log_probs['m2'][sim_shape_id] * (errS_sim.cpu() - b)
-                )
-                #loss = lp[0] * (errS_sim.cpu() - b) + lp[1] * (errS_sim.cpu() - b)
+                loss = log_probs[sim_shape_id] * (errS_sim.cpu() - b)
                 loss.mean().backward()
                 optS.step()                
 
