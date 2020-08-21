@@ -17,24 +17,22 @@ def generate_supershape(msg, shape=(100,100)):
 def main():
     btargs, remainder = btb.parse_blendtorch_args()
 
-    obj = None
+    uvshape = (100,100)
+    obj = sshape.make_bpy_mesh(uvshape)
     idx = None
     coords = None
     params = None
     gen = None
     
     def pre_frame(duplex):
-        nonlocal gen, params, coords, obj, idx     
+        nonlocal gen, params, coords, idx     
         msg = duplex.recv(timeoutms=0)
         if msg != None:
-            gen = generate_supershape(msg)
+            gen = generate_supershape(msg, shape=uvshape)
         if gen != None:
             try:
                 params, idx, coords = next(gen)
-                if obj == None:
-                    obj = sshape.make_bpy_mesh(*coords)
-                else:
-                    sshape.update_bpy_mesh(*coords, obj)
+                sshape.update_bpy_mesh(*coords, obj)
             except StopIteration:
                 gen = None
 
