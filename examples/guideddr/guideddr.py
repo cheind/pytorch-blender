@@ -51,8 +51,8 @@ class ProbModel(nn.Module):
         '''Returns n samples.'''
         m1,m2 = self.dists
         return {
-            'm1': m1.sample_n(n),
-            'm2': m2.sample_n(n),
+            'm1': m1.sample((n,)),
+            'm2': m2.sample((n,)),
         }
     
     def log_prob(self, samples):
