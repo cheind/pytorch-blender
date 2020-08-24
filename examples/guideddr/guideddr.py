@@ -300,6 +300,8 @@ def main():
             if epoch % 10 == 0:
                 vutils.save_image(target_img, 'tmp/real.png', normalize=True)
                 vutils.save_image(sim_img, 'tmp/sim_samples_%03d.png' % (epoch), normalize=True)
+            if epoch > 70:
+                break
 
 if __name__ == '__main__':
     main()
