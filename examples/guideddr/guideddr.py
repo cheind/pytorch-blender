@@ -24,6 +24,8 @@ SIM_INSTANCES = 4
 MEAN_TARGET = 2.25 # rough sample range: 8.5-10.5
 '''Long./Lat. log-normal supershape frequency (m1,m2) target standard deviation'''
 STD_TARGET = 0.1 
+'''Baseline (control variate) smoothing factor'''
+BASELINE_ALPHA = 0.95
 
 class ProbModel(nn.Module):
     '''Probabilistic model governing supershape parameters.
@@ -103,8 +105,10 @@ def update_simulations(remote_sims, params):
 def item_transform(item):
     '''Transformation applied to each received simulation item.
 
-    Here we exctract the image, normalize it and return it together
-    with useful meta-data.
+    Extract the image, normalize it and return it together
+    with meta-data. In particular we return the `shape_id` which
+    allows us to associate the received item with a parameter 
+    sample generated earlier.
     '''
     x = item['image'].astype(np.float32)
     x = (x - 127.5) / 127.5
@@ -213,11 +217,9 @@ def main():
         target_dl = data.DataLoader(target_ds, batch_size=BATCH, num_workers=0, shuffle=True)
        
         # Initial simulation parameters. The parameters in mean and std are off from the target
-        # distribution parameters. Note that we especially enlarge the scale of the distribution
-        # to get explorative behaviour in the beginning.
+        # distribution parameters. Note that we especially enlarge the scale of the initial 
+        # distribution to get explorative behaviour in the beginning.
         pm = ProbModel([1.2, 3.0], [STD_TARGET*4, STD_TARGET*4])
-        # theta_mean = torch.tensor([1.2, 3.0], requires_grad=True)
-        # theta_std = torch.log(torch.tensor([STD_TARGET*4, STD_TARGET*4])).requires_grad_() # initial scale has to be larger the farther away we assume to be from solution.
 
         # Setup discriminator and simulation optimizer
         optD = optim.Adam(netD.parameters(), lr=5e-5, betas=(0.5, 0.999))
@@ -229,8 +231,7 @@ def main():
         crit = nn.BCELoss(reduction='none')
         
         epoch = 0
-        b = 0.          # baseline to reduce variance of gradient estimator.        
-        balpha = 0.95   # baseline exponential smoothing factor.
+        b = 0.          # Baseline to reduce variance of gradient estimator.
         first = True
 
         # Send instructions to render supershapes from the starting point.
@@ -285,7 +286,7 @@ def main():
                 if first:
                     b = errS_sim.mean()
                 else:
-                    b = balpha * errS_sim.mean() + (1-balpha)*b
+                    b = BASELINE_ALPHA * errS_sim.mean() + (1-BASELINE_ALPHA)*b
 
                 print('S step:', pm.m1m2_mean.detach().numpy(), torch.exp(pm.m1m2_log_std).detach().numpy(), 'mean sim', GD_sim)  
                 first = False        
