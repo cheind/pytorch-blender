@@ -25,7 +25,7 @@ MEAN_TARGET = 2.25 # rough sample range: 8.5-10.5
 '''Long./Lat. log-normal supershape frequency (m1,m2) target standard deviation'''
 STD_TARGET = 0.1 
 '''Baseline (control variate) smoothing factor'''
-BASELINE_ALPHA = 0.95
+BASELINE_ALPHA = 0.9
 
 class ProbModel(nn.Module):
     '''Probabilistic model governing supershape parameters.
