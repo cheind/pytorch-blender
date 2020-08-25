@@ -2,8 +2,7 @@ import bpy
 import numpy as np
 from blendtorch import btb
 
-import sys
-sys.path.append('C:/dev/supershape')
+# See https://github.com/cheind/supershape and this examples readme.
 import supershape as sshape
 
 def generate_supershape(msg, shape=(100,100)):
