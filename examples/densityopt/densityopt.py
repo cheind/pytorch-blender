@@ -70,7 +70,11 @@ class ProbModel(nn.Module):
         return (
             LogNormal(self.m1m2_mean[0], torch.exp(self.m1m2_log_std[0])),
             LogNormal(self.m1m2_mean[1], torch.exp(self.m1m2_log_std[1]))
-        )        
+        )  
+
+    def readable_params(self):
+        '''Helper function to access params as vector.'''
+        return torch.cat([self.m1m2_mean.detach(), torch.exp(self.m1m2_log_std).detach()])
 
     @staticmethod
     def to_supershape(samples):
@@ -233,6 +237,7 @@ def main():
         epoch = 0
         b = 0.          # Baseline to reduce variance of gradient estimator.
         first = True
+        param_history = []
 
         # Send instructions to render supershapes from the starting point.
         samples = pm.sample(BATCH)
@@ -295,13 +300,21 @@ def main():
             # Generate shapes according to updated parameters.
             samples = pm.sample(BATCH)
             update_simulations(remotes, pm.to_supershape(samples))
-                
+
+            param_history.append(pm.readable_params())                
             epoch += 1
             if epoch % 5 == 0:
                 vutils.save_image(target_img, 'tmp/real.png', normalize=True)
                 vutils.save_image(sim_img, 'tmp/sim_samples_%03d.png' % (epoch), normalize=True)
             if epoch > 70:
                 break
+
+        # Save parameter history
+        param_history = torch.stack(param_history)
+        import time
+        timestr = time.strftime("%Y%m%d_%H%M%S")
+        np.savetxt(f'tmp/run_densityopt_{timestr}.txt', param_history, header='mu_m1, mu_m2, std_m1, std_m2')
+        
 
 if __name__ == '__main__':
     main()
