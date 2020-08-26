@@ -21,9 +21,9 @@ SIM_LABEL = 0
 '''Number of Blender instances.'''
 SIM_INSTANCES = 4
 '''Long./Lat. log-normal supershape frequency (m1,m2) target mean'''
-MEAN_TARGET = 2.25 # rough sample range: 8.5-10.5
+DEFAULT_MEAN_TARGET = 2.25 # rough sample range: 8.5-10.5
 '''Long./Lat. log-normal supershape frequency (m1,m2) target standard deviation'''
-STD_TARGET = 0.1 
+DEFAULT_STD_TARGET = 0.1 
 '''Baseline (control variate) smoothing factor'''
 BASELINE_ALPHA = 0.9
 
@@ -118,9 +118,9 @@ def item_transform(item):
     x = (x - 127.5) / 127.5
     return np.transpose(x, (2, 0, 1)), item['shape_id']
 
-def get_target_images(dl, remotes, n):
+def get_target_images(dl, remotes, mu_m1m2, std_m1m2, n):
     '''Returns a set of images from the target distribution.'''
-    pm = ProbModel([MEAN_TARGET, MEAN_TARGET], [STD_TARGET, STD_TARGET])
+    pm = ProbModel(mu_m1m2, std_m1m2)
     samples = pm.sample(n)
     update_simulations(remotes, ProbModel.to_supershape(samples))
     images = []
@@ -189,7 +189,7 @@ class Discriminator(nn.Module):
         x = self.features(x)
         return x.view(-1, 1).squeeze(1)
 
-def main():
+def run(args):
 
     # Define how we want to launch Blender
     launch_args = dict(
@@ -217,13 +217,27 @@ def main():
 
         # Fetch images of the target distribution. In the following we assume the 
         # target distribution to be unknown.
-        target_ds = get_target_images(sim_dl, remotes, n=BATCH)
+        if args.random_target:
+            mu_m1m2_target = np.random.uniform(0.1, 20, size=2).astype(np.float32)
+            std_m1m2_target = np.random.uniform(0.1, 0.3, size=2).astype(np.float32)
+        else:
+            mu_m1m2_target = [DEFAULT_MEAN_TARGET, DEFAULT_MEAN_TARGET]
+            std_m1m2_target = [DEFAULT_STD_TARGET, DEFAULT_STD_TARGET]
+        print('Target params:', mu_m1m2_target, std_m1m2_target)  
+
+        target_ds = get_target_images(sim_dl, remotes, mu_m1m2_target, std_m1m2_target, n=BATCH)
         target_dl = data.DataLoader(target_ds, batch_size=BATCH, num_workers=0, shuffle=True)
        
         # Initial simulation parameters. The parameters in mean and std are off from the target
         # distribution parameters. Note that we especially enlarge the scale of the initial 
         # distribution to get explorative behaviour in the beginning.
-        pm = ProbModel([1.2, 3.0], [STD_TARGET*4, STD_TARGET*4])
+        if args.random_start:
+            mu_m1m2 = np.asarray(mu_m1m2_target) + np.random.randn(2)*2
+            std_m1m2 = [std_m1m2_target[0]*4, std_m1m2_target[0]*4]            
+        else:
+            mu_m1m2 = [1.2, 3.0]
+            std_m1m2 = [STD_TARGET*4, STD_TARGET*4]
+        pm = ProbModel(mu_m1m2, std_m1m2)
 
         # Setup discriminator and simulation optimizer
         optD = optim.Adam(netD.parameters(), lr=5e-5, betas=(0.5, 0.999))
@@ -306,15 +320,35 @@ def main():
             if epoch % 5 == 0:
                 vutils.save_image(target_img, 'tmp/real.png', normalize=True)
                 vutils.save_image(sim_img, 'tmp/sim_samples_%03d.png' % (epoch), normalize=True)
-            if epoch > 70:
+            if epoch > args.num_epochs:
+                # Append true target
+                target = torch.tensor(
+                    np.concatenate((mu_m1m2_target, std_m1m2_target))
+                ).float()
+                print('Abs.Diff to true params', abs(target - param_history[-1]))
+                param_history.append(target)
                 break
 
-        # Save parameter history
         param_history = torch.stack(param_history)
-        import time
-        timestr = time.strftime("%Y%m%d_%H%M%S")
-        np.savetxt(f'tmp/run_densityopt_{timestr}.txt', param_history, header='mu_m1, mu_m2, std_m1, std_m2')
+        return param_history
         
 
 if __name__ == '__main__':
-    main()
+    import argparse
+    import time
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--random-target', action='store_true')
+    parser.add_argument('--random-start', action='store_true')
+    parser.add_argument('--num-runs', default=1, type=int)
+    parser.add_argument('--num-epochs', default=70, type=int)
+    args = parser.parse_args()
+
+    timestr = time.strftime("%Y%m%d_%H%M%S")
+    for i in range(args.num_runs):
+        param_history = run(args)
+        np.savetxt(
+            f'tmp/run_{timestr}_{i:02d}_densityopt.txt', 
+            param_history, 
+            header='mu_m1, mu_m2, std_m1, std_m2', 
+            comments='last entry corresponds to target params')
