@@ -14,7 +14,7 @@ For both reasons, we frame out optimization as a minimization over an expected d
 
 ### Results
 
-The image series below shows target images (left) and optimization progress as animated GIF (right). In the animation the start solution is marked with a purple border, the final iteration is shown with a green border. Notice that how the shapes gradually turn into a distribution matching the target distribution on the left.
+The image series below shows images from the target distribution (left) and optimization progress as animated GIF (right). In the animation the <span style="color:purple">start</span> solution is marked with a purple border, the <span style="color:green">final</span> iteration is shown with a green border. Notice that how the shapes gradually turn into a distribution matching the target distribution on the left.
 <div align="center">
 <img src="etc/real.png" width="300">
 <img src="etc/densityopt.gif" width="300">
