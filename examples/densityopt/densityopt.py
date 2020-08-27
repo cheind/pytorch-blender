@@ -217,12 +217,11 @@ def run(args):
 
         # Fetch images of the target distribution. In the following we assume the 
         # target distribution to be unknown.
-        if args.random_target:
-            mu_m1m2_target = np.random.uniform(0.1, 20, size=2).astype(np.float32)
-            std_m1m2_target = np.random.uniform(0.1, 0.3, size=2).astype(np.float32)
+        if args.random_start:
+            mu_m1m2_target = np.random.uniform(0.0, 3, size=2).astype(np.float32)
         else:
             mu_m1m2_target = [DEFAULT_MEAN_TARGET, DEFAULT_MEAN_TARGET]
-            std_m1m2_target = [DEFAULT_STD_TARGET, DEFAULT_STD_TARGET]
+        std_m1m2_target = [DEFAULT_STD_TARGET, DEFAULT_STD_TARGET]
         print('Target params:', mu_m1m2_target, std_m1m2_target)  
 
         target_ds = get_target_images(sim_dl, remotes, mu_m1m2_target, std_m1m2_target, n=BATCH)
@@ -232,11 +231,10 @@ def run(args):
         # distribution parameters. Note that we especially enlarge the scale of the initial 
         # distribution to get explorative behaviour in the beginning.
         if args.random_start:
-            mu_m1m2 = np.asarray(mu_m1m2_target) + np.random.randn(2)
-            std_m1m2 = [std_m1m2_target[0]*4, std_m1m2_target[0]*4]            
+            mu_m1m2 = np.asarray(mu_m1m2_target) + np.random.randn(2)                        
         else:
             mu_m1m2 = [1.2, 3.0]
-            std_m1m2 = [DEFAULT_STD_TARGET*4, DEFAULT_STD_TARGET*4]
+        std_m1m2 = [0.4, 0.4]
         pm = ProbModel(mu_m1m2, std_m1m2)
 
         # Setup discriminator and simulation optimizer
@@ -249,7 +247,7 @@ def run(args):
         crit = nn.BCELoss(reduction='none')
         
         epoch = 0
-        b = 0.          # Baseline to reduce variance of gradient estimator.
+        b = 0.7      # Baseline to reduce variance of gradient estimator.
         first = True
         param_history = []
 
@@ -273,7 +271,7 @@ def run(args):
             errD_sim = crit(output, label)
             errD_sim.mean().backward()
             D_sim = output.mean().item()
-            if (D_real - D_sim) < 0.95:
+            if (D_real - D_sim) < 0.7:
                 optD.step()
                 print('D step: mean real', D_real, 'mean sim', D_sim)
 
@@ -289,7 +287,7 @@ def run(args):
             # minimization of an expectation with the parameters in the distribution
             # the expectation runs over. Using score-function gradients permits gradient
             # based optimization _without_ access to gradients of the render function.
-            if not first or (D_real - D_sim) > 0.7:
+            if not first or (D_real - D_sim) >= 0.7:
                 optS.zero_grad()
                 label.fill_(TARGET_LABEL)
                 with torch.no_grad():
@@ -300,7 +298,7 @@ def run(args):
                 log_probs = pm.log_prob(samples)
                 loss = log_probs[sim_shape_id] * (errS_sim.cpu() - b)
                 loss.mean().backward()
-                optS.step()                
+                optS.step()
 
                 if first:
                     b = errS_sim.mean()
@@ -310,6 +308,8 @@ def run(args):
                 print('S step:', pm.m1m2_mean.detach().numpy(), torch.exp(pm.m1m2_log_std).detach().numpy(), 'mean sim', GD_sim)  
                 first = False        
                 del log_probs, loss
+            
+           
 
             # Generate shapes/images according to updated parameters.
             samples = pm.sample(BATCH)
@@ -319,7 +319,7 @@ def run(args):
             param_history.append(pm.readable_params())                
             epoch += 1
             if epoch % 5 == 0:
-                vutils.save_image(target_img, 'tmp/real.png', normalize=True)
+                vutils.save_image(target_img, 'tmp/real_%03d.png'  % (epoch), normalize=True)
                 vutils.save_image(sim_img, 'tmp/sim_samples_%03d.png' % (epoch), normalize=True)
             if epoch > args.num_epochs:
                 # Append true target
@@ -339,7 +339,6 @@ if __name__ == '__main__':
     import time
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--random-target', action='store_true')
     parser.add_argument('--random-start', action='store_true')
     parser.add_argument('--num-runs', default=1, type=int)
     parser.add_argument('--num-epochs', default=70, type=int)
