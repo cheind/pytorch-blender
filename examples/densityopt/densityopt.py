@@ -232,7 +232,7 @@ def run(args):
         # distribution parameters. Note that we especially enlarge the scale of the initial 
         # distribution to get explorative behaviour in the beginning.
         if args.random_start:
-            mu_m1m2 = np.asarray(mu_m1m2_target) + np.random.randn(2)*2
+            mu_m1m2 = np.asarray(mu_m1m2_target) + np.random.randn(2)
             std_m1m2 = [std_m1m2_target[0]*4, std_m1m2_target[0]*4]            
         else:
             mu_m1m2 = [1.2, 3.0]
