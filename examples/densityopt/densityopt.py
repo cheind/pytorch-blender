@@ -236,7 +236,7 @@ def run(args):
             std_m1m2 = [std_m1m2_target[0]*4, std_m1m2_target[0]*4]            
         else:
             mu_m1m2 = [1.2, 3.0]
-            std_m1m2 = [STD_TARGET*4, STD_TARGET*4]
+            std_m1m2 = [DEFAULT_STD_TARGET*4, DEFAULT_STD_TARGET*4]
         pm = ProbModel(mu_m1m2, std_m1m2)
 
         # Setup discriminator and simulation optimizer
@@ -311,10 +311,11 @@ def run(args):
                 first = False        
                 del log_probs, loss
 
-            # Generate shapes according to updated parameters.
+            # Generate shapes/images according to updated parameters.
             samples = pm.sample(BATCH)
             update_simulations(remotes, pm.to_supershape(samples))
 
+            # Bookkeeping
             param_history.append(pm.readable_params())                
             epoch += 1
             if epoch % 5 == 0:
