@@ -12,6 +12,8 @@ However, there are two **key difference** to GANs:
  
 For both reasons, we frame out optimization as a minimization over an expected discriminator loss using gradient estimators that do not require gradients of the render function to be known. We explain our optimization idea in [this article](etc/blendtorch_stochopt.pdf).
 
+### Results
+
 The image series below shows target images (left) and optimization progress as animated GIF (right). In the animation the start solution is marked with a purple border, the final iteration is shown with a green border. Notice that how the shapes gradually turn into a distribution matching the target distribution on the left.
 <div align="center">
 <img src="etc/real.png" width="300">
