@@ -150,3 +150,20 @@ class Camera:
         return self.ndc_to_pixel(
             self.world_to_ndc(utils.world_coordinates(*objs))
         )
+
+    def bbox_object_to_pixel(self, *objs):
+        '''Convenience composition of `ndc_to_pixel(world_to_ndc(utils.bbox_world_coordinates(*objs)))`
+        
+        Params
+        ------
+        objs: array of bpy.types.Object
+            Collection of objects whose vertices to convert to camera pixel coordinates.
+            
+        Returns
+        -------
+        xy : Mx2 array
+            Concatenated list object vertex coordinates expressed in camera pixels.
+        '''
+        return self.ndc_to_pixel(
+            self.world_to_ndc(utils.bbox_world_coordinates(*objs))
+        )

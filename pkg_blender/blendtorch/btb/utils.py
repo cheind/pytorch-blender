@@ -1,6 +1,7 @@
 import bpy
 import bmesh
 import numpy as np
+from mathutils import Vector
 
 def find_first_view3d():
     '''Helper function to find first space view 3d and associated window region.
@@ -51,6 +52,33 @@ def world_coordinates(*objs, depsgraph=None):
     for obj in objs:
         eval_obj = obj.evaluated_get(dg)
         xyz_obj = [(eval_obj.matrix_world @ v.co) for v in eval_obj.data.vertices]
+        xyz.extend(xyz_obj)
+    return np.stack(xyz)
+
+def bbox_world_coordinates(*objs, depsgraph=None):
+    '''Returns XYZ world coordinates of all bounding box corners of each object in *objs.
+    
+    Params
+    ------
+    objs: list-like of bpy.types.Object
+        Object to return vertices for
+    depsgraph: bpy.types.Depsgraph, None
+        Dependency graph
+
+    Returns
+    -------
+    xyz: Nx3 array
+        World coordinates of object vertices
+    '''
+
+    # To be on the safe side, we use the evaluated object after 
+    # all modifiers etc. applied (done internally by bmesh)
+    
+    dg = depsgraph or bpy.context.evaluated_depsgraph_get()
+    xyz = []
+    for obj in objs:
+        eval_obj = obj.evaluated_get(dg)
+        xyz_obj = [(eval_obj.matrix_world @ Vector(c)) for c in eval_obj.bound_box]
         xyz.extend(xyz_obj)
     return np.stack(xyz)
 
