@@ -1,5 +1,6 @@
 '''Provides helper functions to deal with Blender cameras.'''
 import bpy, bpy_extras
+from mathutils import Vector
 import numpy as np
 
 from . import utils
@@ -167,3 +168,45 @@ class Camera:
         return self.ndc_to_pixel(
             self.world_to_ndc(utils.bbox_world_coordinates(*objs))
         )
+
+    def look_at(self, look_at=None, look_from=None):
+        '''Helper function to look at specific location.'''
+        if look_from is None:
+            look_from = self.bpy_camera.location
+        if look_at is None:
+            look_at = Vector([0,0,0])
+
+        direction = Vector(look_at) - Vector(look_from)
+        # point the cameras '-Z' and use its 'Y' as up
+        rot_quat = direction.to_track_quat('-Z', 'Y')
+        self.bpy_camera.rotation_euler = rot_quat.to_euler()
+        self.bpy_camera.location = look_from
+        bpy.context.evaluated_depsgraph_get().update()
+        self.update_view_matrix()
+
+
+        
+
+# class RandomCameraPoseGenerator:
+#     def __init__(self, nposes, radius=(3,4), theta=(0., np.pi), phi=(0, 2*np.pi), look_at_center=(0,0,1), look_at_radius=0.5):
+#         self.origins = self.random_points_on_sphere(nposes, radius, theta, phi)
+#         self.look_at = self.random_points_on_sphere(nposes, (look_at_radius,look_at_radius), (0., np.pi), (0, 2*np.pi)) + look_at_center
+        
+#     def random_points_on_sphere(self, n, radius, theta, phi):
+#         theta = np.clip(theta, 0, np.pi)
+#         phi = np.clip(phi, 0, 2*np.pi)
+
+#         # Not really uniform on sphere, but fine for us.
+#         r = np.random.uniform(*radius, size=n) # radii
+#         t = np.random.uniform(*theta, size=n) # inclination
+#         p = np.random.uniform(*phi, size=n) # azimuth
+
+#         return np.column_stack((
+#             np.sin(t)*np.cos(p),
+#             np.sin(t)*np.sin(p),
+#             np.cos(t)
+#         )) * r[:, None]
+
+#     def update(self, camera):
+#         idx = np.random.choice(len(self.origins), size=2)
+#         camera_look_at(camera, look_at=self.look_at[idx[1]], look_from=self.origins[idx[0]])

@@ -93,3 +93,38 @@ def hom(x, v=1.):
 def dehom(x):
     '''Return de-homogeneous coordinates by perspective division.'''
     return x[...,:-1] / x[...,-1:]
+
+def random_spherical_loc(radius_range=None, theta_range=None, phi_range=None):
+    '''Return random locations on sphere.
+    
+    Params
+    ------
+    radius_range: tuple
+        min/max radius of sphere. Defaults to (1,1)
+    theta: tuple
+        min/max longitudinal range. Defaults to (0, pi)
+    phi: tuple
+        min/max latitudinal range. Defaults to (0, 2*pi)
+    
+    Returns
+    -------
+    xyz : array
+        location on sphere
+    '''
+    if radius_range is None:
+        radius_range = (1,1)
+    if theta_range is None:
+        theta_range = (0, np.pi)
+    if phi_range is None:
+        phi_range = (0, 2*np.pi)
+
+    # Not really uniform on sphere, but fine for us.
+    r = np.random.uniform(radius_range[0], radius_range[1]) # radii
+    t = np.random.uniform(theta_range[0], theta_range[1]) # inclination
+    p = np.random.uniform(phi_range[0], phi_range[1]) # azimuth
+
+    return np.array([
+        np.sin(t)*np.cos(p),
+        np.sin(t)*np.sin(p),
+        np.cos(t)
+    ])*r
