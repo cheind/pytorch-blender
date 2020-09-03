@@ -1,18 +1,18 @@
 # blendtorch v0.2
-![](https://travis-ci.org/cheind/pytorch-blender.svg?branch=develop)
+[![](https://travis-ci.org/cheind/pytorch-blender.svg?branch=develop)](https://travis-ci.org/cheind/pytorch-blender)
 
 **blendtorch** is a Python framework to seamlessly integrate [Blender](http://blender.orf) renderings into [PyTorch](http://pytorch.org) datasets for deep learning from artificial visual data. We utilize Eevee, a new physically based real-time renderer, to synthesize images and annotations in real-time and thus avoid stalling model training in many cases.
 
 Feature summary
- - ***Data Streaming***: Stream distributed Blender renderings directly into PyTorch data pipelines in real-time for supervised learning and domain randomization applications. Supports arbitrary pickle-able objects to be send alongside images/videos. Built-in recording capability to replay data without Blender.</br>More info [\[examples/datagen\]](examples/datagen)
+ - ***Data Streaming***: Stream distributed Blender renderings directly into PyTorch data pipelines in real-time for supervised learning and domain randomization applications. Supports arbitrary pickle-able objects to be send alongside images/videos. Built-in recording capability to replay data without Blender. Bi-directional communication channels allow Blender simulations to adapt during network training. </br>More info [\[examples/datagen\]](examples/datagen), [\[examples/densityopt\]](examples/densityopt)
  - ***OpenAI Gym Support***: Create and run remotely controlled Blender gyms to train reinforcement agents. Blender serves as simulation, visualization, and interactive live manipulation environment.
  </br>More info [\[examples/control\]](examples/control)
 
 The figure below visualizes a single image/label batch received by PyTorch from four parallel Blender instances. Each Blender process repeatedly performs motion simulations of randomized cubes.
 
-<p align="center">
+<div align="center">
 <img src="etc/result_physics.png" width="500">
-</p>
+</div>
 
 ## Getting started
  1. Read the installation instructions below
@@ -79,7 +79,7 @@ python -c "import blendtorch.btt as btt; print(btt.__version__)"
 which should print **blendtorch** version number on success.
 
 ## Architecture
-Please see [\[examples/datagen\]](examples/datagen) and [examples/control\]](examples/control) for an in-depth architectural discussion.
+Please see [\[examples/datagen\]](examples/datagen) and [\[examples/control\]](examples/control) for an in-depth architectural discussion. Bi-directional communication is explained in [\[examples/densityopt\]](examples/densityopt).
 
 ## Cite
 The code accompanies our [academic work](https://arxiv.org/abs/1907.01879) in the field of machine learning from artificial images. When using please cite the following work
@@ -111,5 +111,5 @@ The following tables show the mean runtimes per batch (8) and per image for a si
 Note: If no image transfer is needed, i.e in reinforcement learning of physical simulations, 2000Hz are easily achieved.
 
 ## Caveats
-- Despite offscreen rendering is supported in Blender 2.8x it requires a UI frontend and thus cannot run in `--background` mode.
+- Despite offscreen rendering is supported in Blender 2.8x it requires a UI frontend and thus cannot run in `--background` mode. You might be able to work around this issue using a [fake screen](https://blender.stackexchange.com/questions/144083/how-to-get-blender-2-80-to-render-through-an-ssh-connection-minimal-working-ex/176110#176110) as suggested by [GNovich](https://github.com/GNovich).
 - The renderings produced by Blender are by default in linear color space and thus will appear darker than expected when displayed.
