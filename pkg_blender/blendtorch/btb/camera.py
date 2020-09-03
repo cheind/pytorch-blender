@@ -183,30 +183,3 @@ class Camera:
         self.bpy_camera.location = look_from
         bpy.context.evaluated_depsgraph_get().update()
         self.update_view_matrix()
-
-
-        
-
-# class RandomCameraPoseGenerator:
-#     def __init__(self, nposes, radius=(3,4), theta=(0., np.pi), phi=(0, 2*np.pi), look_at_center=(0,0,1), look_at_radius=0.5):
-#         self.origins = self.random_points_on_sphere(nposes, radius, theta, phi)
-#         self.look_at = self.random_points_on_sphere(nposes, (look_at_radius,look_at_radius), (0., np.pi), (0, 2*np.pi)) + look_at_center
-        
-#     def random_points_on_sphere(self, n, radius, theta, phi):
-#         theta = np.clip(theta, 0, np.pi)
-#         phi = np.clip(phi, 0, 2*np.pi)
-
-#         # Not really uniform on sphere, but fine for us.
-#         r = np.random.uniform(*radius, size=n) # radii
-#         t = np.random.uniform(*theta, size=n) # inclination
-#         p = np.random.uniform(*phi, size=n) # azimuth
-
-#         return np.column_stack((
-#             np.sin(t)*np.cos(p),
-#             np.sin(t)*np.sin(p),
-#             np.cos(t)
-#         )) * r[:, None]
-
-#     def update(self, camera):
-#         idx = np.random.choice(len(self.origins), size=2)
-#         camera_look_at(camera, look_at=self.look_at[idx[1]], look_from=self.origins[idx[0]])
