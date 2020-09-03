@@ -106,5 +106,5 @@ venv.bak/
 tmp/*
 examples/datagen/tmp/*
 *.blend1
-
+**/tmp/*
 !__keep__
