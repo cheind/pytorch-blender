@@ -22,4 +22,9 @@ setup(
     packages=['blendtorch.btt', 'blendtorch.btt.apps'],    
     install_requires=required,
     zip_safe=False,
+    entry_points = {
+        'console_scripts': [
+            'blendtorch-launch=blendtorch.btt.apps.launch:main'
+        ],
+    }
 )
