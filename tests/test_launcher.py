@@ -2,8 +2,9 @@ import pytest
 import multiprocessing as mp
 from pathlib import Path
 import json
+import copy
+
 from blendtorch import btt
-from shlex import quote
 
 BLENDDIR = Path(__file__).parent/'blender'
 LAUNCH_ARGS = dict(
@@ -65,16 +66,16 @@ def test_launcher_connected_remote(tmp_path):
     _validate_result(items)
     p.join()
 
-def _launch_app(tmp_path):    
+def _launch_app(tmp_path, args):    
     from blendtorch.btt.apps import launch    
     with open(tmp_path/'launchargs.json', 'w') as fp:
-        fp.write(json.dumps(LAUNCH_ARGS, indent=4))
+        fp.write(json.dumps(args, indent=4))
     launch.main(['--out-launch-info', str(tmp_path/'launchinfo.json'), str(tmp_path/'launchargs.json')])
 
 @pytest.mark.background
 def test_launcher_app(tmp_path):
 
-    p = mp.Process(target=_launch_app, args=(tmp_path,))
+    p = mp.Process(target=_launch_app, args=(tmp_path, LAUNCH_ARGS))
     p.start()
 
     import time
@@ -88,3 +89,26 @@ def test_launcher_app(tmp_path):
     _validate_result(items)
     
     p.join()
+
+def test_launcher_app_primaryip(tmp_path):
+
+    # Same with primary ip resolver
+    args = copy.deepcopy(LAUNCH_ARGS)
+    args['bind_addr'] = 'primaryip'
+    p = mp.Process(target=_launch_app, args=(tmp_path,args))
+    p.start()
+
+    import time
+    path = tmp_path/'launchinfo.json'
+    while not Path.exists(path):
+        time.sleep(1)    
+
+    launch_info = btt.LaunchInfo.load_json(path)
+    print(launch_info.addresses)
+    ds = btt.RemoteIterableDataset(launch_info.addresses['DATA'], max_items=2)
+    items = [item for item in ds]
+    _validate_result(items)
+    
+    p.join()
+
+

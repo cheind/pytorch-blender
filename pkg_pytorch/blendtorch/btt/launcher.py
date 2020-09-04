@@ -7,6 +7,7 @@ import json
 
 from .finder import discover_blender
 from .launch_info import LaunchInfo
+from .utils import get_primary_ip
 
 logger = logging.getLogger('blendtorch')
 
@@ -31,7 +32,8 @@ class BlenderLauncher():
     start_port : int (default=11000)
         Start of port range for publisher sockets
     bind_addr : str (default='127.0.0.1')
-        Address to bind publisher sockets  
+        Address to bind publisher sockets. If 'primaryip' binds to primary ip
+        address the one with a default route or `127.0.0.1` if none is available.
     proto: string (default='tcp')
         Protocol to use.      
     instance_args : array (default=None)
@@ -182,6 +184,8 @@ class BlenderLauncher():
 
     def _address_generator(self, proto, bind_addr, start_port):
         '''Convenience to generate addresses.'''
+        if bind_addr == 'primaryip':
+            bind_addr = get_primary_ip()        
         nextport = start_port
         while True:
             addr = f'{proto}://{bind_addr}:{nextport}'
