@@ -25,7 +25,7 @@ The figure below visualizes a single image/label batch received by PyTorch from 
 
 ### Prerequisites
 This package has been tested with
- - [Blender](https://www.blender.org/) >= 2.83 (Python 3.7)
+ - [Blender](https://www.blender.org/) >= 2.83/2.90 (Python 3.7)
  - [PyTorch](http://pytorch.org) >= 1.50 (Python 3.7/3.8)
 running Windows 10 and Linux.
 
