@@ -99,7 +99,8 @@ The code accompanies our [academic work](https://arxiv.org/abs/1907.01879) in th
 ```
 
 ## Runtimes
-The following tables show the mean runtimes per batch (8) and per image for a simple Cube scene (640x480xRGBA). See [benchmarks/benchmark.py](./benchmarks/benchmark.py) for details. The timings include rendering, transfer, decoding and batch collating.
+
+The following tables show the mean runtimes per batch (8) and per image for a simple Cube scene (640x480xRGBA). See [benchmarks/benchmark.py](./benchmarks/benchmark.py) for details. The timings include rendering, transfer, decoding and batch collating. Reported timings are for Blender 2.8. Blender 2.9 performs equally well on this scene, but is usually faster for more complex renderings.
 
 | Blender Instances  | Runtime sec/batch | Runtime sec/image | Arguments|
 |:-:|:-:|:-:|:-:|
