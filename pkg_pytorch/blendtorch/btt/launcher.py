@@ -2,16 +2,13 @@ import subprocess
 import os
 import logging
 import numpy as np
+import json
+
 
 from .finder import discover_blender
+from .launch_info import LaunchInfo
 
 logger = logging.getLogger('blendtorch')
-
-class LaunchInfo:
-    def __init__(self, addresses, processes, commands):
-        self.addresses = addresses
-        self.processes = processes
-        self.commands = commands
 
 
 class BlenderLauncher():
@@ -96,6 +93,7 @@ class BlenderLauncher():
             logger.info(f'Blender found {self.blender_info["path"]} version {self.blender_info["major"]}.{self.blender_info["minor"]}')
 
         self.launch_info = None
+        self.processes = None
 
     def __enter__(self):
         '''Launch processes'''
@@ -160,7 +158,7 @@ class BlenderLauncher():
             commands.append(' '.join(cmd))
             logger.info(f'Started instance: {cmd}')
 
-        self.launch_info = LaunchInfo(addresses, processes, commands)
+        self.launch_info = LaunchInfo(addresses, commands, processes=processes)
         return self
 
     def assert_alive(self):
@@ -169,6 +167,10 @@ class BlenderLauncher():
             return
         codes = self._poll()
         assert all([c==None for c in codes]), f'Alive test failed. Exit codes {codes}'
+
+    def wait(self):
+        '''Wait until all launched processes terminate.'''
+        [p.wait() for p in self.launch_info.processes]
 
     def __exit__(self, exc_type, exc_value, exc_traceback): 
         '''Terminate all processes.'''   

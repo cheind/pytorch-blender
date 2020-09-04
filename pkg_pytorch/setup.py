@@ -19,7 +19,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     version=open(THISDIR/'blendtorch'/'btt'/'__init__.py').readlines()[-1].split()[-1].strip('\''),
-    packages=['blendtorch.btt'],    
+    packages=['blendtorch.btt', 'blendtorch.btt.apps'],    
     install_requires=required,
     zip_safe=False,
 )

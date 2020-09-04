@@ -1,4 +1,4 @@
-from .launcher import BlenderLauncher
+from .launcher import BlenderLauncher, LaunchInfo
 from .dataset import RemoteIterableDataset, FileDataset
 from .finder import discover_blender
 from .file import FileRecorder, FileReader
