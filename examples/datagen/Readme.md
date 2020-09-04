@@ -34,7 +34,7 @@ On the PyTorch side, [minimal.py](./minimal.py) the following steps:
 from pathlib import Path
 from torch.utils import data
 
-from blendtorch import btt
+import blendtorch.btt as btt
 
 def main():
     launch_args = dict(
@@ -67,7 +67,7 @@ scene [cube.blend](./cube.blend) and script [cube.blend.py](./cube.blend.py) con
 import bpy
 import numpy as np
 
-from blendtorch import btb
+import blendtorch.btb as btb
 
 def main():
     # Parse script arguments passed via blendtorch
@@ -145,6 +145,7 @@ Upon launch, `blendtorch-launch` writes connection information to `launch_info.j
 }
 ```
 Notice, `primaryip` was automatically resolved into an IP addresses with default route configured. Now, to connect from *B*, ensure the machine has access to `launch_info.json` and connect as follows
+
 ```python
 import blendtorch.btt as btt
 launch_info = btt.LaunchInfo.load_json('launch_info.json')
