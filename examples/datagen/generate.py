@@ -5,7 +5,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-from blendtorch import btt
+import blendtorch.btt as btt
 
 def gamma_correct(x):
     '''Return sRGB image.'''

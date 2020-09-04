@@ -2,7 +2,7 @@ import numpy as np
 import bpy
 import logging
 
-from blendtorch import btb
+import blendtorch.btb as btb
 
 def main():
     args, remainder = btb.parse_blendtorch_args()

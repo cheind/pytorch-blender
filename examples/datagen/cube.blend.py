@@ -1,7 +1,7 @@
 import bpy
 import numpy as np
 
-from blendtorch import btb
+import blendtorch.btb as btb
 
 def main():
     # Parse script arguments passed via blendtorch launcher
