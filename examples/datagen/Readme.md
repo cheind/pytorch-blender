@@ -126,10 +126,10 @@ where `launch.json` contains a dictionary of keyword arguments for `btt.BlenderL
     ],
     "background": true,
     "seed": 10,
-    "bind_addr": "192.168.20.148"
+    "bind_addr": "primaryip"
 }
 ```
-Additional to loading, `blendtorch-launch` writes connection information to `launch_info.json`. For example
+Upon launch, `blendtorch-launch` writes connection information to `launch_info.json`. For example
 ```json
 {
     "addresses": {
@@ -144,12 +144,13 @@ Additional to loading, `blendtorch-launch` writes connection information to `lau
     },
 }
 ```
-To connect from *B*, ensure it has access to `launch_info.json` and connect as follows
+Notice, `primaryip` was automatically resolved into an IP addresses with default route configured. Now, to connect from *B*, ensure the machine has access to `launch_info.json` and connect as follows
 ```python
 import blendtorch.btt as btt
 launch_info = btt.LaunchInfo.load_json('launch_info.json')
 ds = btt.RemoteIterableDataset(launch_info.addresses['DATA'], max_items=2)
 item = next(iter(ds))
+print(item.keys())
 #...
 ```
 
