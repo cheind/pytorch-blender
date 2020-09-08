@@ -61,7 +61,7 @@ class FileRecorder:
         # we get an error when loading data from stream. We should ensure
         # that what we do here is actually OK, independent of the protocol.
         self.pickler = pickle.Pickler(self.file, protocol=3) 
-        self.offsets = np.full(self.capacity, -1, dtype=int)
+        self.offsets = np.full(self.capacity, -1, dtype=np.int64)
         self.num_messages = 0
         self.pickler.dump(self.offsets) # We fix this once we close the file.
         return self
