@@ -128,3 +128,23 @@ def random_spherical_loc(radius_range=None, theta_range=None, phi_range=None):
         np.sin(t)*np.sin(p),
         np.cos(t)
     ])*r
+
+def compute_object_visibility(obj, cam, N=25, scene=None, view_layer=None):
+    '''Computes object visibility using Monte Carlo ray-tracing.'''
+    scene = scene or bpy.context.scene
+    vl = view_layer or bpy.context.view_layer    
+    src = cam.bpy_camera.matrix_world.translation
+    
+    caminv = cam.bpy_camera.matrix_world.inverted()
+
+    ids = np.random.choice(len(obj.data.vertices), size=N)
+    vis = 0
+    for idx in ids:
+        dst_world = obj.matrix_world @ obj.data.vertices[idx].co
+        dst_cam = caminv @ dst_world
+        if dst_cam.z < 0.: # view towards neg. z
+            d = (dst_world-src).normalized()        
+            res,x,n,face,object,_ = scene.ray_cast(vl, src, d)
+            if res and object==obj:
+                vis += 1
+    return vis / N
