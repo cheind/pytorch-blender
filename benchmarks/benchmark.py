@@ -6,7 +6,7 @@ from blendtorch import btt
 
 BATCH = 8
 INSTANCES = 4
-WORKER_INSTANCES = 2
+WORKER_INSTANCES = 4
 NUM_ITEMS = 512
 EXAMPLES_DIR = Path(__file__).parent/'..'/'examples'/'datagen'
         

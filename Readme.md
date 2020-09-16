@@ -1,4 +1,4 @@
-# blendtorch v0.2
+# blendtorch
 [![](https://travis-ci.org/cheind/pytorch-blender.svg?branch=develop)](https://travis-ci.org/cheind/pytorch-blender)
 
 **blendtorch** is a Python framework to seamlessly integrate [Blender](http://blender.orf) renderings into [PyTorch](http://pytorch.org) datasets for deep learning from artificial visual data. We utilize Eevee, a new physically based real-time renderer, to synthesize images and annotations in real-time and thus avoid stalling model training in many cases.
@@ -25,7 +25,7 @@ The figure below visualizes a single image/label batch received by PyTorch from 
 
 ### Prerequisites
 This package has been tested with
- - [Blender](https://www.blender.org/) >= 2.83 (Python 3.7)
+ - [Blender](https://www.blender.org/) >= 2.83/2.90 (Python 3.7)
  - [PyTorch](http://pytorch.org) >= 1.50 (Python 3.7/3.8)
 running Windows 10 and Linux.
 
@@ -99,7 +99,8 @@ The code accompanies our [academic work](https://arxiv.org/abs/1907.01879) in th
 ```
 
 ## Runtimes
-The following tables show the mean runtimes per batch (8) and per image for a simple Cube scene (640x480xRGBA). See [benchmarks/benchmark.py](./benchmarks/benchmark.py) for details. The timings include rendering, transfer, decoding and batch collating.
+
+The following tables show the mean runtimes per batch (8) and per image for a simple Cube scene (640x480xRGBA). See [benchmarks/benchmark.py](./benchmarks/benchmark.py) for details. The timings include rendering, transfer, decoding and batch collating. Reported timings are for Blender 2.8. Blender 2.9 performs equally well on this scene, but is usually faster for more complex renderings.
 
 | Blender Instances  | Runtime sec/batch | Runtime sec/image | Arguments|
 |:-:|:-:|:-:|:-:|
