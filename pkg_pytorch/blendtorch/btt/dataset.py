@@ -93,7 +93,6 @@ class RemoteIterableDataset(utils.data.IterableDataset):
                             self.max_items
                         )
                     )
-                
 
                 for i in range(self.max_items//num_workers):
                     socks = dict(poller.poll(self.timeoutms))
@@ -105,6 +104,7 @@ class RemoteIterableDataset(utils.data.IterableDataset):
                     else:
                         obj = socket.recv_pyobj()
                     yield self._item(obj)
+                    del obj
             
         finally:
             if socket is not None:
