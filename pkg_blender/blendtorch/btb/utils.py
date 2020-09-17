@@ -145,7 +145,9 @@ def compute_object_visibility(obj, cam, N=25, scene=None, view_layer=None, dist=
         d = (dst_world-src).normalized()
         dst_cam = caminv @ dst_world
         if dst_cam.z <= 0. and np.isfinite(d).all(): # view towards neg. z            
-            res,x,n,face,object,_ = scene.ray_cast(vl, src, d, distance=dist)
+            res,x,n,face,object,m = scene.ray_cast(vl, src, d, distance=dist)
             if res and object==obj:
                 vis += 1
+            del object,m,x,n,res
+        del d, dst_world, dst_cam
     return vis / N
