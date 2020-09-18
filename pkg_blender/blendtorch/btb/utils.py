@@ -27,6 +27,32 @@ def find_first_view3d():
     assert len(spaces) > 0
     return area, spaces[0], region
 
+def object_coordinates(*objs, depsgraph=None):
+    '''Returns XYZ object coordinates of all objects in positional *args.
+    
+    Params
+    ------
+    objs: list-like of bpy.types.Object
+        Object to return vertices for
+    depsgraph: bpy.types.Depsgraph, None
+        Dependency graph
+
+    Returns
+    -------
+    xyz: Nx3 array
+        World coordinates of object vertices
+    '''
+
+    # To be on the safe side, we use the evaluated object after 
+    # all modifiers etc. applied (done internally by bmesh)
+    
+    dg = depsgraph or bpy.context.evaluated_depsgraph_get()
+    xyz = []
+    for obj in objs:
+        eval_obj = obj.evaluated_get(dg)
+        xyz_obj = [v.co for v in eval_obj.data.vertices]
+        xyz.extend(xyz_obj)
+    return np.stack(xyz)
 
 def world_coordinates(*objs, depsgraph=None):
     '''Returns XYZ world coordinates of all objects in positional *args.
