@@ -31,15 +31,6 @@ class OffScreenRenderer:
         Blender performs offline rendering in linear color space that when 
         viewed directly appears to be darker than expected. Usually a value
         of 2.2 get's the job done. Defaults to None.
-
-    Attributes
-    -----------
-    proj_matrix: Matrix
-        Projection matrix to use. See `btb.camera` for helpers. Update this when
-        the camera intrinsics change.
-    view_matrix: Matrix
-        View matrix to use. See `btb.camera` for helpers. Update this when
-        the camera moves.
     '''
     
     def __init__(self, camera=None, mode='rgba', origin='upper-left', gamma_coeff=None):
