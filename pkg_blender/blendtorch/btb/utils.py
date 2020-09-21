@@ -177,3 +177,17 @@ def compute_object_visibility(obj, cam, N=25, scene=None, view_layer=None, dist=
             del object,m,x,n,res
         del d, dst_world, dst_cam
     return vis / N
+
+def scene_stats():
+    '''Returns debug information on the current scene.'''
+    stats = {}
+    for attr in dir(bpy.data):
+        if isinstance(attr, bpy.types.Collection):
+            objs = getattr(bpy.data, attr).all_objects
+            if len(objs) == 0:
+                continue
+            orphaned = [o for o in objs if o.users == 0]
+            active = [o for o in objs if o.users > 0]
+            stats[attr] = (len(active), len(orphaned))
+    return stats
+
