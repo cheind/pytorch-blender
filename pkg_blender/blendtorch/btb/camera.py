@@ -200,5 +200,6 @@ class Camera:
         rot_quat = direction.to_track_quat('-Z', 'Y')
         self.bpy_camera.rotation_euler = rot_quat.to_euler()
         self.bpy_camera.location = look_from
-        bpy.context.evaluated_depsgraph_get().update()
+        #bpy.context.evaluated_depsgraph_get().update()
         self.update_view_matrix()
+        
