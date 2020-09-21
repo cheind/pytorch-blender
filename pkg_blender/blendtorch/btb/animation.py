@@ -2,6 +2,7 @@
 import sys
 import bpy
 import threading
+from contextlib import contextmanager
 
 from .signal import Signal
 from .utils import find_first_view3d
@@ -52,9 +53,11 @@ class AnimationController:
             self.draw_handler = None
             self.draw_space = None
             self.last_post_frame = 0
+            self._allow_events = True
 
         def skip_post_frame(self, current_frame):
             return (
+                not self.allow_events or
                 not self.pending_post_frame or
                 self.last_post_frame == current_frame or
                 (
@@ -63,6 +66,24 @@ class AnimationController:
                     bpy.context.space_data != self.draw_space
                 )
             )
+
+        @contextmanager
+        def disable_events(self):
+            old = self._allow_events
+            self._allow_events = False
+            yield
+            self._allow_events = old
+
+        @contextmanager
+        def enable_events(self):
+            old = self._allow_events
+            self._allow_events = True
+            yield
+            self._allow_events = old
+
+        @property
+        def allow_events(self):
+            return self._allow_events
 
 
     @property
@@ -135,7 +156,8 @@ class AnimationController:
 
     def _play_animation(self):
         '''Setup and start Blender animation loop.'''
-        self.pre_play.invoke()     
+        with self._plyctx.disable_events():
+            self.pre_play.invoke()     
         bpy.app.handlers.frame_change_pre.append(self._on_pre_frame)
         if self._plyctx.use_offline_render:
             # To be save, we need to draw from `POST_PIXEL` not `frame_change_post`.
@@ -152,7 +174,8 @@ class AnimationController:
 
     def _play_manual(self):
         '''Setup and start blocking animation loop.'''
-        self.pre_play.invoke()
+        with self._plyctx.disable_events():
+            self.pre_play.invoke()
         bpy.app.handlers.frame_change_pre.append(self._on_pre_frame)
         bpy.app.handlers.frame_change_post.append(self._on_post_frame)
 
@@ -170,15 +193,20 @@ class AnimationController:
 
     def _set_frame(self, frame_index):
         '''Step to a specific frame.'''
-        bpy.context.scene.frame_set(frame_index)
+        with self._plyctx.enable_events(): # needed for env support?
+            bpy.context.scene.frame_set(frame_index)
 
     def _on_pre_frame(self, scene, *args):              
         '''Handle pre-frame events internally.'''
+        if not self._plyctx.allow_events:
+            return
+
         pre_first = (self.frameid == self._plyctx.frame_range[0])
         
-        if pre_first:
-            self.pre_animation.invoke()
-        self.pre_frame.invoke()
+        with self._plyctx.disable_events():
+            if pre_first:
+                self.pre_animation.invoke()
+            self.pre_frame.invoke()
         # The following guards us from multiple calls to `_on_post_frame`
         # when we hooked into `POST_PIXEL`
         self._plyctx.pending_post_frame = True
@@ -190,13 +218,14 @@ class AnimationController:
         self._plyctx.pending_post_frame = False
         self._plyctx.last_post_frame = self.frameid
         
-        self.post_frame.invoke()
-        post_last = (self.frameid == self._plyctx.frame_range[1])
-        if post_last:            
-            self.post_animation.invoke()
-            self._plyctx.episode += 1
-            if self._plyctx.episode == self._plyctx.num_episodes:
-                self._cancel()
+        with self._plyctx.disable_events():
+            self.post_frame.invoke()
+            post_last = (self.frameid == self._plyctx.frame_range[1])
+            if post_last:                        
+                self.post_animation.invoke()
+                self._plyctx.episode += 1
+                if self._plyctx.episode == self._plyctx.num_episodes:
+                    self._cancel()
 
     def _cancel(self):
         '''Stop the animation.'''

@@ -4,7 +4,6 @@ from .camera import Camera
 from pathlib import Path
 import re
 from functools import partial
-import OpenEXR, Imath
 import os
 
 class Renderer:
@@ -26,8 +25,10 @@ class Renderer:
         of 2.2 get's the job done. Defaults to None.
     '''
     
-    def __init__(self, camera=None, mode='rgba', gamma_coeff=None, delete_render_files=True):
-        assert mode in ['rgba', 'rgb']        
+    def __init__(self, btid, camera=None, mode='rgba', gamma_coeff=None, delete_render_files=True):
+        assert mode in ['rgba', 'rgb'] 
+        
+        self.btid = btid       
         self.camera = camera or Camera()
         self.gamma_coeff = gamma_coeff
         self.delete_render_files = delete_render_files
@@ -44,7 +45,6 @@ class Renderer:
         assert n.format.file_format == 'OPEN_EXR_MULTILAYER', 'Renderer requires OPEN_EXR_MULTILAYER format.'        
         assert n.format.exr_codec == 'NONE', 'Renderer requires EXR codec None.'
         assert n.format.color_depth == '16', 'Renderer requires half-precision.'
-        self._color_depth = Imath.PixelType(Imath.PixelType.HALF)
         
         self._layername = None
         for (inp, slot) in zip(n.inputs, n.layer_slots):
@@ -52,13 +52,17 @@ class Renderer:
                 self._layername = slot.name
 
         assert self._layername is not None, 'Failed to find RGBA layer.'
-        self._outpath_template = n.base_path
+
+        path = Path(bpy.path.abspath(n.base_path))
+        path = path.parent / f'{path.stem}_{btid:02d}'
+        path = path.with_suffix('.exr')
+        n.base_path = str(path)
+        self._outpath_template = str(path)
         self._outpath_re = re.compile(r'((#)+)')
         
     @property
     def shape(self):
         return self.camera.shape
-
 
     def _repl(self, g, fidx):
         len = g.span()[1] - g.span()[0]
@@ -72,7 +76,10 @@ class Renderer:
         image: HxWxD array
             where D is 4 when `mode=='RGBA'` else 3.
         '''
+        import OpenEXR, Imath
+
         fidx = self._scene.frame_current
+        bpy.ops.render.render(animation=False, write_still=False, use_viewport=True)
 
         basepath, cnt = self._outpath_re.subn(partial(self._repl, fidx=fidx), self._outpath_template)
         if cnt == 0:
@@ -83,22 +90,24 @@ class Renderer:
         file = None
         try:
             file = OpenEXR.InputFile(str(path))
-            self.color_image[..., 0] = np.frombuffer(file.channel(f'{self._layername}.R', self._color_depth), dtype=np.float16).reshape(self.shape)
-            self.color_image[..., 1] = np.frombuffer(file.channel(f'{self._layername}.G', self._color_depth), dtype=np.float16).reshape(self.shape)
-            self.color_image[..., 2] = np.frombuffer(file.channel(f'{self._layername}.B', self._color_depth), dtype=np.float16).reshape(self.shape)
+            cdepth = Imath.PixelType(Imath.PixelType.HALF)
+            self.color_image[..., 0] = np.frombuffer(file.channel(f'{self._layername}.R', cdepth), dtype=np.float16).reshape(self.shape)
+            self.color_image[..., 1] = np.frombuffer(file.channel(f'{self._layername}.G', cdepth), dtype=np.float16).reshape(self.shape)
+            self.color_image[..., 2] = np.frombuffer(file.channel(f'{self._layername}.B', cdepth), dtype=np.float16).reshape(self.shape)
             if self.channels == 4:
-                self.color_image[..., 3] = np.frombuffer(file.channel(f'{self._layername}.A', self._color_depth), dtype=np.float16).reshape(self.shape)
+                self.color_image[..., 3] = np.frombuffer(file.channel(f'{self._layername}.A', cdepth), dtype=np.float16).reshape(self.shape)
         finally:
             if file is not None:
                 file.close()
             file = None
 
-        #if self.delete_render_files:
-        #    os.remove(path)
+        if self.delete_render_files:
+            os.remove(path)
         if self.gamma_coeff:
             self._color_correct(self.color_image, self.gamma_coeff)
 
-        return (self.color_image * 255.0).astype(np.uint8)
+        rgba = (self.color_image * 255.0).astype(np.uint8)
+        return rgba
         
     def _color_correct(self, coeff=2.2):
         ''''Return sRGB image.'''
