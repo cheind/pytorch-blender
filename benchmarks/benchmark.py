@@ -15,7 +15,7 @@ EXAMPLES_DIR = Path(__file__).parent/'..'/'examples'/'datagen'
         
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--scene', help='Blender scene name to run', default='cube')
+    parser.add_argument('scene', help='Blender scene name to run', default='cube')
     args = parser.parse_args()
 
     launch_args = dict(
@@ -60,8 +60,10 @@ def main():
         fig, _ = plt.subplots()
         plt.plot(np.arange(len(elapsed)), elapsed)
         plt.title('Receive times between 50 consecutive batches')
-        fig.savefig(f'./tmp/batches_elapsed.png')
+        save_path = EXAMPLES_DIR / 'tmp' / 'batches_elapsed.png'
+        fig.savefig(str(save_path))
         plt.close(fig)
+        print(f'Figure saved to {save_path}')
 
 if __name__ == '__main__':
     main()
