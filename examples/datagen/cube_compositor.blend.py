@@ -28,12 +28,12 @@ def main():
 
     # Setup default image rendering
     cam = btb.Camera()
-    off = btb.Renderer(camera=cam, mode='rgb')
+    off = btb.Renderer(btargs.btid, camera=cam, mode='rgb')
 
     # Setup the animation and run endlessly
     anim = btb.AnimationController()
     anim.pre_frame.add(pre_frame)
     anim.post_frame.add(post_frame, off, pub, anim, cam)    
-    anim.play(frame_range=(0,100), num_episodes=-1, use_offline_render=False, use_renderer=True, use_animation=False)
+    anim.play(frame_range=(0,100), num_episodes=-1, use_offline_render=False)
 
 main()
