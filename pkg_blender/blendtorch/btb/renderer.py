@@ -104,13 +104,19 @@ class Renderer:
         if self.delete_render_files:
             os.remove(path)
         if self.gamma_coeff:
-            self._color_correct(self.color_image, self.gamma_coeff)
+            self._color_correct(self.gamma_coeff)
 
         rgba = (self.color_image * 255.0).astype(np.uint8)
         return rgba
+
+    def _color_correct(self, buffer, coeff=2.2):
+        ''''Return sRGB image.'''
+        rgb = np.uint8(255.0 * rgb**(1/coeff))
+        if buffer.shape[-1] == 4:
+            return np.concatenate((rgb, buffer[...,3:4]), axis=-1)
+        else:
+            return rgb
         
     def _color_correct(self, coeff=2.2):
         ''''Return sRGB image.'''
-        mask = (self.color_image[...,:3] <= 0.0031308)
-        self.color_image[mask,:3] *= 12.92
-        self.color_image[~mask,:3] = 1.055*np.power(self.color_image[~mask,:3], 1/coeff) - 0.055
+        self.color_image[..., :3] = self.color_image[..., :3]**(1/coeff)        
