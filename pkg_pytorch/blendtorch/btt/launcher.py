@@ -141,6 +141,7 @@ class BlenderLauncher():
             if self.background:
                 cmd.append('--background')
             cmd.append('--python-use-system-env')
+            cmd.append('--enable-autoexec')
             cmd.append('--python')
             cmd.append(f'{self.script}')
             cmd.append('--')
