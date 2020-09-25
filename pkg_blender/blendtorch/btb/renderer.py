@@ -108,14 +108,6 @@ class Renderer:
 
         rgba = (self.color_image * 255.0).astype(np.uint8)
         return rgba
-
-    def _color_correct(self, buffer, coeff=2.2):
-        ''''Return sRGB image.'''
-        rgb = np.uint8(255.0 * rgb**(1/coeff))
-        if buffer.shape[-1] == 4:
-            return np.concatenate((rgb, buffer[...,3:4]), axis=-1)
-        else:
-            return rgb
         
     def _color_correct(self, coeff=2.2):
         ''''Return sRGB image.'''
