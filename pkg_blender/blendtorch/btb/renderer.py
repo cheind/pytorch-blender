@@ -1,10 +1,12 @@
-import numpy as np
 import bpy
-from .camera import Camera
-from pathlib import Path
-import re
+import re, os
+import numpy as np
 from functools import partial
-import os
+from pathlib import Path
+import minexr
+
+from .camera import Camera
+
 
 class Renderer:
     '''Provides rendering using Eevee.
@@ -33,8 +35,7 @@ class Renderer:
         self.gamma_coeff = gamma_coeff
         self.delete_render_files = delete_render_files
         self.channels = 4 if mode=='rgba' else 3
-        self.color_image = np.zeros(self.camera.shape + (self.channels,), dtype=np.float32)
-
+        
         self._scene = bpy.context.scene
         assert self._scene.use_nodes, 'Renderer currently requires compositing nodes.'
 
@@ -46,12 +47,16 @@ class Renderer:
         assert n.format.exr_codec == 'NONE', 'Renderer requires EXR codec None.'
         assert n.format.color_depth == '16', 'Renderer requires half-precision.'
         
-        self._layername = None
+        layer = None
         for (inp, slot) in zip(n.inputs, n.layer_slots):
             if inp.type == 'RGBA':
-                self._layername = slot.name
+                layer = slot.name
+        assert layer is not None, 'Failed to find RGBA layer.'
 
-        assert self._layername is not None, 'Failed to find RGBA layer.'
+        if self.channels == 4:
+            self._exr_channels = [f'{layer}.{c}' for c in ['R', 'G', 'B', 'A']]
+        else:
+            self._exr_channels = [f'{layer}.{c}' for c in ['R', 'G', 'B']]
 
         path = Path(bpy.path.abspath(n.base_path))
         path = path.parent / f'{path.stem}_{btid:02d}'
@@ -76,7 +81,6 @@ class Renderer:
         image: HxWxD array
             where D is 4 when `mode=='RGBA'` else 3.
         '''
-        import OpenEXR, Imath
 
         fidx = self._scene.frame_current
         bpy.ops.render.render(animation=False, write_still=False, use_viewport=True)
@@ -87,28 +91,17 @@ class Renderer:
         path = Path(bpy.path.abspath(basepath))
         assert path.exists(), f'Could not find output file {path}'
 
-        file = None
-        try:
-            file = OpenEXR.InputFile(str(path))
-            cdepth = Imath.PixelType(Imath.PixelType.HALF)
-            self.color_image[..., 0] = np.frombuffer(file.channel(f'{self._layername}.R', cdepth), dtype=np.float16).reshape(self.shape)
-            self.color_image[..., 1] = np.frombuffer(file.channel(f'{self._layername}.G', cdepth), dtype=np.float16).reshape(self.shape)
-            self.color_image[..., 2] = np.frombuffer(file.channel(f'{self._layername}.B', cdepth), dtype=np.float16).reshape(self.shape)
-            if self.channels == 4:
-                self.color_image[..., 3] = np.frombuffer(file.channel(f'{self._layername}.A', cdepth), dtype=np.float16).reshape(self.shape)
-        finally:
-            if file is not None:
-                file.close()
-            file = None
-
+        with open(path, 'rb') as fp:
+            reader = minexr.load(fp)
+            rgba = reader.select(self._exr_channels).astype(np.float32)
+        
         if self.delete_render_files:
             os.remove(path)
         if self.gamma_coeff:
-            self._color_correct(self.gamma_coeff)
-
-        rgba = (self.color_image * 255.0).astype(np.uint8)
-        return rgba
+            self._color_correct(rgba, coeff=self.gamma_coeff)
+            
+        return (rgba * 255.0).astype(np.uint8)
         
-    def _color_correct(self, coeff=2.2):
+    def _color_correct(self, img, coeff=2.2):
         ''''Return sRGB image.'''
-        self.color_image[..., :3] = self.color_image[..., :3]**(1/coeff)        
+        img[..., :3] = img[..., :3]**(1/coeff)        
