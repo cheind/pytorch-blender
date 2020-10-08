@@ -11,7 +11,7 @@ Feature summary
 The figure below visualizes the basic concept of **blendtorch** used in the context of generating artificial training data for a real-world detection task.
 
 <div align="center">
-<img src="etc/blendtorch_intro_v3.svg" width="600">
+<img src="etc/blendtorch_intro_v3.svg" width="90%">
 </div>
 
 ## Getting started
