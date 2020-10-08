@@ -11,7 +11,7 @@ Feature summary
 The figure below visualizes a single image/label batch received by PyTorch from four parallel Blender instances. Each Blender process repeatedly performs motion simulations of randomized cubes.
 
 <div align="center">
-<img src="etc/result_physics.png" width="500">
+<img src="etc/blendtorch_intro_v3.svg" width="600">
 </div>
 
 ## Getting started
@@ -80,23 +80,6 @@ which should print **blendtorch** version number on success.
 
 ## Architecture
 Please see [\[examples/datagen\]](examples/datagen) and [\[examples/control\]](examples/control) for an in-depth architectural discussion. Bi-directional communication is explained in [\[examples/densityopt\]](examples/densityopt).
-
-## Cite
-The code accompanies our [academic work](https://arxiv.org/abs/1907.01879) in the field of machine learning from artificial images. When using please cite the following work
-```
-@inproceedings{robotpose_etfa2019_cheind,
-    author={Christoph Heindl and Sebastian Zambal and Josef Scharinger},
-    title={Learning to Predict Robot Keypoints Using Artificially Generated Images},
-    booktitle={
-        24th IEEE International Conference on 
-        Emerging Technologies and Factory Automation (ETFA)
-    },    
-    year={2019},
-    pages={1536-1539},
-    doi={10.1109/ETFA.2019.8868243},
-    isbn={978-1-7281-0303-7},
-}
-```
 
 ## Runtimes
 
