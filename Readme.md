@@ -20,7 +20,7 @@ The figure below visualizes the basic concept of **blendtorch** used in the cont
  1. To learn about using **blendtorch** for creating reinforcement training environments read [\[examples/control\]](examples/control).
 
 ## Cite
-The code accompanies our academic work in the field of machine learning from artificial images. Please consider the following publications when citing **blendtorch**
+The code accompanies our academic work [[1]](https://arxiv.org/abs/1907.01879),[[2]](https://arxiv.org/abs/2010.11696) in the field of machine learning from artificial images. Please consider the following publications when citing **blendtorch**
 ```
 @inproceedings{robotpose_etfa2019_cheind,
     author={Christoph Heindl, Sebastian Zambal, Josef Scharinger},
