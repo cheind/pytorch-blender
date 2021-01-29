@@ -20,7 +20,7 @@ def run(cmd):
         sys.exit(1)
 
 def install(name, upgrade=True, user=True, editable=False):
-    cmd = [bpy.app.binary_path_python, '-m', 'pip', 'install']
+    cmd = [sys.executable, '-m', 'pip', 'install']
     if upgrade:
         cmd.append('--upgrade')
     if user:
@@ -31,7 +31,11 @@ def install(name, upgrade=True, user=True, editable=False):
     run(cmd)
 
 def bootstrap(user=True):
-    cmd = [bpy.app.binary_path_python, '-m', 'ensurepip', '--upgrade']
+    cmd = [sys.executable, '-m', 'ensurepip', '--upgrade']
+    if user:
+        cmd.append('--user')
+    run(cmd)
+    cmd = [sys.executable, '-m', 'pip', 'install', '--upgrade', 'pip']
     if user:
         cmd.append('--user')
     run(cmd)
