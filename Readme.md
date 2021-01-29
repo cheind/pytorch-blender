@@ -49,7 +49,7 @@ The code accompanies our academic work [[1]](https://arxiv.org/abs/1907.01879),[
 
 ### Prerequisites
 This package has been tested with
- - [Blender](https://www.blender.org/) >= 2.83/2.90 (Python 3.7)
+ - [Blender](https://www.blender.org/) >= 2.83/2.91 (Python 3.7)
  - [PyTorch](http://pytorch.org) >= 1.50 (Python 3.7/3.8)
 running Windows 10 and Linux.
 
@@ -63,8 +63,11 @@ git clone https://github.com/cheind/pytorch-blender.git <DST>
 ### Extend `PATH`
 Ensure Blender executable is in your environments lookup `PATH`. On Windows this can be accomplished by
 ```
-set PATH=c:\Program Files\Blender Foundation\Blender 2.83;%PATH%
+set PATH=c:\Program Files\Blender Foundation\Blender 2.91;%PATH%
 ```
+
+### Complete Blender settings
+Open Blender at least once, and complete the initial settings. If this step is missed, some of the tests (especially the tests relating RL) will fail (Blender 2.91).
 
 ### Install **blendtorch** Blender part
 ```
@@ -80,6 +83,7 @@ installs `blendtorch-btt` into the Python environment that you intend to run PyT
 ```
 pip install gym
 ```
+
 ### Developer instructions
 This step is optional. If you plan to run the unit tests
 ```
