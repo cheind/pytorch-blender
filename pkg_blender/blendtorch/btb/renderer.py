@@ -11,8 +11,7 @@ from .camera import Camera
 class Renderer:
     '''Provides rendering using Eevee.
 
-    Does not use preview rendering as provided by OffscreenRenderer. This class currently
-    requires compositor usage with at least one file output node configured.    
+    Does not use preview rendering as provided by OffscreenRenderer. This class currently requires compositor usage with at least one file output node configured.    
     
     Params
     ------
