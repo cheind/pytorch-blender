@@ -134,7 +134,7 @@ class CompositeRenderer:
 
     Params
     ------
-    slots: Iterable[SlotSelection]
+    slots: Iterable[CompositeSelection]
         Slots to be selected and returned by `render`.        
     camera: btb.Camera, None
         Camera view to be rendered. When None, default camera is used.
@@ -180,13 +180,15 @@ class CompositeRenderer:
         def is_compatible(n):
             return (
                 n.format.file_format == 'OPEN_EXR_MULTILAYER' and
-                n.format.exr_codec == 'NONE'  # and
-                #n.format.color_depth == '16'
+                n.format.exr_codec == 'NONE' and
+                n.format.color_depth == '16'  # currently, minexr assumes fp16
             )
 
-        outnodes = [n for n in outnodes if is_compatible(n)]
-        assert len(outnodes) > 0, 'Could not find a compatible output filenode'
-        return outnodes
+        outnodes_ok = [n for n in outnodes if is_compatible(n)]
+        outnodes_dropped = [n for n in outnodes if not is_compatible(n)]
+        assert len(
+            outnodes_ok) > 0, 'Could not find a single compatible output filenode'
+        return outnodes_ok
 
     def _update_output_paths(self, outnodes):
         for n in outnodes:
@@ -197,15 +199,14 @@ class CompositeRenderer:
         return outnodes
 
     def _actual_path(self, fidx, base_path):
-        def _repl(g, fidx):
+        def _replicate(g, fidx):
             len = g.span()[1] - g.span()[0]
             return str(fidx).zfill(len)
 
         newpath, cnt = self._outpath_re.subn(
-            partial(_repl, fidx=fidx),
+            partial(_replicate, fidx=fidx),
             base_path)
-        if cnt == 0:
-            newpath = f'{base_path}{fidx}'
+        assert cnt > 0, f'Composite renderer requires hash placeholders in output paths to identify frame number.'
         path = Path(bpy.path.abspath(newpath))
         assert path.exists(), f'Could not find output file {path}'
         return path
