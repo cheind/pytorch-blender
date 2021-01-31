@@ -11,8 +11,8 @@ if p not in sys.path:
     sys.path.append(p)
 from normals_depth import scene
 
-SHAPE = (50,50)
-NSHAPES = 20
+SHAPE = (30,30)
+NSHAPES = 50
 
 def main():
     def pre_anim(meshes):
@@ -34,6 +34,9 @@ def main():
 
     # Fetch camera
     cam = bpy.context.scene.camera
+
+    bpy.context.scene.rigidbody_world.time_scale = 100
+    bpy.context.scene.rigidbody_world.substeps_per_frame = 300
 
     # Setup supershapes
     meshes = scene.prepare(NSHAPES, sshape_res=SHAPE)

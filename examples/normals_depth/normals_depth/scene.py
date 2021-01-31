@@ -31,7 +31,8 @@ def prepare(n_sshapes, sshape_res=(100, 100), collection='Generated', mat='Norma
         SCN.rigidbody_world.collection.objects.link(s)
         # Rigid body settings
         s.rigid_body.enabled = True
-        s.rigid_body.collision_shape = 'CONVEX_HULL'
+        #s.rigid_body.collision_shape = 'CONVEX_HULL'
+        s.rigid_body.collision_shape = 'BOX'
         s.rigid_body.friction = 0.7
         s.rigid_body.linear_damping = 0.3
         s.rigid_body.angular_damping = 0.4
@@ -42,11 +43,11 @@ def prepare(n_sshapes, sshape_res=(100, 100), collection='Generated', mat='Norma
 
 def update_mesh(mesh, sshape_res=(100, 100)):
     params = np.random.uniform(
-        low=[2.00, 1, 1, 8.0, 8.0, 8.0],
+        low=[1.00, 1, 1, 6.0, 6.0, 6.0],
         high=[4.00, 1, 1, 10.0, 10.0, 10.0],
         size=(2, 6)
     )
-    scale = np.random.uniform(0.02, 0.10, size=3)
+    scale = np.abs(np.random.normal(0.05, 0.05, size=3))
     x, y, z = sshape.supercoords(params, shape=sshape_res)
     sshape.update_bpy_mesh(x*scale[0], y*scale[1], z*scale[2], mesh)
     mesh.location = np.random.uniform(

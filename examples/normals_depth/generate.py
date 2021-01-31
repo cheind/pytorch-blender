@@ -31,7 +31,7 @@ def main():
                   depth.dtype, np.ptp(depth))
 
             plt.figure()
-            plt.imshow(depth[0, :, :, 0], vmin=0, vmax=4.)
+            plt.imshow(depth[0, :, :, 0], vmin=1, vmax=2.5)
             plt.figure()
             plt.imshow(normals[0, :, :])
             plt.show()
