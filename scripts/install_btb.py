@@ -11,6 +11,7 @@ from pathlib import Path
 
 THISDIR = Path(__file__).parent
 
+
 def run(cmd):
     try:
         output = subprocess.check_output(cmd)
@@ -18,6 +19,7 @@ def run(cmd):
     except subprocess.CalledProcessError as e:
         print(e.output)
         sys.exit(1)
+
 
 def install(name, upgrade=True, user=True, editable=False):
     cmd = [sys.executable, '-m', 'pip', 'install']
@@ -30,6 +32,7 @@ def install(name, upgrade=True, user=True, editable=False):
     cmd.append(name)
     run(cmd)
 
+
 def bootstrap(user=True):
     cmd = [sys.executable, '-m', 'ensurepip', '--upgrade']
     if user:
@@ -39,9 +42,12 @@ def bootstrap(user=True):
     if user:
         cmd.append('--user')
     run(cmd)
-        
+
+
 def main():
+    print('Installing Blender dependencies. This might take a while...')
     bootstrap(user=True)
     install(str(THISDIR/'..'/'pkg_blender'), editable=True, user=True)
+
 
 main()
