@@ -26,8 +26,3 @@ def test_projection():
         item = next(iter(ds))
         assert_allclose(item['color'], expected_color)
         assert_allclose(item['depth'], expected_depth)
-
-        # assert_allclose(item['ortho_xy'], ortho_xy_expected, atol=1e-2)
-        # assert_allclose(item['ortho_z'], z_expected, atol=1e-2)
-        # assert_allclose(item['proj_xy'], proj_xy_expected, atol=1e-2)
-        # assert_allclose(item['proj_z'], z_expected, atol=1e-2)
