@@ -20,7 +20,7 @@ def main():
     with btt.BlenderLauncher(**launch_args) as bl:
         # Create remote dataset and limit max length to 16 elements.
         addr = bl.launch_info.addresses['DATA']
-        ds = btt.RemoteIterableDataset(addr, max_items=4)
+        ds = btt.RemoteIterableDataset(addr, max_items=16)
         dl = data.DataLoader(ds, batch_size=4, num_workers=0)
 
         for item in dl:
@@ -30,12 +30,15 @@ def main():
             print('Received', normals.shape, depth.shape,
                   depth.dtype, np.ptp(depth))
 
-            plt.figure()
-            plt.imshow(depth[0, :, :, 0], vmin=1, vmax=2.5)
-            plt.figure()
-            plt.imshow(normals[0, :, :])
+            fig, axs = plt.subplots(2,2)
+            axs = np.asarray(axs).reshape(-1)
+            for i in range(4):
+                axs[i].imshow(depth[i, :, :, 0], vmin=1, vmax=2.5)
+            fig, axs = plt.subplots(2,2)
+            axs = np.asarray(axs).reshape(-1)
+            for i in range(4):
+                axs[i].imshow(normals[i, :, :])
             plt.show()
-        # Will get here after 16/BATCH=4 iterations.
 
 
 if __name__ == '__main__':

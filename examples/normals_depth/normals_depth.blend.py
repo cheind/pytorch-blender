@@ -12,7 +12,7 @@ if p not in sys.path:
 from normals_depth import scene
 
 SHAPE = (30,30)
-NSHAPES = 50
+NSHAPES = 70
 
 def main():
     def pre_anim(meshes):
