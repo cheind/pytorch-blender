@@ -4,11 +4,8 @@ import numpy as np
 import blendtorch.btb as btb
 
 # Update python-path with current blend file directory,
-# so that package `tless` can be found.
-import sys
-p = bpy.path.abspath("//")
-if p not in sys.path:
-    sys.path.append(p)
+# so that normals_depth directory is recognized as package.
+btb.add_scene_dir_to_path()
 from normals_depth import scene
 
 SHAPE = (30,30)
