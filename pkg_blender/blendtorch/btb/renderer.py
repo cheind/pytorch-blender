@@ -85,7 +85,7 @@ class CompositeRenderer:
             )
 
         outnodes_ok = [n for n in outnodes if is_compatible(n)]
-        outnodes_dropped = [n for n in outnodes if not is_compatible(n)]
+        #outnodes_dropped = [n for n in outnodes if not is_compatible(n)]
         assert len(
             outnodes_ok) > 0, 'Could not find a single compatible output filenode'
         return outnodes_ok
