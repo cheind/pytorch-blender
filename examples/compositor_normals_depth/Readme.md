@@ -1,6 +1,6 @@
 ## Compositor Render Support
 
-This directory showcases synthetic data generation using **blendtorch** for supervised machine learning. In particular, we use composite rendering to extract normals and depths from a randomized scene. The scene is composed of fixed plane and a number of parametric 3D supershapes. Using physics, we let a randomized initial object constellation fall onto the plane. Once the object come to rest (we speed up the physics, so this roughly happens after a single frame), we publish dense camera  depth and normal information.
+This directory showcases synthetic data generation using **blendtorch** for supervised machine learning. In particular, we use composite rendering to extract normals and depths from a randomized scene. The scene is composed of fixed plane and a number of parametric 3D supershapes. Using physics, we drop a random initial constellation of objects onto the plane. Once the object come to rest (we speed up the physics, so this roughly happens after a single frame), we publish dense camera  depth and normal information.
 
 <p align="center">
 <img src="etc/normals_depth.png" width="500">
