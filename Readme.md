@@ -4,7 +4,7 @@
 **blendtorch** is a Python framework to seamlessly integrate [Blender](http://blender.orf) renderings into [PyTorch](http://pytorch.org) datasets for deep learning from artificial visual data. We utilize Eevee, a new physically based real-time renderer, to synthesize images and annotations in real-time and thus avoid stalling model training in many cases.
 
 Feature summary
- - ***Data Streaming***: Stream distributed Blender renderings directly into PyTorch data pipelines in real-time for supervised learning and domain randomization applications. Supports arbitrary pickle-able objects to be send alongside images/videos. Built-in recording capability to replay data without Blender. Bi-directional communication channels allow Blender simulations to adapt during network training. </br>More info [\[examples/datagen\]](examples/datagen), [\[examples/densityopt\]](examples/densityopt)
+ - ***Data Streaming***: Stream distributed Blender renderings directly into PyTorch data pipelines in real-time for supervised learning and domain randomization applications. Supports arbitrary pickle-able objects to be send alongside images/videos. Built-in recording capability to replay data without Blender. Bi-directional communication channels allow Blender simulations to adapt during network training. </br>More info [\[examples/datagen\]](examples/datagen), [\[examples/compositor_normals_depth\]](examples/compositor_normals_depth),  [\[examples/densityopt\]](examples/densityopt)
  - ***OpenAI Gym Support***: Create and run remotely controlled Blender gyms to train reinforcement agents. Blender serves as simulation, visualization, and interactive live manipulation environment.
  </br>More info [\[examples/control\]](examples/control)
 
@@ -125,9 +125,3 @@ Note: If no image transfer is needed, i.e in reinforcement learning of physical 
 ## Caveats
 - Despite offscreen rendering is supported in Blender 2.8x it requires a UI frontend and thus cannot run in `--background` mode. You might be able to work around this issue using a [fake screen](https://blender.stackexchange.com/questions/144083/how-to-get-blender-2-80-to-render-through-an-ssh-connection-minimal-working-ex/176110#176110) as suggested by [GNovich](https://github.com/GNovich).
 - The renderings produced by Blender are by default in linear color space and thus will appear darker than expected when displayed.
-
-
-## Compositor Support
-
-Requires EXR
-"C:\\Program Files\\Blender Foundation\\Blender 2.90\\2.90\\python\\bin\\python.EXE" -m pip install "C:\Users\cheind\Downloads\OpenEXR-1.3.2-cp37-cp37m-win_amd64.whl"
