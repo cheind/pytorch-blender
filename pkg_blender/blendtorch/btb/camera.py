@@ -203,3 +203,8 @@ class Camera:
         #bpy.context.evaluated_depsgraph_get().update()
         self.update_view_matrix()
         
+    def set_as_active_camera(self, scene=None):
+        '''Make this camera the active scene camera.'''
+        scene = scene or bpy.context.scene
+        scene.camera = self.bpy_camera
+        

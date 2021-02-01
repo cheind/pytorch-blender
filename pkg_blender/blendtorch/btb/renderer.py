@@ -112,15 +112,16 @@ class CompositeRenderer:
         return path
 
     def render(self):
-        '''Render the scene and return image as buffer.
+        '''Render the scene and return data of selected slots.
 
         Returns
         -------
-        image: HxWxD array
-            where D is 4 when `mode=='RGBA'` else 3.
+        data: dict
+            Mapping from name to np.array
         '''
 
         fidx = self._scene.frame_current
+        self.camera.set_as_active_camera(self._scene)
         bpy.ops.render.render(
             animation=False,
             write_still=False,
