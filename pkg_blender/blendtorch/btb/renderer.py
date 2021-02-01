@@ -15,9 +15,14 @@ from .camera import Camera
 
 @dataclass
 class CompositeSelection:
+    """Name of given to this element, serves as key in the result dict."""
     key: str
+    """Name of the target FileOutput node in the compositing tree."""
     node: str
+    """Name of the slot to select."""
     slot: str
+    """Selection of channels to extract from slot. 
+    Note, use 'RGBA', 'RGB', 'BGR' for color information and 'V' for depth information."""
     channels: str
 
 
@@ -30,7 +35,12 @@ class _EXRSelection:
 class CompositeRenderer:
     '''Provides composite rendering support for EEVEE.
 
-    Does not use preview rendering as provided by OffscreenRenderer. This class currently requires compositor usage with at least one file output node configured.    
+    Rendering with compositor support. This implementation currently assumes that at least one FileOutput node is present in the compositing tree. Each FileOutput node has to be configured as follows: 
+     - Filename: has include hashes placeholders #### for frame index.
+     - Format: OPEN_EXR_MULTILAYER, 
+     - Codec: None
+     - Precision: Half
+    The initialization is passed an array of `CompositeSelection` elements that basically define which elements should be returned after a call to `render`.
 
     Params
     ------
