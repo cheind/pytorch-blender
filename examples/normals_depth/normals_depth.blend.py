@@ -22,7 +22,7 @@ def main():
 
     def post_frame(render, pub, animation):
         # After frame
-        if anim.frameid == 2:
+        if anim.frameid == 1:
             imgs = render.render()
             pub.publish(
                 normals=imgs['normals'],
@@ -30,7 +30,7 @@ def main():
             )
 
     # Parse script arguments passed via blendtorch launcher
-    btargs, remainder = btb.parse_blendtorch_args()
+    btargs, _ = btb.parse_blendtorch_args()
 
     # Fetch camera
     cam = bpy.context.scene.camera
@@ -59,7 +59,7 @@ def main():
     anim = btb.AnimationController()
     anim.pre_animation.add(pre_anim, meshes)
     anim.post_frame.add(post_frame, render, pub, anim)
-    anim.play(frame_range=(1, 3), num_episodes=-1, use_offline_render=False)
+    anim.play(frame_range=(0, 1), num_episodes=-1, use_offline_render=False, use_physics=True)
 
 
 main()
