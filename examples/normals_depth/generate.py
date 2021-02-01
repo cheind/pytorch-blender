@@ -10,8 +10,8 @@ import blendtorch.btt as btt
 def main():
     # Define how we want to launch Blender
     launch_args = dict(
-        scene=Path(__file__).parent/'normals_depth.blend',
-        script=Path(__file__).parent/'normals_depth.blend.py',
+        scene=Path(__file__).parent/'compositor_normals_depth.blend',
+        script=Path(__file__).parent/'compositor_normals_depth.blend.py',
         num_instances=1,
         named_sockets=['DATA'],
     )
@@ -20,12 +20,13 @@ def main():
     with btt.BlenderLauncher(**launch_args) as bl:
         # Create remote dataset and limit max length to 16 elements.
         addr = bl.launch_info.addresses['DATA']
-        ds = btt.RemoteIterableDataset(addr, max_items=16)
+        ds = btt.RemoteIterableDataset(addr, max_items=4)
         dl = data.DataLoader(ds, batch_size=4, num_workers=0)
 
         for item in dl:
-            # item is a dict with custom content (see cube.blend.py)
+            # item is a dict with custom content
             normals = item['normals']
+            true_normals = (normals - 0.5)*np.array([2., 2., -2.]).reshape(1,1,1,-1)
             depth = item['depth']
             print('Received', normals.shape, depth.shape,
                   depth.dtype, np.ptp(depth))
