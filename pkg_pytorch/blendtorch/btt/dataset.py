@@ -11,17 +11,18 @@ from .constants import DEFAULT_TIMEOUTMS
 def _identity_item_transform(x):
     return x
 
+
 class RemoteIterableDataset(utils.data.IterableDataset):
     '''Base class for iteratable datasets that receive data from remote Blender instances.
 
-    To support multiple DataLoader workers in PyTorch, this class lazily constructs the data
-    stream upon start of iteration. Each received message is represented as item dictionary.
+    To support multiple DataLoader workers in PyTorch, this class lazily constructs the data stream upon start of iteration. Each received message is represented as item dictionary. 
 
-    `RemoteIterableDataset` supports two ways to manipulate items before returning them to
-    the caller
+    `RemoteIterableDataset` supports two ways to manipulate items before returning them to the caller
      - Provide an `item_transform` that takes a dictionary and returns transformed elements
      - Inherit from `RemoteIterableDataset` and override `RemoteIterableDataset._item()` method.
-    
+
+    Note, at a dataset level you will usually operate with numpy arrays, because that's what Blender usually publishes. When wrapping the dataset in a PyTorch dataloader, however, PyTorch will try to automatically convert these to PyTorch tensors.
+
     Params
     ------
     addresses: list-like
@@ -52,7 +53,7 @@ class RemoteIterableDataset(utils.data.IterableDataset):
 
     def enable_recording(self, fname):
         '''Enable recording to given prefix path `fname`.
-        
+
         Needs to be set before receiving items from the dataset.
         '''
         self.record_path_prefix = fname
@@ -83,17 +84,17 @@ class RemoteIterableDataset(utils.data.IterableDataset):
             if wi is not None:
                 worker_id = wi.id
                 num_workers = wi.num_workers
-            
+
             with ExitStack() as es:
-                rec = None                
+                rec = None
                 if self.record_path_prefix is not None:
                     rec = es.enter_context(
                         FileRecorder(
-                            FileRecorder.filename(self.record_path_prefix, worker_id),
+                            FileRecorder.filename(
+                                self.record_path_prefix, worker_id),
                             self.max_items
                         )
                     )
-                
 
                 for i in range(self.max_items//num_workers):
                     socks = dict(poller.poll(self.timeoutms))
@@ -105,7 +106,8 @@ class RemoteIterableDataset(utils.data.IterableDataset):
                     else:
                         obj = socket.recv_pyobj()
                     yield self._item(obj)
-            
+                    del obj
+
         finally:
             if socket is not None:
                 socket.close()
@@ -116,8 +118,10 @@ class RemoteIterableDataset(utils.data.IterableDataset):
         '''
         return self.item_transform(item)
 
+
 class SingleFileDataset(utils.data.Dataset):
     '''Replays from a particular recording file.'''
+
     def __init__(self, path, item_transform=None):
         self.reader = FileReader(path)
         self.item_transform = item_transform or _identity_item_transform
@@ -131,23 +135,26 @@ class SingleFileDataset(utils.data.Dataset):
     def _item(self, item):
         return self.item_transform(item)
 
+
 class FileDataset(utils.data.ConcatDataset):
     '''Replays from multiple recordings matching a recording pattern.
-    
+
     This dataset constructs one `SingleFileDataset` per file matching
     the specified prefix pattern `record_path_prefix`. All datasets
     are then concatenated to appear as a single larger dataset.     
     '''
+
     def __init__(self, record_path_prefix, item_transform=None):
         fnames = sorted(glob(f'{record_path_prefix}_*.btr'))
-        assert len(fnames) > 0, f'Found no recording files with prefix {record_path_prefix}'
+        assert len(
+            fnames) > 0, f'Found no recording files with prefix {record_path_prefix}'
         ds = [SingleFileDataset(fname) for fname in fnames]
         super().__init__(ds)
 
         self.item_transform = item_transform or _identity_item_transform
 
     def __getitem__(self, idx):
-        return self._item(super().__getitem__(idx))  
+        return self._item(super().__getitem__(idx))
 
     def _item(self, item):
         return self.item_transform(item)

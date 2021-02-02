@@ -1,23 +1,47 @@
-# blendtorch v0.2
-![](https://travis-ci.org/cheind/pytorch-blender.svg?branch=develop)
+# blendtorch
+[![](https://travis-ci.org/cheind/pytorch-blender.svg?branch=develop)](https://travis-ci.org/cheind/pytorch-blender)
 
 **blendtorch** is a Python framework to seamlessly integrate [Blender](http://blender.org) into [PyTorch](http://pytorch.org) datasets for deep learning from artificial visual data. We utilize Eevee, a new physically based real-time renderer, to synthesize images and annotations in real-time and thus avoid stalling model training in many cases.
 
 Feature summary
- - ***Data Streaming***: Stream distributed Blender renderings directly into PyTorch data pipelines in real-time for supervised learning and domain randomization applications. Supports arbitrary pickle-able objects to be send alongside images/videos. Built-in recording capability to replay data without Blender.</br>More info [\[examples/datagen\]](examples/datagen)
+ - ***Data Streaming***: Stream distributed Blender renderings directly into PyTorch data pipelines in real-time for supervised learning and domain randomization applications. Supports arbitrary pickle-able objects to be send alongside images/videos. Built-in recording capability to replay data without Blender. Bi-directional communication channels allow Blender simulations to adapt during network training. </br>More info [\[examples/datagen\]](examples/datagen), [\[examples/compositor_normals_depth\]](examples/compositor_normals_depth),  [\[examples/densityopt\]](examples/densityopt)
  - ***OpenAI Gym Support***: Create and run remotely controlled Blender gyms to train reinforcement agents. Blender serves as simulation, visualization, and interactive live manipulation environment.
  </br>More info [\[examples/control\]](examples/control)
 
-The figure below visualizes a single image/label batch received by PyTorch from four parallel Blender instances. Each Blender process repeatedly performs motion simulations of randomized cubes.
+The figure below visualizes the basic concept of **blendtorch** used in the context of generating artificial training data for a real-world detection task.
 
-<p align="center">
-<img src="etc/result_physics.png" width="500">
-</p>
+<div align="center">
+<img src="etc/blendtorch_intro_v3.svg" width="90%">
+</div>
 
 ## Getting started
  1. Read the installation instructions below
  1. To get started with **blendtorch** for training data training read [\[examples/datagen\]](examples/datagen). 
  1. To learn about using **blendtorch** for creating reinforcement training environments read [\[examples/control\]](examples/control).
+
+## Cite
+The code accompanies our academic work [[1]](https://arxiv.org/abs/1907.01879),[[2]](https://arxiv.org/abs/2010.11696) in the field of machine learning from artificial images. Please consider the following publications when citing **blendtorch**
+```
+@inproceedings{robotpose_etfa2019_cheind,
+    author={Christoph Heindl, Sebastian Zambal, Josef Scharinger},
+    title={Learning to Predict Robot Keypoints Using Artificially Generated Images},
+    booktitle={
+        24th IEEE International Conference on 
+        Emerging Technologies and Factory Automation (ETFA)
+    },    
+    year={2019}
+}
+
+@inproceedings{blendtorch_icpr2020_cheind,
+    author = {Christoph Heindl, Lukas Brunner, Sebastian Zambal and Josef Scharinger},
+    title = {BlendTorch: A Real-Time, Adaptive Domain Randomization Library},
+    booktitle = {
+        1st Workshop on Industrial Machine Learning 
+        at International Conference on Pattern Recognition (ICPR2020)
+    },
+    year = {2020},
+}
+```
 
 ## Installation
 
@@ -25,7 +49,7 @@ The figure below visualizes a single image/label batch received by PyTorch from 
 
 ### Prerequisites
 This package has been tested with
- - [Blender](https://www.blender.org/) >= 2.83 (Python 3.7)
+ - [Blender](https://www.blender.org/) >= 2.83/2.91 (Python 3.7)
  - [PyTorch](http://pytorch.org) >= 1.50 (Python 3.7/3.8)
 running Windows 10 and Linux.
 
@@ -39,8 +63,11 @@ git clone https://github.com/cheind/pytorch-blender.git <DST>
 ### Extend `PATH`
 Ensure Blender executable is in your environments lookup `PATH`. On Windows this can be accomplished by
 ```
-set PATH=c:\Program Files\Blender Foundation\Blender 2.83;%PATH%
+set PATH=c:\Program Files\Blender Foundation\Blender 2.91;%PATH%
 ```
+
+### Complete Blender settings
+Open Blender at least once, and complete the initial settings. If this step is missed, some of the tests (especially the tests relating RL) will fail (Blender 2.91).
 
 ### Install **blendtorch** Blender part
 ```
@@ -56,6 +83,7 @@ installs `blendtorch-btt` into the Python environment that you intend to run PyT
 ```
 pip install gym
 ```
+
 ### Developer instructions
 This step is optional. If you plan to run the unit tests
 ```
@@ -79,27 +107,11 @@ python -c "import blendtorch.btt as btt; print(btt.__version__)"
 which should print **blendtorch** version number on success.
 
 ## Architecture
-Please see [\[examples/datagen\]](examples/datagen) and [examples/control\]](examples/control) for an in-depth architectural discussion.
-
-## Cite
-The code accompanies our [academic work](https://arxiv.org/abs/1907.01879) in the field of machine learning from artificial images. When using please cite the following work
-```
-@inproceedings{robotpose_etfa2019_cheind,
-    author={Christoph Heindl and Sebastian Zambal and Josef Scharinger},
-    title={Learning to Predict Robot Keypoints Using Artificially Generated Images},
-    booktitle={
-        24th IEEE International Conference on 
-        Emerging Technologies and Factory Automation (ETFA)
-    },    
-    year={2019},
-    pages={1536-1539},
-    doi={10.1109/ETFA.2019.8868243},
-    isbn={978-1-7281-0303-7},
-}
-```
+Please see [\[examples/datagen\]](examples/datagen) and [\[examples/control\]](examples/control) for an in-depth architectural discussion. Bi-directional communication is explained in [\[examples/densityopt\]](examples/densityopt).
 
 ## Runtimes
-The following tables show the mean runtimes per batch (8) and per image for a simple Cube scene (640x480xRGBA). See [benchmarks/benchmark.py](./benchmarks/benchmark.py) for details. The timings include rendering, transfer, decoding and batch collating.
+
+The following tables show the mean runtimes per batch (8) and per image for a simple Cube scene (640x480xRGBA). See [benchmarks/benchmark.py](./benchmarks/benchmark.py) for details. The timings include rendering, transfer, decoding and batch collating. Reported timings are for Blender 2.8. Blender 2.9 performs equally well on this scene, but is usually faster for more complex renderings.
 
 | Blender Instances  | Runtime sec/batch | Runtime sec/image | Arguments|
 |:-:|:-:|:-:|:-:|

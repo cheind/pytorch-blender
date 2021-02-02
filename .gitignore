@@ -103,8 +103,7 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-tmp/*
-examples/datagen/tmp/*
+**/tmp/*
 *.blend1
-
+**/tmp/*
 !__keep__

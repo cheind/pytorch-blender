@@ -1,5 +1,6 @@
 '''Provides helper functions to deal with Blender cameras.'''
 import bpy, bpy_extras
+from mathutils import Vector
 import numpy as np
 
 from . import utils
@@ -134,19 +135,76 @@ class Camera:
             xy[:, 1] = 1. - xy[:, 1]
         return xy * np.array([[w,h]]) 
 
-    def object_to_pixel(self, *objs):
+    def object_to_pixel(self, *objs, return_depth=False):
         '''Convenience composition of `ndc_to_pixel(world_to_ndc(utils.world_coordinates(*objs)))`
         
         Params
         ------
         objs: array of bpy.types.Object
             Collection of objects whose vertices to convert to camera pixel coordinates.
+        return_depth: bool
+            When True, returns the linear depth in camera space of each coordinate.
             
         Returns
         -------
         xy : Mx2 array
             Concatenated list object vertex coordinates expressed in camera pixels.
+        z: array, optional
+            Linear depth in camera space when `return_depth==True`
         '''
-        return self.ndc_to_pixel(
-            self.world_to_ndc(utils.world_coordinates(*objs))
-        )
+        if return_depth:
+            ndc,z = self.world_to_ndc(utils.world_coordinates(*objs), return_depth=True)
+            px = self.ndc_to_pixel(ndc)
+            return px, z
+        else:
+            ndc = self.world_to_ndc(utils.world_coordinates(*objs))
+            px = self.ndc_to_pixel(ndc)
+            return px
+        
+
+    def bbox_object_to_pixel(self, *objs, return_depth=False):
+        '''Convenience composition of `ndc_to_pixel(world_to_ndc(utils.bbox_world_coordinates(*objs)))`
+        
+        Params
+        ------
+        objs: array of bpy.types.Object
+            Collection of objects whose vertices to convert to camera pixel coordinates.
+        return_depth: bool
+            When True, returns the linear depth in camera space of each coordinate.
+            
+        Returns
+        -------
+        xy : Mx2 array
+            Concatenated list object vertex coordinates expressed in camera pixels.
+        z: array, optional
+            Linear depth in camera space when `return_depth==True`
+        '''
+        if return_depth:
+            ndc,z = self.world_to_ndc(utils.bbox_world_coordinates(*objs), return_depth=True)
+            px = self.ndc_to_pixel(ndc)
+            return px, z
+        else:
+            ndc = self.world_to_ndc(utils.bbox_world_coordinates(*objs))
+            px = self.ndc_to_pixel(ndc)
+            return px
+
+    def look_at(self, look_at=None, look_from=None):
+        '''Helper function to look at specific location.'''
+        if look_from is None:
+            look_from = self.bpy_camera.location
+        if look_at is None:
+            look_at = Vector([0,0,0])
+
+        direction = Vector(look_at) - Vector(look_from)
+        # point the cameras '-Z' and use its 'Y' as up
+        rot_quat = direction.to_track_quat('-Z', 'Y')
+        self.bpy_camera.rotation_euler = rot_quat.to_euler()
+        self.bpy_camera.location = look_from
+        #bpy.context.evaluated_depsgraph_get().update()
+        self.update_view_matrix()
+        
+    def set_as_active_camera(self, scene=None):
+        '''Make this camera the active scene camera.'''
+        scene = scene or bpy.context.scene
+        scene.camera = self.bpy_camera
+        

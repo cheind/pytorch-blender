@@ -34,7 +34,7 @@ On the PyTorch side, [minimal.py](./minimal.py) the following steps:
 from pathlib import Path
 from torch.utils import data
 
-from blendtorch import btt
+import blendtorch.btt as btt
 
 def main():
     launch_args = dict(
@@ -67,7 +67,7 @@ scene [cube.blend](./cube.blend) and script [cube.blend.py](./cube.blend.py) con
 import bpy
 import numpy as np
 
-from blendtorch import btb
+import blendtorch.btb as btb
 
 def main():
     # Parse script arguments passed via blendtorch
@@ -103,6 +103,56 @@ def main():
     anim.play(frame_range=(0,100), num_episodes=-1)
 
 main()
+```
+
+### Launching and connecting to remote instances
+Often you will find it convenient to launch Blender instances on a machine *A* while model training is supposed to happen on machine *B*. To facilitate this use case, **blendtorch** comes with a set of supporting tools.
+
+From here on we assume that *A* has `pkg_pytorch` and `pkg_blender` installed, while *B* has at least `pkg_pytorch` installed.
+
+On *A* run
+```
+blendtorch-launch launch.json
+```
+where `launch.json` contains a dictionary of keyword arguments for `btt.BlenderLauncher`. For example
+```json
+{
+    "scene": "",
+    "script": "/tests/blender/launcher.blend.py",
+    "num_instances": 2,
+    "named_sockets": [
+        "DATA",
+        "GYM"
+    ],
+    "background": true,
+    "seed": 10,
+    "bind_addr": "primaryip"
+}
+```
+Upon launch, `blendtorch-launch` writes connection information to `launch_info.json`. For example
+```json
+{
+    "addresses": {
+        "DATA": [
+            "tcp://192.168.20.148:11000",
+            "tcp://192.168.20.148:11001"
+        ],
+        "GYM": [
+            "tcp://192.168.20.148:11002",
+            "tcp://192.168.20.148:11003"
+        ]
+    },
+}
+```
+Notice, `primaryip` was automatically resolved into an IP addresses with default route configured. Now, to connect from *B*, ensure the machine has access to `launch_info.json` and connect as follows
+
+```python
+import blendtorch.btt as btt
+launch_info = btt.LaunchInfo.load_json('launch_info.json')
+ds = btt.RemoteIterableDataset(launch_info.addresses['DATA'], max_items=2)
+item = next(iter(ds))
+print(item.keys())
+#...
 ```
 
 ### Architecture

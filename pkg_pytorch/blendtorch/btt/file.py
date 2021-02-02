@@ -25,11 +25,12 @@ class FileRecorder:
     max_messages: int
         Only up to `max_messages` can be stored.
     '''
-    def __init__(self, outpath='blendtorch.mpkl', max_messages=100000):
+    def __init__(self, outpath='blendtorch.mpkl', max_messages=100000, update_header=10000):
         outpath = Path(outpath)
         outpath.parent.mkdir(parents=True, exist_ok=True)
         self.outpath = outpath
         self.capacity = max_messages
+        self.update_header = update_header
         _logger.info(f'Recording configured for path {outpath}, max_messages {max_messages}.')
 
     def save(self, data, is_pickled=False):
@@ -51,6 +52,9 @@ class FileRecorder:
                 self.pickler.dump(data)
             else:
                 self.file.write(data)
+        
+        if self.num_messages % self.update_header == 0:
+            self._update_offsets()
             
 
     def __enter__(self):
@@ -61,17 +65,22 @@ class FileRecorder:
         # we get an error when loading data from stream. We should ensure
         # that what we do here is actually OK, independent of the protocol.
         self.pickler = pickle.Pickler(self.file, protocol=3) 
-        self.offsets = np.full(self.capacity, -1, dtype=int)
+        self.offsets = np.full(self.capacity, -1, dtype=np.int64)
         self.num_messages = 0
-        self.pickler.dump(self.offsets) # We fix this once we close the file.
+        self.pickler.dump(self.offsets) # We fix this once we update headers.
         return self
 
     def __exit__(self, *args):
-        self.file.seek(0)
-        # need to re-create unpickler
-        pickle.Pickler(self.file, protocol=3).dump(self.offsets)
+        self._update_offsets()
         self.file.close()
         self.file = None
+
+    def _update_offsets(self):
+        off = self.file.tell()
+        self.file.seek(0)
+        pickle.Pickler(self.file, protocol=3).dump(self.offsets)
+        self.file.seek(off)
+
 
     @staticmethod
     def filename(prefix, worker_idx):

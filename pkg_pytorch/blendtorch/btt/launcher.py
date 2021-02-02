@@ -2,16 +2,14 @@ import subprocess
 import os
 import logging
 import numpy as np
+import json
+
 
 from .finder import discover_blender
+from .launch_info import LaunchInfo
+from .utils import get_primary_ip
 
 logger = logging.getLogger('blendtorch')
-
-class LaunchInfo:
-    def __init__(self, addresses, processes, commands):
-        self.addresses = addresses
-        self.processes = processes
-        self.commands = commands
 
 
 class BlenderLauncher():
@@ -34,7 +32,8 @@ class BlenderLauncher():
     start_port : int (default=11000)
         Start of port range for publisher sockets
     bind_addr : str (default='127.0.0.1')
-        Address to bind publisher sockets  
+        Address to bind publisher sockets. If 'primaryip' binds to primary ip
+        address the one with a default route or `127.0.0.1` if none is available.
     proto: string (default='tcp')
         Protocol to use.      
     instance_args : array (default=None)
@@ -96,6 +95,7 @@ class BlenderLauncher():
             logger.info(f'Blender found {self.blender_info["path"]} version {self.blender_info["major"]}.{self.blender_info["minor"]}')
 
         self.launch_info = None
+        self.processes = None
 
     def __enter__(self):
         '''Launch processes'''
@@ -141,6 +141,7 @@ class BlenderLauncher():
             if self.background:
                 cmd.append('--background')
             cmd.append('--python-use-system-env')
+            cmd.append('--enable-autoexec')
             cmd.append('--python')
             cmd.append(f'{self.script}')
             cmd.append('--')
@@ -160,7 +161,7 @@ class BlenderLauncher():
             commands.append(' '.join(cmd))
             logger.info(f'Started instance: {cmd}')
 
-        self.launch_info = LaunchInfo(addresses, processes, commands)
+        self.launch_info = LaunchInfo(addresses, commands, processes=processes)
         return self
 
     def assert_alive(self):
@@ -169,6 +170,10 @@ class BlenderLauncher():
             return
         codes = self._poll()
         assert all([c==None for c in codes]), f'Alive test failed. Exit codes {codes}'
+
+    def wait(self):
+        '''Wait until all launched processes terminate.'''
+        [p.wait() for p in self.launch_info.processes]
 
     def __exit__(self, exc_type, exc_value, exc_traceback): 
         '''Terminate all processes.'''   
@@ -180,6 +185,8 @@ class BlenderLauncher():
 
     def _address_generator(self, proto, bind_addr, start_port):
         '''Convenience to generate addresses.'''
+        if bind_addr == 'primaryip':
+            bind_addr = get_primary_ip()        
         nextport = start_port
         while True:
             addr = f'{proto}://{bind_addr}:{nextport}'

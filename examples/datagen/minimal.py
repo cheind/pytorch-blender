@@ -1,7 +1,7 @@
 from pathlib import Path
 from torch.utils import data
 
-from blendtorch import btt
+import blendtorch.btt as btt
 
 def main():
     # Define how we want to launch Blender
