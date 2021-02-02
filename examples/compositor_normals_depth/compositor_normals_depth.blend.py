@@ -1,24 +1,22 @@
-import bpy
-import numpy as np
 
 import blendtorch.btb as btb
+import numpy as np
+import bpy
 
-# Update python-path with current blend file directory,
-# so that package `tless` can be found.
-import sys
-p = bpy.path.abspath("//")
-if p not in sys.path:
-    sys.path.append(p)
-from normals_depth import scene
-
-SHAPE = (30,30)
+SHAPE = (30, 30)
 NSHAPES = 70
 
+
 def main():
+    # Update python-path with current blend file directory
+    btb.add_scene_dir_to_path()
+    import scene_helpers as scene
+
     def pre_anim(meshes):
         # Called before each animation
         # Randomize supershapes
-        [scene.update_mesh(m, sshape_res=SHAPE) for m in meshes]
+        for m in meshes:
+            scene.update_mesh(m, sshape_res=SHAPE)
 
     def post_frame(render, pub, animation):
         # After frame
@@ -59,7 +57,8 @@ def main():
     anim = btb.AnimationController()
     anim.pre_animation.add(pre_anim, meshes)
     anim.post_frame.add(post_frame, render, pub, anim)
-    anim.play(frame_range=(0, 1), num_episodes=-1, use_offline_render=False, use_physics=True)
+    anim.play(frame_range=(0, 1), num_episodes=-1,
+              use_offline_render=False, use_physics=True)
 
 
 main()
