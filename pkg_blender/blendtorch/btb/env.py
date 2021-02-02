@@ -7,12 +7,13 @@ from .offscreen import OffScreenRenderer
 from .constants import DEFAULT_TIMEOUTMS
 from .camera import Camera
 
+
 class BaseEnv:
     '''Abstract base class for environments to be interacted with by agents.
-    
+
     This class is what `gym.Env` is to OpenAI gym: it defines the basic interface
     required to be implemented by all Blender environments.
-    
+
     Blender defines a callback based animation system. This also affects `BaseEnv` in that it 
     requires the agent to be given by a callable method having following signature:
         cmd, action = agent(env, **kwargs)
@@ -46,7 +47,7 @@ class BaseEnv:
         self.events.pre_animation.add(self._pre_animation)
         self.events.post_frame.add(self._post_frame)
         self.agent = agent
-        self.ctx = None        
+        self.ctx = None
         self.renderer = None
         self.render_every = None
         self.frame_range = None
@@ -71,19 +72,18 @@ class BaseEnv:
         '''
         self.frame_range = AnimationController.setup_frame_range(frame_range)
         self.events.play(
-            (self.frame_range[0], 2147483647), # we allow playing the simulation past end.
-            num_episodes=-1, 
-            use_animation=use_animation, 
+            # we allow playing the simulation past end.
+            (self.frame_range[0], 2147483647),
+            num_episodes=-1,
+            use_animation=use_animation,
             use_offline_render=True)
 
     def attach_default_renderer(self, every_nth=1):
         '''Attach a default renderer to the environment.
 
-        Convenience function to provide render images for remotely controlled agents
-        (i.e `env.render()`). Uses the default camera perspective for image generation.
+        Convenience function to provide render images for remotely controlled agents (i.e `env.render()`). Uses the default camera perspective for image generation.
 
-        The image rendered will be provided in the `rgb_array` field of the context
-        provided to the agent.
+        The image rendered will be provided in the `rgb_array` field of the context provided to the agent.
 
         Params
         ------
@@ -91,14 +91,14 @@ class BaseEnv:
             Render every nth frame of the simulation.
         '''
 
-        self.renderer = OffScreenRenderer(camera=Camera(), mode='rgb', gamma_coeff=2.2)
+        self.renderer = OffScreenRenderer(camera=Camera(), mode='rgb')
         self.render_every = every_nth
 
     def _pre_frame(self):
         '''Internal pre-frame callback.'''
         self.ctx['time'] = self.events.frameid
         self.ctx['done'] |= (self.events.frameid >= self.frame_range[1])
-        if self.events.frameid > self.frame_range[0]:            
+        if self.events.frameid > self.frame_range[0]:
             cmd, action = self.agent(self, **self.ctx)
             if cmd == BaseEnv.CMD_RESTART:
                 self._restart()
@@ -107,21 +107,21 @@ class BaseEnv:
                     self._env_prepare_step(action)
                     self.ctx['prev_action'] = action
                 self.state = BaseEnv.STATE_RUN
-            
+
     def _pre_animation(self):
         '''Internal pre-animation callback.'''
         self.state = BaseEnv.STATE_INIT
-        self.ctx = {'prev_action':None, 'done':False}
+        self.ctx = {'prev_action': None, 'done': False}
         self._env_reset()
 
     def _post_frame(self):
-        '''Internal post-frame callback.'''  
+        '''Internal post-frame callback.'''
         self._render(self.ctx)
         next_ctx = self._env_post_step()
         self.ctx = {**self.ctx, **next_ctx}
 
     def _render(self, ctx):
-        '''Internal render command.'''  
+        '''Internal render command.'''
         cur, start = self.events.frameid, self.frame_range[0]
         render = bool(
             self.renderer and
@@ -136,11 +136,11 @@ class BaseEnv:
 
     def _env_reset(self):
         '''Reset the environment state. 
-        
+
         To be implemented by actual environments. Returns nothing.
         '''
         raise NotImplementedError()
-        
+
     def _env_prepare_step(self, action):
         '''Prepare environment with action.
 
@@ -164,7 +164,7 @@ class BaseEnv:
         Requires at least the following fields to be set: `obs`, `reward`. You might
         also want to specify `done`. All other fields set will be passed to the agent 
         as well. 
-        
+
         In case a remote controlled agent is used, make sure all items are pickle-able.
 
         Returns
@@ -174,11 +174,11 @@ class BaseEnv:
             any reward and auxilary information.
         '''
         raise NotImplementedError()
-        
+
 
 class RemoteControlledAgent:
     '''Agent implementation that receives commands from a remote peer.
-    
+
     Uses a request(remote-agent)/reply(self) pattern to model a [blocking] 
     service call. The agent is expected to initiate a request using a dictionary:
      - `cmd` field set either to `'reset'` or `'step'`.
@@ -208,7 +208,7 @@ class RemoteControlledAgent:
 
     def __init__(self, address, real_time=False, timeoutms=DEFAULT_TIMEOUTMS):
         '''Initialize the remote controlled agent.'''
-        self.context = zmq.Context()        
+        self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
         self.socket.setsockopt(zmq.LINGER, 0)
         self.socket.setsockopt(zmq.SNDTIMEO, timeoutms)

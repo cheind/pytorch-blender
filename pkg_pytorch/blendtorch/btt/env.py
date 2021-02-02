@@ -1,12 +1,15 @@
+from contextlib import contextmanager
 import zmq
 
 from .constants import DEFAULT_TIMEOUTMS
 from .launcher import BlenderLauncher
 from .env_rendering import create_renderer
+from . import colors
+
 
 class RemoteEnv:
     '''Communicate with a remote Blender environment.
-    
+
     This sets up a communication channel with a remote Blender environment.
     Its counterpart on Blender is usually a `btb.RemoteControlledAgent`.
 
@@ -14,7 +17,7 @@ class RemoteEnv:
     that block the caller until the remote call returns. However, it does
     not manage launching the remote Environment. For this reason we provide
     `launch_env` below. 
-    
+
     To provide OpenAI gym compatible environments, one usually inherits 
     from `btb.env.OpenAIRemoteEnv`.
 
@@ -46,7 +49,7 @@ class RemoteEnv:
 
     def reset(self):
         '''Reset the remote environment.
-        
+
         Returns
         -------
         obs: object
@@ -81,11 +84,11 @@ class RemoteEnv:
         ddict = self._reqrep(cmd='step', action=action)
         obs = ddict.pop('obs')
         r = ddict.pop('reward')
-        done = ddict.pop('done')        
+        done = ddict.pop('done')
         self.rgb_array = ddict.pop('rgb_array', None)
         return obs, r, done, ddict
 
-    def render(self, mode='human', backend=None):   
+    def render(self, mode='human', backend=None, gamma_coeff=2.2):
         '''Render the current remote environment state.
 
         We consider Blender itself the visualization of the environment
@@ -99,6 +102,10 @@ class RemoteEnv:
         backend: str, None
             Which backend to use to visualize the image. When None,
             automatically chosen by blendtorch.
+        gamma_coeff: scalar
+            Gamma correction coeff before visualizing image. Does not
+            affect the returned rgb array when mode is `rgb_array` which
+            remains in linear color space. Defaults to 2.2
         '''
 
         if mode == 'rgb_array' or self.rgb_array is None:
@@ -106,22 +113,23 @@ class RemoteEnv:
 
         if self.viewer is None:
             self.viewer = create_renderer(backend)
-        self.viewer.imshow(self.rgb_array)
-       
+        self.viewer.imshow(colors.gamma(self.rgb_array, gamma_coeff))
+
     def _reqrep(self, **send_kwargs):
         '''Convenience request-reply method.'''
         try:
-            ext = {**send_kwargs, 'time':self.env_time}
+            ext = {**send_kwargs, 'time': self.env_time}
             self.socket.send_pyobj(ext)
         except zmq.error.Again:
             raise ValueError('Failed to send to remote environment') from None
-        
+
         try:
-            ddict =  self.socket.recv_pyobj()
+            ddict = self.socket.recv_pyobj()
             self.env_time = ddict['time']
             return ddict
         except zmq.error.Again:
-            raise ValueError('Failed to receive from remote environment') from None
+            raise ValueError(
+                'Failed to receive from remote environment') from None
 
     def close(self):
         '''Close the environment.'''
@@ -131,8 +139,8 @@ class RemoteEnv:
         if self.socket:
             self.socket.close()
             self.socket = None
-        
-from contextlib import contextmanager
+
+
 @contextmanager
 def launch_env(scene, script, background=False, **kwargs):
     '''Launch a remote environment wrapped in a context manager.
@@ -162,7 +170,7 @@ def launch_env(scene, script, background=False, **kwargs):
     env = None
     try:
         additional_args = []
-        for k,v in kwargs.items():
+        for k, v in kwargs.items():
             k = k.replace('_', '-')
             if isinstance(v, bool):
                 if v:
@@ -170,31 +178,31 @@ def launch_env(scene, script, background=False, **kwargs):
                 else:
                     additional_args.append(f'--no-{k}')
             else:
-                additional_args.extend([f'--{k}',str(v)])
-            
-        
+                additional_args.extend([f'--{k}', str(v)])
+
         launcher_args = dict(
-            scene=scene, 
-            script=script, 
-            num_instances=1, 
+            scene=scene,
+            script=script,
+            num_instances=1,
             named_sockets=['GYM'],
             instance_args=[additional_args],
             background=background
         )
-        with BlenderLauncher(**launcher_args) as bl:            
+        with BlenderLauncher(**launcher_args) as bl:
             env = RemoteEnv(bl.launch_info.addresses['GYM'][0])
             yield env
     finally:
         if env:
             env.close()
 
+
 try:
     import gym
     from contextlib import ExitStack
-    
+
     class OpenAIRemoteEnv(gym.Env):
         '''Base class for remote OpenAI gym compatible environments.
-        
+
         By inherting from this class you can provide almost all of the 
         code necessary to register a remote Blender environment to 
         OpenAI gym.
@@ -215,7 +223,7 @@ try:
 
         def launch(self, scene, script, background=False, **kwargs):
             '''Launch the remote environment.
-            
+
             Params
             ------
             scene: path, str
@@ -243,7 +251,7 @@ try:
             '''Run one timestep of the environment's dynamics. When end of
             episode is reached, you are responsible for calling `reset()`
             to reset this environment's state.
-            
+
             Accepts an action and returns a tuple (observation, reward, done, info).
             Note, this methods documentation is a 1:1 copy of OpenAI `gym.Env`.
 
@@ -271,7 +279,7 @@ try:
             '''Resets the state of the environment and returns an initial observation.
 
             Note, this methods documentation is a 1:1 copy of OpenAI `gym.Env`.
-            
+
             Returns
             -------
             observation: object
@@ -280,7 +288,7 @@ try:
             assert self._env, 'Environment not running.'
             obs, info = self._env.reset()
             return obs
-            
+
         def seed(self, seed):
             ''''Sets the seed for this env's random number generator(s).'''
             raise NotImplementedError()
@@ -304,7 +312,7 @@ try:
 
         def close(self):
             '''Close the environment.'''
-            if self._es:     
+            if self._es:
                 self._es.close()
                 self._es = None
                 self._env = None

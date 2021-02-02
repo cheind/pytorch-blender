@@ -42,6 +42,10 @@ class CompositeRenderer:
      - Precision: Half
     The initialization is passed an array of `CompositeSelection` elements that basically define which elements should be returned after a call to `render`.
 
+    Note, color images are in linear color spaces and may appear darker than
+    expected when visualized. Use `btt.colors.gamma` to gamma encode before
+    visualizing.
+
     Params
     ------
     slots: Iterable[CompositeSelection]
@@ -150,7 +154,3 @@ class CompositeRenderer:
                 os.remove(path)
 
         return key_data
-
-    # def _color_correct(self, img, coeff=2.2):
-    #     ''''Return sRGB image.'''
-    #     img[..., :3] = img[..., :3]**(1/coeff)
