@@ -8,4 +8,4 @@ from .camera import Camera
 from .duplex import DuplexChannel
 from . import env, utils, materials
 
-__version__ = '0.3.0'
+__version__ = '0.4.0'
