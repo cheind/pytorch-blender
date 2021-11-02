@@ -1,6 +1,7 @@
 import bpy
 import zmq
 import sys
+import numpy as np
 
 from .animation import AnimationController
 from .offscreen import OffScreenRenderer
@@ -103,7 +104,7 @@ class BaseEnv:
             if cmd == BaseEnv.CMD_RESTART:
                 self._restart()
             elif cmd == BaseEnv.CMD_STEP:
-                if action != None:
+                if np.all(action != None):
                     self._env_prepare_step(action)
                     self.ctx['prev_action'] = action
                 self.state = BaseEnv.STATE_RUN
