@@ -66,6 +66,12 @@ Ensure Blender executable is in your environments lookup `PATH`. On Windows this
 set PATH=c:\Program Files\Blender Foundation\Blender 2.91;%PATH%
 ```
 
+On Ubuntu when blender is [installed using snap](https://snapcraft.io/install/blender/ubuntu), the path may be included by adding the following line to your ~/.bashrc,
+
+```
+export PATH=/snap/blender/current/${PATH:+:${PATH}}
+```
+
 ### Complete Blender settings
 Open Blender at least once, and complete the initial settings. If this step is missed, some of the tests (especially the tests relating RL) will fail (Blender 2.91).
 
