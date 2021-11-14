@@ -17,9 +17,17 @@ class CartpoleEnv(btb.env.BaseEnv):
         self.total_mass = self.cart.rigid_body.mass + self.pole.rigid_body.mass
 
     def _env_reset(self):
-        self.motor.motor_lin_target_velocity = 0.
-        self.cart.location = (0.0, 0, 1.2)
-        self.polerot.rotation_euler[1] = np.random.uniform(-0.6, 0.6)
+        c = 0.
+        p = np.array([0.0, 0, 1.2])
+        a = np.random.uniform(-0.6, 0.6)
+        self.motor.motor_lin_target_velocity = c
+        self.cart.location = p
+        self.polerot.rotation_euler[1] = a
+        return dict(
+            obs=(c, p, a),
+            reward=0.,
+            done=False
+        )
 
     def _env_prepare_step(self, action):
         self._apply_motor_force(action)
