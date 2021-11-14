@@ -113,7 +113,8 @@ class BaseEnv:
         '''Internal pre-animation callback.'''
         self.state = BaseEnv.STATE_INIT
         self.ctx = {'prev_action': None, 'done': False}
-        self._env_reset()
+        init_ctx = self._env_reset()
+        self.ctx = {**self.ctx, **init_ctx}
 
     def _post_frame(self):
         '''Internal post-frame callback.'''
