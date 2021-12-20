@@ -19,38 +19,14 @@ The figure below visualizes the basic concept of **blendtorch** used in the cont
  1. To get started with **blendtorch** for training data training read [\[examples/datagen\]](examples/datagen). 
  1. To learn about using **blendtorch** for creating reinforcement training environments read [\[examples/control\]](examples/control).
 
-## Cite
-The code accompanies our academic work [[1]](https://arxiv.org/abs/1907.01879),[[2]](https://arxiv.org/abs/2010.11696) in the field of machine learning from artificial images. Please consider the following publications when citing **blendtorch**
-```
-@inproceedings{robotpose_etfa2019_cheind,
-    author={Christoph Heindl, Sebastian Zambal, Josef Scharinger},
-    title={Learning to Predict Robot Keypoints Using Artificially Generated Images},
-    booktitle={
-        24th IEEE International Conference on 
-        Emerging Technologies and Factory Automation (ETFA)
-    },    
-    year={2019}
-}
-
-@inproceedings{blendtorch_icpr2020_cheind,
-    author = {Christoph Heindl, Lukas Brunner, Sebastian Zambal and Josef Scharinger},
-    title = {BlendTorch: A Real-Time, Adaptive Domain Randomization Library},
-    booktitle = {
-        1st Workshop on Industrial Machine Learning 
-        at International Conference on Pattern Recognition (ICPR2020)
-    },
-    year = {2020},
-}
-```
-
 ## Installation
 
 **blendtorch** is composed of two distinct sub-packages: `bendtorch.btt` (in [pkg_pytorch](./pkg_pytorch)) and `blendtorch.btb` (in [pkg_blender](./pkg_blender)), providing the PyTorch and Blender views on **blendtorch**. 
 
 ### Prerequisites
 This package has been tested with
- - [Blender](https://www.blender.org/) >= 2.83/2.91 (Python 3.7)
- - [PyTorch](http://pytorch.org) >= 1.50 (Python 3.7/3.8)
+ - [Blender](https://www.blender.org/) >= 2.83/2.91/3.0 (Python 3.7/3.9)
+ - [PyTorch](http://pytorch.org) >= 1.5/1.10 (Python 3.7/3.8)
 running Windows 10 and Linux.
 
 Other versions might work as well, but have not been tested. 
@@ -127,6 +103,30 @@ The following tables show the mean runtimes per batch (8) and per image for a si
 | 5  | 0.085 | 0.011| no UI refresh|
 
 Note: If no image transfer is needed, i.e in reinforcement learning of physical simulations, 2000Hz are easily achieved.
+
+## Cite
+The code accompanies our academic work [[1]](https://arxiv.org/abs/1907.01879),[[2]](https://arxiv.org/abs/2010.11696) in the field of machine learning from artificial images. Please consider the following publications when citing **blendtorch**
+```
+@inproceedings{robotpose_etfa2019_cheind,
+    author={Christoph Heindl, Sebastian Zambal, Josef Scharinger},
+    title={Learning to Predict Robot Keypoints Using Artificially Generated Images},
+    booktitle={
+        24th IEEE International Conference on 
+        Emerging Technologies and Factory Automation (ETFA)
+    },    
+    year={2019}
+}
+
+@inproceedings{blendtorch_icpr2020_cheind,
+    author = {Christoph Heindl, Lukas Brunner, Sebastian Zambal and Josef Scharinger},
+    title = {BlendTorch: A Real-Time, Adaptive Domain Randomization Library},
+    booktitle = {
+        1st Workshop on Industrial Machine Learning 
+        at International Conference on Pattern Recognition (ICPR2020)
+    },
+    year = {2020},
+}
+```
 
 ## Caveats
 - Despite offscreen rendering is supported in Blender 2.8x it requires a UI frontend and thus cannot run in `--background` mode. If your application does not require offscreen renderings you may enable background usage (see [tests/](tests/) for examples).
