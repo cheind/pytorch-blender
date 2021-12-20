@@ -1,13 +1,17 @@
 import bpy
 import numpy as np
 from blendtorch import btb
+import os
 
 def main():
     btargs, remainder = btb.parse_blendtorch_args()
     
+    cnt = 0
     def post_frame(pub, anim):      
+        nonlocal cnt
         pub.publish(frameid=anim.frameid, img=np.zeros((64,64), dtype=np.uint8))
-        if btargs.btid > 0:
+        cnt += 1
+        if btargs.btid > 0 and cnt > 200:
             raise ValueError() 
 
     # Data source: add linger to avoid not sending data upon closing Blender.

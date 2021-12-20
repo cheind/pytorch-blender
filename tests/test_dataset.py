@@ -49,19 +49,16 @@ def test_dataset_robustness():
         addr = bl.launch_info.addresses['DATA']
 
         # Note, https://github.com/pytorch/pytorch/issues/44108
-        ds = btt.RemoteIterableDataset(addr, max_items=128)
+        ds = btt.RemoteIterableDataset(addr, max_items=5000)
         dl = DataLoader(ds, batch_size=4, num_workers=0, drop_last=False, shuffle=False)
         
 
-        count = 0
         ids = []
         for item in dl:
             assert item['img'].shape == (4,64,64)
             assert item['frameid'].shape == (4,)
-            ids.append(item['btid'])
-            count += 1
-        assert count == 32
-        ids = np.concatenate(ids)
-        assert (ids==1).sum() == 1
-        assert (ids==0).sum() == 127
+            ids.extend(item['btid'].tolist())
+            if len(np.unique(ids)) == 2:
+                break
+        assert len(np.unique(ids)) == 2
         
