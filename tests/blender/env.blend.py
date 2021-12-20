@@ -14,6 +14,7 @@ class MyEnv(btb.env.BaseEnv):
     def _env_reset(self):
         self.cube.rotation_euler[2] = 0.
         self.count = 0
+        return dict(obs=self.cube.rotation_euler[2],count=self.count,done=False)
 
     def _env_prepare_step(self, action):
         self.cube.rotation_euler[2] = action
