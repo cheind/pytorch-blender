@@ -1,5 +1,5 @@
 # blendtorch
-[![](https://travis-ci.org/cheind/pytorch-blender.svg?branch=develop)](https://travis-ci.org/cheind/pytorch-blender)
+[![Build Status](https://app.travis-ci.com/cheind/pytorch-blender.svg?branch=develop)](https://app.travis-ci.com/cheind/pytorch-blender)
 
 **blendtorch** is a Python framework to seamlessly integrate [Blender](http://blender.org) into [PyTorch](http://pytorch.org) datasets for deep learning from artificial visual data. We utilize Eevee, a new physically based real-time renderer, to synthesize images and annotations in real-time and thus avoid stalling model training in many cases.
 
