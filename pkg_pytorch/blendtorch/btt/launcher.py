@@ -2,7 +2,8 @@ import subprocess
 import os
 import logging
 import numpy as np
-import json
+import psutil
+import signal
 
 
 from .finder import discover_blender
@@ -177,15 +178,14 @@ class BlenderLauncher():
 
     def __exit__(self, exc_type, exc_value, exc_traceback): 
         '''Terminate all processes.'''   
-        [p.terminate() for p in self.launch_info.processes]
-        [p.wait() for p in self.launch_info.processes]
-        all_closed = all([c!=None for c in self._poll()])
+        all_closed = all([self._kill_tree(p.pid, sig=signal.SIGTERM, timeout=5.0) for p in self.launch_info.processes])
         if not all_closed:
-            [p.kill() for p in self.launch_info.processes]
-            [p.wait() for p in self.launch_info.processes]
-        assert all([c!=None for c in self._poll()]), 'Not all Blender instances closed.'
+            all_closed = all([self._kill_tree(p.pid, sig=signal.SIGKILL, timeout=5.0) for p in self.launch_info.processes])
         self.launch_info = None
-        logger.info('Blender instances closed')
+        if not all_closed:
+            logger.warning('Not all Blender instances closed')
+        else:
+            logger.info('Blender instances closed')
 
     def _address_generator(self, proto, bind_addr, start_port):
         '''Convenience to generate addresses.'''
@@ -200,3 +200,26 @@ class BlenderLauncher():
     def _poll(self):
         '''Convenience to poll all processes exit codes.'''
         return [p.poll() for p in self.launch_info.processes]
+
+
+    def _kill_tree(self, pid, sig=signal.SIGTERM, include_parent=True,timeout=None, on_terminate=None) -> bool:
+        """Kill a process tree.
+        
+        This method is required for some tools actually spawn Blender as a subprocces (e.g. snap). This method
+        ensures that the process opened and all its subprocesses are killed.
+        """
+        parent = psutil.Process(pid)
+        plist = parent.children(recursive=True)
+        if include_parent:
+            plist.append(parent)
+
+        for p in plist:
+            p.send_signal(sig)
+
+        gone, alive = psutil.wait_procs(plist, timeout=timeout,
+                                        callback=on_terminate)
+
+        return len(gone) == len(plist)
+        
+
+parent_pid = 30437   # my example
