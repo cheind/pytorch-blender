@@ -28,7 +28,8 @@ def discover_blender(additional_blender_paths=None):
         return None
     else:
         logger.debug(f'Discovered Blender in {bpath}')
-    bpath = Path(bpath).resolve()
+    # Using absolute instead of resolve to not follow symlinks (snap issue on linux)
+    bpath = Path(bpath).absolute()
     
     p = subprocess.Popen(f'"{bpath}" --version', 
             shell=True,
