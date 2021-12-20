@@ -179,6 +179,10 @@ class BlenderLauncher():
         '''Terminate all processes.'''   
         [p.terminate() for p in self.launch_info.processes]
         [p.wait() for p in self.launch_info.processes]
+        all_closed = all([c!=None for c in self._poll()])
+        if not all_closed:
+            [p.kill() for p in self.launch_info.processes]
+            [p.wait() for p in self.launch_info.processes]
         assert all([c!=None for c in self._poll()]), 'Not all Blender instances closed.'
         self.launch_info = None
         logger.info('Blender instances closed')
