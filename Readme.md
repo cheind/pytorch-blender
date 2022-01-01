@@ -1,10 +1,10 @@
 # blendtorch
 [![Build Status](https://app.travis-ci.com/cheind/pytorch-blender.svg?branch=develop)](https://app.travis-ci.com/cheind/pytorch-blender)
 
-**blendtorch** is a Python framework to seamlessly integrate [Blender](http://blender.org) into [PyTorch](http://pytorch.org) datasets for deep learning from artificial visual data. We utilize Eevee, a new physically based real-time renderer, to synthesize images and annotations in real-time and thus avoid stalling model training in many cases.
+**blendtorch** is a Python framework to seamlessly integrate Blender into PyTorch for deep learning from artificial visual data. We utilize Eevee, a new physically based real-time renderer, to synthesize images and annotations in real-time and thus avoid stalling model training in many cases. If you find the project helpful, you consider [citing](#cite_anchor) it.
 
 Feature summary
- - ***Data Streaming***: Stream distributed Blender renderings directly into PyTorch data pipelines in real-time for supervised learning and domain randomization applications. Supports arbitrary pickle-able objects to be send alongside images/videos. Built-in recording capability to replay data without Blender. Bi-directional communication channels allow Blender simulations to adapt during network training. </br>More info [\[examples/datagen\]](examples/datagen), [\[examples/compositor_normals_depth\]](examples/compositor_normals_depth),  [\[examples/densityopt\]](examples/densityopt)
+ - ***Data Generation***: Stream distributed Blender renderings directly into PyTorch data pipelines in real-time for supervised learning and domain randomization applications. Supports arbitrary pickle-able objects to be send alongside images/videos. Built-in recording capability to replay data without Blender. Bi-directional communication channels allow Blender simulations to adapt during network training. </br>More info [\[examples/datagen\]](examples/datagen), [\[examples/compositor_normals_depth\]](examples/compositor_normals_depth),  [\[examples/densityopt\]](examples/densityopt)
  - ***OpenAI Gym Support***: Create and run remotely controlled Blender gyms to train reinforcement agents. Blender serves as simulation, visualization, and interactive live manipulation environment.
  </br>More info [\[examples/control\]](examples/control)
 
@@ -104,19 +104,10 @@ The following tables show the mean runtimes per batch (8) and per image for a si
 
 Note: If no image transfer is needed, i.e in reinforcement learning of physical simulations, 2000Hz are easily achieved.
 
+<a name="cite_anchor"></a>
 ## Cite
 The code accompanies our academic work [[1]](https://arxiv.org/abs/1907.01879),[[2]](https://arxiv.org/abs/2010.11696) in the field of machine learning from artificial images. Please consider the following publications when citing **blendtorch**
 ```
-@inproceedings{robotpose_etfa2019_cheind,
-    author={Christoph Heindl, Sebastian Zambal, Josef Scharinger},
-    title={Learning to Predict Robot Keypoints Using Artificially Generated Images},
-    booktitle={
-        24th IEEE International Conference on 
-        Emerging Technologies and Factory Automation (ETFA)
-    },    
-    year={2019}
-}
-
 @inproceedings{blendtorch_icpr2020_cheind,
     author = {Christoph Heindl, Lukas Brunner, Sebastian Zambal and Josef Scharinger},
     title = {BlendTorch: A Real-Time, Adaptive Domain Randomization Library},
@@ -125,6 +116,16 @@ The code accompanies our academic work [[1]](https://arxiv.org/abs/1907.01879),[
         at International Conference on Pattern Recognition (ICPR2020)
     },
     year = {2020},
+}
+
+@inproceedings{robotpose_etfa2019_cheind,
+    author={Christoph Heindl, Sebastian Zambal, Josef Scharinger},
+    title={Learning to Predict Robot Keypoints Using Artificially Generated Images},
+    booktitle={
+        24th IEEE International Conference on 
+        Emerging Technologies and Factory Automation (ETFA)
+    },    
+    year={2019}
 }
 ```
 
