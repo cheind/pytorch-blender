@@ -45,5 +45,5 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       uses: GabrielBB/xvfb-action@v1
-      run: |
-        pytest tests -m background
+      with:
+        run: pytest tests -m background
