@@ -50,4 +50,5 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
+        source .envs
         xvfb-run pytest tests -m background -k test_animation
