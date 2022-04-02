@@ -9,7 +9,7 @@ URL="https://mirror.clarkson.edu/blender/release/Blender3.0/${NAMETAR}"
 echo "Installing Blender ${NAME}"
 mkdir -p $CACHE
 if [ ! -f $TAR ]; then
-    wget -O $TAR $URL
+    wget -O $TAR $URL -q
 fi
 tar -xf $TAR -C $HOME
 
