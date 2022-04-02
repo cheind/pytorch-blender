@@ -40,6 +40,7 @@ jobs:
         python -m pip install -e pkg_pytorch
         python -m pip install -r requirements_dev.txt
         python -c "import blendtorch.btt as btt; print(btt.__version__)"
+        sudo apt-get install xvfb
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -47,7 +48,5 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
-      uses: GabrielBB/xvfb-action@v1
-      with:
-        run: | 
-          pytest tests -m background
+      run: |
+        xvfb-run pytest tests -m background
