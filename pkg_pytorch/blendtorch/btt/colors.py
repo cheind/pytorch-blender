@@ -24,4 +24,4 @@ def gamma(x, coeff=2.2):
     if x.shape[-1] == 3:
         return y
     else:
-        return np.concatenate((rgb, x[..., 3:4]), axis=-1)
+        return np.concatenate((y, x[..., 3:4]), axis=-1)

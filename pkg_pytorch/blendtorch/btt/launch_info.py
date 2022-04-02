@@ -1,5 +1,5 @@
 import json
-from contextlib import ExitStack
+from contextlib import ExitStack, nullcontext
 
 class LaunchInfo:
     '''Holds information about running Blender instances.
