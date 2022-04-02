@@ -51,4 +51,4 @@ jobs:
     - name: Test with pytest
       run: |
         source .envs
-        xvfb-run pytest tests -m background -k test_animation
+        xvfb-run pytest tests -m background
