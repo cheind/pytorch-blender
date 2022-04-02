@@ -24,12 +24,14 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install Blender
+    - name: Download Blender
       run: |
         scripts/install_blender.sh
         source .envs
+    - name: Install Blender dependencies
+      run: |
         blender --background --python scripts/install_btb.py
-        blender --background --python-use-system-env --python-expr "import blendtorch.btb as btb; print
+        blender --background --python-use-system-env --python-expr "import blendtorch.btb as btb; print (btb.__version__)"
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
