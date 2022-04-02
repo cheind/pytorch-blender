@@ -30,6 +30,7 @@ jobs:
         source .envs
     - name: Install Blender dependencies
       run: |
+        source .envs
         blender --background --python scripts/install_btb.py
         blender --background --python-use-system-env --python-expr "import blendtorch.btb as btb; print (btb.__version__)"
     - name: Install dependencies
@@ -48,4 +49,6 @@ jobs:
     - name: Test with pytest
       uses: GabrielBB/xvfb-action@v1
       with:
-        run: pytest tests -m background
+        run: | 
+          source .envs
+          pytest tests -m background
