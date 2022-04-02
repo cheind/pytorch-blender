@@ -1,26 +1,28 @@
-'''Create and maintain image renderers used in `env.render()` to display images.'''
+"""Create and maintain image renderers used in `env.render()` to display images."""
 
-RENDER_BACKENDS={}
-LOOKUP_ORDER = ['openai', 'matplotlib']
+RENDER_BACKENDS = {}
+LOOKUP_ORDER = ["openai", "matplotlib"]
+
 
 def create_renderer(backend=None, **kwargs):
-    '''Create image display.
-    
+    """Create image display.
+
     Params
     ------
     backend: str, None
         The backend to use. When None, auto selects.
     kwargs: dict
         Additional keywords to be passed to initialization.
-    '''
+    """
     if backend is None:
         avail = [RENDER_BACKENDS[l] for l in LOOKUP_ORDER if l in RENDER_BACKENDS]
-        assert len(avail) > 0, 'No render backends available.'
+        assert len(avail) > 0, "No render backends available."
         kls = avail[0]
     else:
-        assert backend in RENDER_BACKENDS, f'Render backend {backend} not found.'
+        assert backend in RENDER_BACKENDS, f"Render backend {backend} not found."
         kls = RENDER_BACKENDS[backend]
     return kls(**kwargs)
+
 
 ## MATPLOTLIB
 try:
@@ -28,9 +30,9 @@ try:
 
     class MatplotlibRenderer:
         def __init__(self, **kwargs):
-            self.fig, self.ax = plt.subplots(1,1)
+            self.fig, self.ax = plt.subplots(1, 1)
             self.img = None
-        
+
         def imshow(self, rgb):
             if self.img is None:
                 self.img = self.ax.imshow(rgb)
@@ -48,17 +50,16 @@ try:
 
         def __del__(self):
             self.close()
-    
-    RENDER_BACKENDS['matplotlib'] = MatplotlibRenderer
+
+    RENDER_BACKENDS["matplotlib"] = MatplotlibRenderer
 except ImportError as e:
     pass
 
 ## PYGLET/OpenAI based
 try:
     from gym.envs.classic_control import rendering
-    
-    class OpenAIGymRenderer(object):
 
+    class OpenAIGymRenderer(object):
         def __init__(self, **kwargs):
             self._viewer = rendering.SimpleImageViewer(**kwargs)
 
@@ -73,7 +74,6 @@ try:
         def __del__(self):
             self.close()
 
-    RENDER_BACKENDS['openai'] = OpenAIGymRenderer
+    RENDER_BACKENDS["openai"] = OpenAIGymRenderer
 except ImportError as e:
     pass
-

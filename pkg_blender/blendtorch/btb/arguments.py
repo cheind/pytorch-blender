@@ -1,11 +1,11 @@
 import sys
 import argparse
-import os
+
 
 def parse_blendtorch_args(argv=None):
-    '''Parses blendtorch instance parameters and returns the remainder arguments.
-    
-    This method is intended to be used with Blender instances launched via 
+    """Parses blendtorch instance parameters and returns the remainder arguments.
+
+    This method is intended to be used with Blender instances launched via
     `btt.BlenderLauncher`. It parses specific command line arguments that
      - identify the Blender process `btid`,
      - provide a random number seed `btseed`, and
@@ -13,7 +13,7 @@ def parse_blendtorch_args(argv=None):
 
     This script parses command-line arguments after a special end of
     command line element `--`.
-    
+
     Params
     ------
     argv: list-like, None
@@ -25,23 +25,26 @@ def parse_blendtorch_args(argv=None):
         The parsed command line arguments
     remainder: list-like
         The remaining command line arguments.
-    '''    
+    """
     argv = argv or sys.argv
-    if '--' in argv:
-        argv = argv[argv.index("--") + 1:]
+    if "--" in argv:
+        argv = argv[argv.index("--") + 1 :]  # noqa
     else:
-        raise ValueError('No script arguments found; missing `--`?')
+        raise ValueError("No script arguments found; missing `--`?")
 
-    addrsplit = lambda x: tuple(x.split('='))
+    def addrsplit(x):
+        return tuple(x.split("="))
 
-    parser = argparse.ArgumentParser()    
-    parser.add_argument('-btid', type=int, help='Identifier for this Blender instance')    
-    parser.add_argument('-btseed', type=int, help='Random number seed')
-    parser.add_argument("-btsockets",
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-btid", type=int, help="Identifier for this Blender instance")
+    parser.add_argument("-btseed", type=int, help="Random number seed")
+    parser.add_argument(
+        "-btsockets",
         metavar="NAME=ADDRESS",
-        nargs='*',
+        nargs="*",
         type=addrsplit,
-        help="Set a number of named address pairs.")        
+        help="Set a number of named address pairs.",
+    )
     args, remainder = parser.parse_known_args(argv)
     args.btsockets = dict(args.btsockets)
     return args, remainder

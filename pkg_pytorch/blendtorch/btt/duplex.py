@@ -1,12 +1,13 @@
 import zmq
-import time
 import os
 import sys
 
 from .constants import DEFAULT_TIMEOUTMS
 
+
 class DuplexChannel:
-    '''Provides generic bidirectional communication with a single PyTorch instance.'''
+    """Provides generic bidirectional communication with a single PyTorch instance."""
+
     def __init__(self, address, btid=None, lingerms=0, timeoutms=DEFAULT_TIMEOUTMS):
         self.ctx = zmq.Context()
         self.sock = self.ctx.socket(zmq.PAIR)
@@ -22,8 +23,8 @@ class DuplexChannel:
         self.btid = btid
 
     def recv(self, timeoutms=None):
-        '''Return next message or None.
-        
+        """Return next message or None.
+
         Kwargs
         ------
         timeoutms: int
@@ -33,8 +34,8 @@ class DuplexChannel:
         Returns
         -------
         msg: dict, None
-            Message received or None.        
-        '''
+            Message received or None.
+        """
         socks = dict(self.poller.poll(timeoutms))
         if self.sock in socks:
             return self.sock.recv_pyobj()
@@ -42,7 +43,7 @@ class DuplexChannel:
             return None
 
     def send(self, **kwargs):
-        '''Send a message to remote Blender process.
+        """Send a message to remote Blender process.
 
         Automatically attaches the process identifier `btid` and
         a unique message id `btmid` to the dictionary.
@@ -56,12 +57,8 @@ class DuplexChannel:
         -------
         messageid: integer
             Message id attached to dictionary
-        '''
+        """
         mid = int.from_bytes(os.urandom(4), sys.byteorder)
-        data = {
-            'btid':self.btid, 
-            'btmid': mid, 
-            **kwargs
-        }
+        data = {"btid": self.btid, "btmid": mid, **kwargs}
         self.sock.send_pyobj(data)
         return mid

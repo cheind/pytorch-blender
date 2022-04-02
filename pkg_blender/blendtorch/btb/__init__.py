@@ -1,3 +1,4 @@
+# flake8: noqa
 from .animation import AnimationController
 from .offscreen import OffScreenRenderer
 from .renderer import CompositeRenderer, CompositeSelection
@@ -8,4 +9,4 @@ from .camera import Camera
 from .duplex import DuplexChannel
 from . import env, utils, materials
 
-__version__ = '0.4.0'
+__version__ = "0.4.0"

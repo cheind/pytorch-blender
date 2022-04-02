@@ -1,6 +1,4 @@
-
 import blendtorch.btb as btb
-import numpy as np
 import bpy
 
 SHAPE = (30, 30)
@@ -22,10 +20,7 @@ def main():
         # After frame
         if anim.frameid == 1:
             imgs = render.render()
-            pub.publish(
-                normals=imgs['normals'],
-                depth=imgs['depth']
-            )
+            pub.publish(normals=imgs["normals"], depth=imgs["depth"])
 
     # Parse script arguments passed via blendtorch launcher
     btargs, _ = btb.parse_blendtorch_args()
@@ -40,14 +35,14 @@ def main():
     meshes = scene.prepare(NSHAPES, sshape_res=SHAPE)
 
     # Data source
-    pub = btb.DataPublisher(btargs.btsockets['DATA'], btargs.btid)
+    pub = btb.DataPublisher(btargs.btsockets["DATA"], btargs.btid)
 
     # Setup default image rendering
     cam = btb.Camera()
     render = btb.CompositeRenderer(
         [
-            btb.CompositeSelection('normals', 'Out1', 'Normals', 'RGB'),
-            btb.CompositeSelection('depth', 'Out1', 'Depth', 'V'),
+            btb.CompositeSelection("normals", "Out1", "Normals", "RGB"),
+            btb.CompositeSelection("depth", "Out1", "Depth", "V"),
         ],
         btid=btargs.btid,
         camera=cam,
@@ -57,8 +52,9 @@ def main():
     anim = btb.AnimationController()
     anim.pre_animation.add(pre_anim, meshes)
     anim.post_frame.add(post_frame, render, pub, anim)
-    anim.play(frame_range=(0, 1), num_episodes=-1,
-              use_offline_render=False, use_physics=True)
+    anim.play(
+        frame_range=(0, 1), num_episodes=-1, use_offline_render=False, use_physics=True
+    )
 
 
 main()

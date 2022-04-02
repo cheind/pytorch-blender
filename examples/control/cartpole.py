@@ -16,18 +16,20 @@ import cartpole_gym
 
 KAPPA = 30
 
+
 def control(obs):
     # Simple P controller defining the error as xpole-xcart
     xcart, xpole, _ = obs
-    return (xpole-xcart)*KAPPA
+    return (xpole - xcart) * KAPPA
+
 
 def main():
-    # Create the environment. The environment is registered in 
-    # `cartpole_gym/__init__.py`. Set `real_time=True` when you 
-    # want to keep the simulation running until the agent response. 
-    env = gym.make('blendtorch-cartpole-v0', real_time=False)
-    
-    obs = env.reset()        
+    # Create the environment. The environment is registered in
+    # `cartpole_gym/__init__.py`. Set `real_time=True` when you
+    # want to keep the simulation running until the agent response.
+    env = gym.make("blendtorch-cartpole-v0", real_time=False)
+
+    obs = env.reset()
     while True:
         obs, reward, done, info = env.step(control(obs))
         env.render()
@@ -35,5 +37,6 @@ def main():
             obs = env.reset()
     env.done()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

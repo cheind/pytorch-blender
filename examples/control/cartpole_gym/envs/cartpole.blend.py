@@ -1,5 +1,4 @@
 import bpy
-from mathutils import Matrix
 import numpy as np
 
 from blendtorch import btb

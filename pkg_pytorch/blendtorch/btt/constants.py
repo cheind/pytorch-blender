@@ -1,4 +1,4 @@
-'''Commonly used constants.'''
+"""Commonly used constants."""
 
-'''Default socket timeout 10 sec.'''
+"""Default socket timeout 10 sec."""
 DEFAULT_TIMEOUTMS = 10000
