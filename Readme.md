@@ -23,61 +23,68 @@ The figure below visualizes the basic concept of **blendtorch** used in the cont
  1. To get started with **blendtorch** for training data training read [\[examples/datagen\]](examples/datagen). 
  1. To learn about using **blendtorch** for creating reinforcement training environments read [\[examples/control\]](examples/control).
 
+## Prerequisites
+This package has been tested with
+ - [Blender](https://www.blender.org/) >= 2.83/2.91/3.0/3.1 (Python >= 3.7)
+ - [PyTorch](http://pytorch.org) >= 1.5/1.10 (Python >= 3.7)
+
+running Windows 10 and Linux. Other versions might work as well, but have not been tested. 
+
 ## Installation
 
-**blendtorch** is composed of two distinct sub-packages: `bendtorch.btt` (in [pkg_pytorch](./pkg_pytorch)) and `blendtorch.btb` (in [pkg_blender](./pkg_blender)), providing the PyTorch and Blender views on **blendtorch**. 
+**blendtorch** is composed of two distinct sub-packages: 
+ - `bendtorch.btt` located in [pkg_pytorch](./pkg_pytorch) and 
+ - `blendtorch.btb` located in [pkg_blender](./pkg_blender),
 
-### Prerequisites
-This package has been tested with
- - [Blender](https://www.blender.org/) >= 2.83/2.91/3.0 (Python 3.7/3.9)
- - [PyTorch](http://pytorch.org) >= 1.5/1.10 (Python 3.7/3.8)
-running Windows 10 and Linux.
+providing the PyTorch and Blender views on **blendtorch**. `bendtorch.btt` will be installed to your local Python environment, while `blendtorch.btb` will be installed to the Python environment that ships with Blender.
 
-Other versions might work as well, but have not been tested. 
+1. Clone this repository
+    
+    ```
+    git clone https://github.com/cheind/pytorch-blender.git <DST>
+    ```
+1. Extend `PATH`    
+    
+    Ensure Blender executable is in your environments lookup `PATH`. On Windows this can be accomplished by
+    ```
+    set PATH=c:\Program Files\Blender Foundation\Blender 2.91;%PATH%
+    ```
+    On Ubuntu when blender is [installed using snap](https://snapcraft.io/install/blender/ubuntu), the path may be included by adding the following line to your ~/.bashrc,
+    ```
+    export PATH=/snap/blender/current/${PATH:+:${PATH}}
+    ```
+1. Complete Blender settings
+    
+    Open Blender at least once, and complete the initial settings. If this step is missed, some of the tests (especially the tests relating RL) will fail (Blender 2.91).
+1. Install `blendtorch.btb`
+    
+    Run
+    ```
+    blender --background --python <DST>/scripts/install_btb.py
+    ```
+    to `blendtorch-btb` into the Python environment bundled with Blender. 
+1. Install `blendtorch.btt`
 
-### Clone this repository
-```
-git clone https://github.com/cheind/pytorch-blender.git <DST>
-```
+    Run
+    ```
+    pip install -e <DST>/pkg_pytorch
+    ```
+    installs `blendtorch-btt` into the Python environment that you intend to run PyTorch from. 
+1. Install `gym` [optional]
 
-### Extend `PATH`
-Ensure Blender executable is in your environments lookup `PATH`. On Windows this can be accomplished by
-```
-set PATH=c:\Program Files\Blender Foundation\Blender 2.91;%PATH%
-```
+    While not required, it is advised to install OpenAI gym if you intend to use **blendtorch** for reinforcement learning
+    ```
+    pip install gym
+    ```
+1. Install dev requirements [optional]
 
-On Ubuntu when blender is [installed using snap](https://snapcraft.io/install/blender/ubuntu), the path may be included by adding the following line to your ~/.bashrc,
+    This step is optional. If you plan to run the unit tests
+    ```
+    pip install -r requirements_dev.txt
+    pytest tests/
+    ```
 
-```
-export PATH=/snap/blender/current/${PATH:+:${PATH}}
-```
-
-### Complete Blender settings
-Open Blender at least once, and complete the initial settings. If this step is missed, some of the tests (especially the tests relating RL) will fail (Blender 2.91).
-
-### Install **blendtorch** Blender part
-```
-blender --background --python <DST>/scripts/install_btb.py
-```
-installs `blendtorch-btb` into the Python environment bundled with Blender. 
-
-### Install **blendtorch** PyTorch part
-```
-pip install -e <DST>/pkg_pytorch
-```
-installs `blendtorch-btt` into the Python environment that you intend to run PyTorch from. While not required, it is advised to install OpenAI gym if you intend to use **blendtorch** for reinforcement learning
-```
-pip install gym
-```
-
-### Developer instructions
-This step is optional. If you plan to run the unit tests
-```
-pip install -r requirements_dev.txt
-pytest tests/
-```
-
-### Troubleshooting
+## Troubleshooting
 Run
 ```
 blender --version
