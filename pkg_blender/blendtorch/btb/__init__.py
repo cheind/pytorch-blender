@@ -8,5 +8,4 @@ from .publisher import DataPublisher
 from .camera import Camera
 from .duplex import DuplexChannel
 from . import env, utils, materials
-
-__version__ = "0.4.0"
+from .version import __version__

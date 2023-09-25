@@ -8,7 +8,10 @@ with open(THISDIR / "requirements.txt") as f:
 
 with open(THISDIR / ".." / "Readme.md", encoding="utf-8") as f:
     long_description = f.read()
-print(required)
+
+main_ns = {}
+with open(THISDIR / "blendtorch" / "btt" / "version.py") as ver_file:
+    exec(ver_file.read(), main_ns)
 
 setup(
     name="blendtorch-btt",
@@ -18,10 +21,7 @@ setup(
     license="MIT",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    version=open(THISDIR / "blendtorch" / "btt" / "__init__.py")
-    .readlines()[-1]
-    .split()[-1]
-    .strip("'"),
+    version=main_ns["__version__"],
     packages=["blendtorch.btt", "blendtorch.btt.apps"],
     install_requires=required,
     zip_safe=False,

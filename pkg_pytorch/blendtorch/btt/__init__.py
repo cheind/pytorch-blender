@@ -7,5 +7,4 @@ from .file import FileRecorder, FileReader
 from .duplex import DuplexChannel
 from . import env
 from . import colors
-
-__version__ = "0.4.0"
+from .version import __version__
