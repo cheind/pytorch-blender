@@ -62,7 +62,7 @@ def _capture_anim_callback_sequence(background):
             print("err")
 
 
-@pytest.mark.background
+#@pytest.mark.background
 def test_anim_callback_sequence():
     _capture_anim_callback_sequence(background=True)
 

@@ -48,7 +48,7 @@ def _run_remote_env(background):
     env.close()
 
 
-@pytest.mark.background
+#@pytest.mark.background
 def test_remote_env():
     _run_remote_env(background=True)
 

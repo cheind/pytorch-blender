@@ -36,7 +36,7 @@ def _validate_result(items):
     assert items[second]["remainder"] == ["--x", "4"]
 
 
-@pytest.mark.background
+#@pytest.mark.background
 def test_launcher():
     with btt.BlenderLauncher(**LAUNCH_ARGS) as bl:
         addr = bl.launch_info.addresses["DATA"]
@@ -53,7 +53,7 @@ def _launch(q, tmp_path):
         bl.wait()
 
 
-@pytest.mark.background
+#@pytest.mark.background
 def test_launcher_connected_remote(tmp_path):
     # Simulates BlenderLauncher called from a separate process and
     # shows how one can connect to already launched instances through
@@ -83,7 +83,7 @@ def _launch_app(tmp_path, args):
     )
 
 
-@pytest.mark.background
+#@pytest.mark.background
 def test_launcher_app(tmp_path):
 
     p = mp.Process(target=_launch_app, args=(tmp_path, LAUNCH_ARGS))

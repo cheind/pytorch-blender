@@ -8,7 +8,7 @@ from blendtorch import btt
 BLENDDIR = Path(__file__).parent / "blender"
 
 
-@pytest.mark.background
+#@pytest.mark.background
 def test_dataset():
     launch_args = dict(
         scene="",
@@ -34,7 +34,7 @@ def test_dataset():
         assert count == 4
 
 
-@pytest.mark.background
+#@pytest.mark.background
 def test_dataset_robustness():
     launch_args = dict(
         scene="",

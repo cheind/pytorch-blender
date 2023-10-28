@@ -6,7 +6,7 @@ from blendtorch import btt
 BLENDDIR = Path(__file__).parent / "blender"
 
 
-@pytest.mark.background
+#@pytest.mark.background
 def test_duplex():
     launch_args = dict(
         scene="",
