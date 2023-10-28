@@ -24,11 +24,14 @@ jobs:
               with:
                   python-version: ${{ matrix.python-version }}
                   cache: "pip"
-            - name: Test glxinfo
+            - name: Prepare
               run: |
                   sudo apt-get update
                   sudo apt-get install -y mesa-utils xvfb libgl1-mesa-dev
-                  xvfb-run glxinfo
+                  sudo /usr/bin/Xvfb :0 -screen 0 1280x1024x24 &
+            - name: Test glxinfo
+              run: |
+                  glxinfo
             - name: Download Blender
               run: |
                   scripts/install_blender.sh
@@ -54,4 +57,4 @@ jobs:
             - name: Test with pytest
               run: |
                   source .envs
-                  xvfb-run pytest tests -m background
+                  pytest tests -m background
