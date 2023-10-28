@@ -28,9 +28,9 @@ jobs:
               run: |
                   sudo apt-get update
                   sudo apt-get install -y mesa-utils xvfb libgl1-mesa-dev
-                  sudo /usr/bin/Xvfb :0 -screen 0 1280x1024x24 &
             - name: Test glxinfo
               run: |
+                  sudo /usr/bin/Xvfb :0 -screen 0 1280x1024x24 &
                   glxinfo
             - name: Download Blender
               run: |
